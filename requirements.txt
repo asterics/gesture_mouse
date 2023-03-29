@@ -1,12 +1,11 @@
 numpy
 scipy
 mediapipe
-PySide6
+PySide6==6.4.3
 opencv-python
 mouse
 keyboard
 pyqtgraph
-pygame
 screeninfo
 timecode
 pynput

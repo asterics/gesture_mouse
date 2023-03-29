@@ -8,7 +8,7 @@ from typing import List, Dict
 
 from pynput import mouse
 from pynput import keyboard
-import pygame
+#import pygame
 import pyqtgraph as pg
 from PySide6 import QtWidgets, QtCore, QtGui
 
