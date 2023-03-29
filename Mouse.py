@@ -31,7 +31,7 @@ class Mouse:
         self.yaw = 0
         monitors = screeninfo.get_monitors()
         print(monitors)
-        default_screen = monitors[1]  # TODO: multiscreen?
+        default_screen = monitors[0]  # TODO: multiscreen?
         self.mode: MouseMode = MouseMode.ABSOLUTE
         self.h_pixels = default_screen.height
         self.w_pixels = default_screen.width
