@@ -43,15 +43,23 @@ class PlotLine:
         self.plot_data_item.setVisible(visibility)
 
 
-class SignalVis(pg.PlotWidget):
+class SignalVis(QtWidgets.QWidget):
     def __init__(self):
         super(SignalVis, self).__init__()
-        self.setBackground('w')
+        self.plot_area = pg.PlotWidget()
+        self.layout = QtWidgets.QHBoxLayout(self)
+        self.layout.addWidget(self.plot_area)
+        self.raw_selection_button = QtWidgets.QRadioButton("Raw Values")
+        self.layout.addWidget(self.raw_selection_button)
+        self.layout.setAlignment(self.raw_selection_button, QtCore.Qt.AlignmentFlag.AlignTop)
+        self.raw_selection_button.toggled.connect(self.toggle_raw)
+        self.raw_values = False
+        self.plot_area.setBackground('w')
         self.lines = {}
 
     def add_line(self, name: str):
         pen = pg.mkPen(color=(255, 0, 0))
-        data_line = self.plot(x=[90, -90] * 50, y=[0] * 100, pen=pen)
+        data_line = self.plot_area.plot(x=[90, -90] * 50, y=[0] * 100, pen=pen)
         plot_handler = PlotLine(pen, data_line)
         self.lines[name] = plot_handler
         return plot_handler
@@ -59,8 +67,16 @@ class SignalVis(pg.PlotWidget):
     def update_plot(self, signals):
         x = time.time()
         for name, plot in self.lines.items():
-            y = signals[name].scaled_value
-            plot.plot(x, y)
+            if self.raw_values:
+                y = signals[name].raw_value.get()
+                plot.plot(x, y)
+            else:
+                y = signals[name].scaled_value
+                plot.plot(x, y)
+
+    def toggle_raw(self, checked):
+        print(checked)
+        self.raw_values = checked
 
 
 class SignalSetting(QtWidgets.QWidget):
