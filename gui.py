@@ -11,6 +11,7 @@ from pynput import keyboard
 #import pygame
 import pyqtgraph as pg
 from PySide6 import QtWidgets, QtCore, QtGui
+import numpy as np
 
 import Demo
 import Signal
@@ -80,9 +81,12 @@ class SignalVis(QtWidgets.QWidget):
 
 
 class SignalSetting(QtWidgets.QWidget):
-    def __init__(self, name: str, min_value, max_value, min_filter=0.0001, max_filter=1.):
+    def __init__(self, name: str, min_value, max_value, min_filter=0.0001, max_filter=1., demo=None):
         super().__init__()
+        self.name = name
         self.name_label = QtWidgets.QLabel(name)
+
+        self.demo = demo
 
         self.lower_value = QtWidgets.QDoubleSpinBox()
         self.lower_value.setSingleStep(0.01)
@@ -103,6 +107,9 @@ class SignalSetting(QtWidgets.QWidget):
         self.visualization_checkbox = QtWidgets.QCheckBox("Visualize")
         self.visualization_checkbox.setChecked(True)
 
+        self.calibrate_button = QtWidgets.QPushButton("Calibrate Thresholds")
+        self.calibrate_button.clicked.connect(self.calibrate_signal)
+
         self.layout = QtWidgets.QHBoxLayout(self)
         self.layout.addWidget(self.name_label)
         self.layout.addWidget(self.visualization_checkbox)
@@ -111,8 +118,16 @@ class SignalSetting(QtWidgets.QWidget):
         self.layout.addWidget(self.higher_value)
         self.layout.addWidget(QtWidgets.QLabel("Filter"))
         self.layout.addWidget(self.filter_slider)
+        self.layout.addWidget(self.calibrate_button)
 
         self.filter_slider.doubleValueChanged.connect(lambda value: print(value))
+
+    def calibrate_signal(self):
+        print("Calibration start")
+        self.calib_diag = CalibrationDialog(self.demo, self.name)
+        self.calib_diag.webcam_timer.start()
+        self.calib_diag.open()
+        #self.calibration_dialog.show()
 
 
 class SignalTab(QtWidgets.QWidget):
@@ -142,7 +157,7 @@ class SignalTab(QtWidgets.QWidget):
             higher_threshold = json_signal["higher_threshold"]
             filter_value = json_signal["filter_value"]
 
-            setting = SignalSetting(signal_name, lower_threshold, higher_threshold)
+            setting = SignalSetting(signal_name, lower_threshold, higher_threshold, demo=self.demo)
             handler = self.signals_vis.add_line(signal_name)
 
             setting.visualization_checkbox.stateChanged.connect(handler.set_visible)
@@ -170,6 +185,86 @@ class SignalTab(QtWidgets.QWidget):
     def update_plots(self, signals):
         self.signals_vis.update_plot(signals)
 
+class CalibrationDialog(QtWidgets.QDialog):
+    def __init__(self, demo, name):
+        super().__init__()
+        self.demo: Demo.Demo = demo
+        self.name = name
+        self.label = QtWidgets.QLabel(name)
+
+        self.do_action_label = QtWidgets.QLabel()
+        self.neutral_timer = QtCore.QTimer(self)
+        self.neutral_timer.setSingleShot(True)
+        self.neutral_timer.setInterval(2000)
+
+        self.pose_timer = QtCore.QTimer(self)
+        self.pose_timer.setSingleShot(True)
+        self.pose_timer.setInterval(2000)
+
+
+        ## Webcam Image
+        self.webcam_label = QtWidgets.QLabel()
+        self.webcam_label.setMinimumSize(640, 480)
+        self.webcam_label.setMaximumSize(1280, 720)
+        self.webcam_label.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
+        self.webcam_timer = QtCore.QTimer(self)
+        self.webcam_timer.setInterval(30)
+        self.webcam_timer.timeout.connect(self.update_image)
+        self.qt_image = QtGui.QImage(np.zeros((640, 480, 30), dtype=np.uint8), 480, 640, QtGui.QImage.Format.Format_BGR888)
+
+
+        QBtn = QtWidgets.QDialogButtonBox.StandardButton.Ok | QtWidgets.QDialogButtonBox.StandardButton.Cancel
+        self.start_button = QtWidgets.QPushButton("Start")
+        self.start_button.clicked.connect(self.start_calibration)
+        self.buttonBox = QtWidgets.QDialogButtonBox(QBtn)
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
+
+        self.layout = QtWidgets.QVBoxLayout()
+        self.layout.addWidget(self.label)
+        self.layout.addWidget(self.do_action_label)
+        self.layout.addWidget(self.webcam_label)
+        self.button_layout = QtWidgets.QHBoxLayout()
+        self.button_layout.addWidget(self.start_button)
+        self.button_layout.addWidget(self.buttonBox)
+
+        self.layout.addLayout(self.button_layout)
+        self.setLayout(self.layout)
+
+    def update_image(self):
+        w = self.webcam_label.width()
+        h = self.webcam_label.height()
+        image = self.demo.annotated_landmarks
+        self.qt_image = QtGui.QImage(image, image.shape[1], image.shape[0], QtGui.QImage.Format.Format_BGR888)
+        self.qt_image = self.qt_image.scaled(w, h, QtCore.Qt.AspectRatioMode.KeepAspectRatio,
+                                             QtCore.Qt.TransformationMode.SmoothTransformation)
+        self.webcam_label.setPixmap(QtGui.QPixmap.fromImage(self.qt_image))
+
+    def resizeEvent(self, event: QtGui.QResizeEvent) -> None:
+        super().resizeEvent(event)
+        self.webcam_label.resizeEvent(event)
+        w = self.webcam_label.width()
+        h = self.webcam_label.height()
+        self.qt_image = self.qt_image.scaled(w, h, QtCore.Qt.AspectRatioMode.KeepAspectRatio)
+        self.webcam_label.setPixmap(QtGui.QPixmap.fromImage(self.qt_image))
+
+    def accept(self) -> None:
+        self.webcam_timer.stop()
+        super().accept()
+
+    def reject(self) -> None:
+        self.webcam_timer.stop()
+        super().reject()
+
+    def start_calibration(self):
+        self.do_action_label.setText("Neutral Pose")
+        self.neutral_timer.timeout.connect(self.record_gesture)
+        self.neutral_timer.start()
+
+    def record_gesture(self):
+        self.do_action_label.setText("Maximum Gesture")
+        self.pose_timer.timeout.connect(lambda: self.do_action_label.setText("Finished"))
+        self.pose_timer.start()
 
 class DebugVisualizetion(QtWidgets.QWidget):
     def __init__(self):
