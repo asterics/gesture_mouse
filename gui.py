@@ -8,7 +8,7 @@ from typing import List, Dict
 
 from pynput import mouse
 from pynput import keyboard
-#import pygame
+# import pygame
 import pyqtgraph as pg
 from PySide6 import QtWidgets, QtCore, QtGui
 import numpy as np
@@ -125,9 +125,16 @@ class SignalSetting(QtWidgets.QWidget):
     def calibrate_signal(self):
         print("Calibration start")
         self.calib_diag = CalibrationDialog(self.demo, self.name)
+        self.calib_diag.accepted.connect(self.accept_calibration)
         self.calib_diag.webcam_timer.start()
         self.calib_diag.open()
-        #self.calibration_dialog.show()
+        # self.calibration_dialog.show()
+
+    def accept_calibration(self):
+        min_value = self.calib_diag.min_value
+        max_value = self.calib_diag.max_value
+        self.lower_value.setValue(min_value)
+        self.higher_value.setValue(max_value)
 
 
 class SignalTab(QtWidgets.QWidget):
@@ -185,12 +192,18 @@ class SignalTab(QtWidgets.QWidget):
     def update_plots(self, signals):
         self.signals_vis.update_plot(signals)
 
+
 class CalibrationDialog(QtWidgets.QDialog):
     def __init__(self, demo, name):
         super().__init__()
         self.demo: Demo.Demo = demo
         self.name = name
         self.label = QtWidgets.QLabel(name)
+        self.calibration_samples = {name: {"neutral": [], "pose": []}}
+        self.min_value = 0.
+        self.max_value = 0.
+        self.recording_neutral=False
+        self.recording_max_pose=False
 
         self.do_action_label = QtWidgets.QLabel()
         self.neutral_timer = QtCore.QTimer(self)
@@ -201,7 +214,6 @@ class CalibrationDialog(QtWidgets.QDialog):
         self.pose_timer.setSingleShot(True)
         self.pose_timer.setInterval(2000)
 
-
         ## Webcam Image
         self.webcam_label = QtWidgets.QLabel()
         self.webcam_label.setMinimumSize(640, 480)
@@ -210,8 +222,8 @@ class CalibrationDialog(QtWidgets.QDialog):
         self.webcam_timer = QtCore.QTimer(self)
         self.webcam_timer.setInterval(30)
         self.webcam_timer.timeout.connect(self.update_image)
-        self.qt_image = QtGui.QImage(np.zeros((640, 480, 30), dtype=np.uint8), 480, 640, QtGui.QImage.Format.Format_BGR888)
-
+        self.qt_image = QtGui.QImage(np.zeros((640, 480, 30), dtype=np.uint8), 480, 640,
+                                     QtGui.QImage.Format.Format_BGR888)
 
         QBtn = QtWidgets.QDialogButtonBox.StandardButton.Ok | QtWidgets.QDialogButtonBox.StandardButton.Cancel
         self.start_button = QtWidgets.QPushButton("Start")
@@ -235,6 +247,13 @@ class CalibrationDialog(QtWidgets.QDialog):
         w = self.webcam_label.width()
         h = self.webcam_label.height()
         image = self.demo.annotated_landmarks
+        signal = self.demo.signals.get(self.name)
+        if signal is not None:
+            if self.recording_neutral:
+                self.calibration_samples[self.name]["neutral"].append(signal.raw_value.get())
+            elif self.recording_max_pose:
+                self.calibration_samples[self.name]["pose"].append(signal.raw_value.get())
+
         self.qt_image = QtGui.QImage(image, image.shape[1], image.shape[0], QtGui.QImage.Format.Format_BGR888)
         self.qt_image = self.qt_image.scaled(w, h, QtCore.Qt.AspectRatioMode.KeepAspectRatio,
                                              QtCore.Qt.TransformationMode.SmoothTransformation)
@@ -250,7 +269,12 @@ class CalibrationDialog(QtWidgets.QDialog):
 
     def accept(self) -> None:
         self.webcam_timer.stop()
+        print(self.calibration_samples)
+        print(len(self.calibration_samples[self.name]["neutral"]))
+        print(len(self.calibration_samples[self.name]["pose"]))
+        self.min_value, self.max_value = self.demo.calibrate_signal(calibration_sample=self.calibration_samples, name=self.name)
         super().accept()
+
 
     def reject(self) -> None:
         self.webcam_timer.stop()
@@ -259,12 +283,21 @@ class CalibrationDialog(QtWidgets.QDialog):
     def start_calibration(self):
         self.do_action_label.setText("Neutral Pose")
         self.neutral_timer.timeout.connect(self.record_gesture)
+        self.recording_neutral = True
         self.neutral_timer.start()
 
     def record_gesture(self):
+        # TODO: save videos to create dataset?
         self.do_action_label.setText("Maximum Gesture")
-        self.pose_timer.timeout.connect(lambda: self.do_action_label.setText("Finished"))
+        self.pose_timer.timeout.connect(self.finish_recording)
+        self.recording_neutral = False
+        self.recording_max_pose = True
         self.pose_timer.start()
+
+    def finish_recording(self):
+        self.recording_max_pose = False
+        self.do_action_label.setText("Finished")
+
 
 class DebugVisualizetion(QtWidgets.QWidget):
     def __init__(self):

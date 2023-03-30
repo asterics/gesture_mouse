@@ -51,6 +51,9 @@ class Demo(QThread):
         self.filter_landmarks = False
         self.landmark_kalman = [Kalman1D(R=0.008 ** 2) for _ in range(468)]
 
+        # Calibration
+        self.calibration_samples = dict()
+
         # add hotkey
         # TODO: how to handle activate mouse / toggle mouse etc. by global hotkey
         # keyboard.add_hotkey("esc", lambda: self.stop())
@@ -148,25 +151,6 @@ class Demo(QThread):
             self.socket.close()
             self.socket = None
 
-    def record_neutral(self):
-        with mp_face_mesh.FaceMesh(refine_landmarks=True) as face_mesh:
-            success, image = self.cam_cap.read()
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-            results = face_mesh.process(image)
-            image.flags.writeable = True
-            image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-
-            if not results.multi_face_landmarks:
-                return False
-
-            landmarks = results.multi_face_landmarks[0]
-            np_landmarks = np.array(
-                [(lm.x * self.frame_width, lm.y * self.frame_height) for lm in
-                 landmarks.landmark])
-            self.signal_calculator.process_neutral(np_landmarks)
-
-            return True
-
     def stop(self):
         self.is_running = False
 
@@ -220,3 +204,17 @@ class Demo(QThread):
             signal.set_filter_value(filter_value)
             signal.set_threshold(lower_threshold, higher_threshold)
             self.signals[name] = signal
+
+    def calibrate_signal(self, calibration_sample, name):
+        self.calibration_samples.update(calibration_sample)
+        neutral_samples = np.array(calibration_sample[name]["neutral"])
+        pose_samples = np.array(calibration_sample[name]["pose"])
+        neutral_samples = neutral_samples[len(neutral_samples) // 4:3 * len(neutral_samples) // 4]
+        pose_samples = pose_samples[len(neutral_samples) // 4:3 * len(neutral_samples) // 4]
+        signal = self.signals.get(name)
+        min_value = max_value = 0
+        if signal is not None:
+            min_value = np.mean(neutral_samples)
+            max_value = np.mean(pose_samples)
+            signal.set_threshold(min_value, max_value)
+        return min_value, max_value
