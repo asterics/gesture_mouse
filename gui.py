@@ -68,6 +68,9 @@ class SignalVis(QtWidgets.QWidget):
     def update_plot(self, signals):
         x = time.time()
         for name, plot in self.lines.items():
+            signal = signals.get(name)
+            if signal is None:
+                continue
             if self.raw_values:
                 y = signals[name].raw_value.get()
                 plot.plot(x, y)
@@ -790,7 +793,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.timer.start()
 
         self.change_signals_tab(False)
-
         ## Signals
         self.demo.start()
 
