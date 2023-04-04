@@ -1,0 +1,20 @@
+[
+  {
+    "action": "keyboard_key",
+    "signal": "JawOpen",
+    "threshold": 0.5,
+    "delay": 0.01,
+    "trigger": "up",
+    "action_type": "press",
+    "key": "Space"
+  },
+  {
+    "action": "keyboard_key",
+    "signal": "JawOpen",
+    "threshold": 0.5,
+    "delay": 0.009999999999999997,
+    "trigger": "down",
+    "action_type": "release",
+    "key": "Space"
+  }
+]

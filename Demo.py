@@ -210,11 +210,11 @@ class Demo(QThread):
         neutral_samples = np.array(calibration_sample[name]["neutral"])
         pose_samples = np.array(calibration_sample[name]["pose"])
         neutral_samples = neutral_samples[len(neutral_samples) // 4:3 * len(neutral_samples) // 4]
-        pose_samples = pose_samples[len(neutral_samples) // 4:3 * len(neutral_samples) // 4]
+        pose_samples = pose_samples[len(pose_samples) // 4:3 * len(neutral_samples) // 4]
         signal = self.signals.get(name)
         min_value = max_value = 0
         if signal is not None:
-            min_value = np.mean(neutral_samples)
-            max_value = np.mean(pose_samples)
+            min_value = np.percentile(neutral_samples, 75)
+            max_value = np.percentile(pose_samples, 25)
             signal.set_threshold(min_value, max_value)
         return min_value, max_value

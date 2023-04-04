@@ -185,3 +185,7 @@ fabric.properties
 .idea
 
 venv
+
+deploy/
+gui.build/
+gui.dist/
