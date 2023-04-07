@@ -356,7 +356,7 @@ class GeneralTab(QtWidgets.QWidget):
         self.debug_window.show()
 
     def update_debug_visualization(self):
-        self.debug_window.update_image(self.demo.annotated_landmarks)
+        #self.debug_window.update_image(self.demo.annotated_landmarks)
         self.debug_window.status_bar.showMessage(f"FPS: {self.demo.fps}, Mode: {self.demo.mouse.mode}")
 
 
@@ -799,7 +799,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def update_plots(self):
         # TODO: move up again
         self.selected_signals.update_plots(self.demo.signals)
-        self.general_tab.update_debug_visualization()
+        #self.general_tab.update_debug_visualization()
 
     def change_signals_tab(self, checked: bool):
         if checked:

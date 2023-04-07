@@ -47,8 +47,8 @@ class Demo(QThread):
                                                                      frame_size=(self.frame_width, self.frame_height))
         self.signal_calculator.set_filter_value("screen_xy", 0.022)
 
-        self.use_mediapipe = False
-        self.filter_landmarks = False
+        self.use_mediapipe = True
+        self.filter_landmarks = True
         self.landmark_kalman = [Kalman1D(R=0.008 ** 2) for _ in range(468)]
 
         # Calibration
@@ -110,7 +110,7 @@ class Demo(QThread):
                 if self.mouse_enabled:
                     self.mouse.process_signal(self.signals)
                 # Debug
-                self.annotated_landmarks = DrawingDebug.annotate_landmark_image(landmarks, image)
+                #self.annotated_landmarks = DrawingDebug.annotate_landmark_image(landmarks, image)
                 # DrawingDebug.show_por(x_pixel, y_pixel, self.monitor.w_pixels, self.monitor.h_pixels)
 
                 self.fps = self.fps_counter()
@@ -134,8 +134,8 @@ class Demo(QThread):
         self.cam_cap = cv2.VideoCapture(0)
         self.cam_cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.frame_width)
         self.cam_cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.frame_height)
-        self.cam_cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P',
-                                                                     'G'))  # From https://forum.opencv.org/t/videoio-v4l2-dev-video0-select-timeout/8822/4 for linux
+        #self.cam_cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P',
+        #                                                             'G'))  # From https://forum.opencv.org/t/videoio-v4l2-dev-video0-select-timeout/8822/4 for linux
 
     def __stop_camera(self):
         if self.cam_cap is not None:
@@ -218,3 +218,9 @@ class Demo(QThread):
             max_value = np.percentile(pose_samples, 25)
             signal.set_threshold(min_value, max_value)
         return min_value, max_value
+
+
+if __name__ == '__main__':
+    demo = Demo()
+    demo.run()
+    bla = input("Press any key to stop")
