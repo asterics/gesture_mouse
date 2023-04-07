@@ -336,12 +336,12 @@ class DebugVisualizetion(QtWidgets.QWidget):
 class GeneralTab(QtWidgets.QWidget):
     def __init__(self, demo):
         super().__init__()
-        self.demo = demo
+        self.demo: Demo.Demo = demo
         self.mediapipe_selector_button = QtWidgets.QCheckBox(text="Use web cam tracking.")
-        self.mediapipe_selector_button.setChecked(False)
+        self.mediapipe_selector_button.setChecked(self.demo.use_mediapipe)
         self.mediapipe_selector_button.clicked.connect(lambda selected: self.demo.set_use_mediapipe(selected))
         self.landmark_filter_button = QtWidgets.QCheckBox(text="Filter Landmarks.")
-        self.landmark_filter_button.setChecked(False)
+        self.landmark_filter_button.setChecked(self.demo.filter_landmarks)
         self.landmark_filter_button.clicked.connect(lambda selected: self.demo.set_filter_landmarks(selected))
         self.debug_window = DebugVisualizetion()
         self.debug_window_button = QtWidgets.QPushButton("Open Debug Menu")
