@@ -5,6 +5,7 @@ import os.path
 import time
 import uuid
 from typing import List, Dict
+from collections import deque
 
 from pynput import mouse
 from pynput import keyboard
@@ -21,23 +22,16 @@ import re
 
 class PlotLine:
     def __init__(self, pen, plot_data_item: pg.PlotDataItem):
-        self.x = [0.] * 100
-        self.y = [0.] * 100
+        self.x = deque(maxlen=100)
+        self.y = deque(maxlen=100)
         self.length = 0
         self.max_length = 100
         self.pen = pen
         self.plot_data_item = plot_data_item
 
     def plot(self, x, y):
-        if self.length < self.max_length:
-            self.x[self.length] = x
-            self.y[self.length] = y
-            self.length += 1
-        else:
-            self.x = self.x[1:]
-            self.x.append(x)
-            self.y = self.y[1:]
-            self.y.append(y)
+        self.x.append(x)
+        self.y.append(y)
         self.plot_data_item.setData(self.x, self.y, pen=self.pen)
 
     def set_visible(self, visibility):
@@ -49,7 +43,6 @@ class SignalVis(QtWidgets.QWidget):
         super(SignalVis, self).__init__()
         self.plot_area: pg.PlotWidget= pg.PlotWidget()
         self.plot_item: pg.PlotItem = self.plot_area.getPlotItem()
-        self.plot_item.disableAutoRange()
         self.layout = QtWidgets.QHBoxLayout(self)
         self.layout.addWidget(self.plot_area)
         self.raw_selection_button = QtWidgets.QRadioButton("Raw Values")
@@ -79,7 +72,7 @@ class SignalVis(QtWidgets.QWidget):
             else:
                 y = signals[name].scaled_value
                 plot.plot(x, y)
-        self.plot_item.autoRange()
+
 
     def toggle_raw(self, checked):
         print(checked)
