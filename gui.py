@@ -47,7 +47,9 @@ class PlotLine:
 class SignalVis(QtWidgets.QWidget):
     def __init__(self):
         super(SignalVis, self).__init__()
-        self.plot_area = pg.PlotWidget()
+        self.plot_area: pg.PlotWidget= pg.PlotWidget()
+        self.plot_item: pg.PlotItem = self.plot_area.getPlotItem()
+        self.plot_item.disableAutoRange()
         self.layout = QtWidgets.QHBoxLayout(self)
         self.layout.addWidget(self.plot_area)
         self.raw_selection_button = QtWidgets.QRadioButton("Raw Values")
@@ -77,6 +79,7 @@ class SignalVis(QtWidgets.QWidget):
             else:
                 y = signals[name].scaled_value
                 plot.plot(x, y)
+        self.plot_item.autoRange()
 
     def toggle_raw(self, checked):
         print(checked)
@@ -308,6 +311,7 @@ class DebugVisualizetion(QtWidgets.QWidget):
         self.webcam_label = QtWidgets.QLabel()
         self.webcam_label.setMinimumSize(1, 1)
         self.webcam_label.setMaximumSize(1280, 720)
+        self.qt_image = QtGui.QImage()
         self.webcam_label.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
         self.status_bar = QtWidgets.QStatusBar()
         self.status_bar.showMessage("FPS: ")
@@ -792,14 +796,14 @@ class MainWindow(QtWidgets.QMainWindow):
         self.timer.timeout.connect(self.update_plots)
         self.timer.start()
 
-        self.change_signals_tab(False)
+        self.change_signals_tab(True)
         ## Signals
         self.demo.start()
 
     def update_plots(self):
         # TODO: move up again
         self.selected_signals.update_plots(self.demo.signals)
-        #self.general_tab.update_debug_visualization()
+        self.general_tab.update_debug_visualization()
 
     def change_signals_tab(self, checked: bool):
         if checked:

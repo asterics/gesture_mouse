@@ -129,6 +129,7 @@ class Demo(QThread):
                     self.signals[signal_name].set_value(value)
                 if self.mouse_enabled:
                     self.mouse.process_signal(self.signals)
+            self.msleep(16)
 
     def __start_camera(self):
         self.cam_cap = cv2.VideoCapture(0)
