@@ -33,7 +33,7 @@ class Demo(QThread):
         self.mouse_absolute = True
         self.mouse: Mouse.Mouse = Mouse.Mouse()
 
-        self.frame_width, self.frame_height = (1280, 720)
+        self.frame_width, self.frame_height = (640, 480)
         self.annotated_landmarks = np.zeros((self.frame_height, self.frame_width, 3), dtype=np.int8)
         self.fps_counter = FPSCounter.FPSCounter(20)
         self.fps = 0
@@ -79,7 +79,11 @@ class Demo(QThread):
                 self.__stop_socket()
 
     def __run_mediapipe(self):
-        with mp_face_mesh.FaceMesh(refine_landmarks=True) as face_mesh:
+        with mp_face_mesh.FaceMesh(static_image_mode=False,
+               max_num_faces=1,
+               refine_landmarks=True,
+               min_detection_confidence=0.5,
+               min_tracking_confidence=0.5) as face_mesh:
             while self.is_running and self.cam_cap.isOpened() and self.use_mediapipe:
                 success, image = self.cam_cap.read()
                 image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -110,7 +114,7 @@ class Demo(QThread):
                 if self.mouse_enabled:
                     self.mouse.process_signal(self.signals)
                 # Debug
-                #self.annotated_landmarks = DrawingDebug.annotate_landmark_image(landmarks, image)
+                self.annotated_landmarks = DrawingDebug.annotate_landmark_image(landmarks, image)
                 # DrawingDebug.show_por(x_pixel, y_pixel, self.monitor.w_pixels, self.monitor.h_pixels)
 
                 self.fps = self.fps_counter()
@@ -133,8 +137,8 @@ class Demo(QThread):
 
     def __start_camera(self):
         self.cam_cap = cv2.VideoCapture(0)
-        self.cam_cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.frame_width)
-        self.cam_cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.frame_height)
+        #self.cam_cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.frame_width)
+        #self.cam_cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.frame_height)
         #self.cam_cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P',
         #                                                             'G'))  # From https://forum.opencv.org/t/videoio-v4l2-dev-video0-select-timeout/8822/4 for linux
 

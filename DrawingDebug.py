@@ -6,35 +6,21 @@ mp_drawing = mp.solutions.drawing_utils
 mp_drawing_styles = mp.solutions.drawing_styles
 mp_face_mesh = mp.solutions.face_mesh
 
+tesselation_drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=1)
+contours_drawing_spec = mp_drawing.DrawingSpec((0, 255, 0), thickness=1, circle_radius=1)
+iris_drawing_spec = mp_drawing.DrawingSpec((255, 0, 0), thickness=1, circle_radius=1)
 
 def annotate_landmark_image(landmarks, image):
     annotated_image = image.copy()
     ## different connections possible (lips, eye brows, etc)
 
-    tesselation_drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=1)
-    contours_drawing_spec = mp_drawing.DrawingSpec((0, 255, 0), thickness=1, circle_radius=1)
-    iris_drawing_spec = mp_drawing.DrawingSpec((255, 0, 0), thickness=1, circle_radius=1)
     mp_drawing.draw_landmarks(
         image=annotated_image,
         landmark_list=landmarks,
-        connections=mp_face_mesh.FACEMESH_TESSELATION,
+        connections=[],
         landmark_drawing_spec=tesselation_drawing_spec,
         connection_drawing_spec=mp_drawing_styles
         .get_default_face_mesh_tesselation_style())
-    mp_drawing.draw_landmarks(
-        image=annotated_image,
-        landmark_list=landmarks,
-        connections=mp_face_mesh.FACEMESH_CONTOURS,
-        landmark_drawing_spec=contours_drawing_spec,
-        connection_drawing_spec=mp_drawing_styles
-        .get_default_face_mesh_contours_style())
-    mp_drawing.draw_landmarks(
-        image=annotated_image,
-        landmark_list=landmarks,
-        connections=mp_face_mesh.FACEMESH_IRISES,
-        landmark_drawing_spec=iris_drawing_spec,
-        connection_drawing_spec=mp_drawing_styles
-        .get_default_face_mesh_iris_connections_style())
 
     return cv2.flip(annotated_image, 1)
 
