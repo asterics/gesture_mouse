@@ -4,7 +4,9 @@ from threading import Thread
 import socket
 import json
 from typing import Dict
+import os
 
+import PIL.Image
 import mediapipe as mp
 import cv2
 import numpy as np
@@ -42,6 +44,12 @@ class Demo(QThread):
         self.UDP_PORT = 11111
         self.socket = None
 
+        self.face_mesh = mp_face_mesh.FaceMesh(static_image_mode=False,
+               max_num_faces=1,
+               refine_landmarks=True,
+               min_detection_confidence=0.5,
+               min_tracking_confidence=0.5)
+
         self.camera_parameters = (1000, 1000, 1280 / 2, 720 / 2)
         self.signal_calculator = SignalsCalculator.SignalsCalculater(camera_parameters=self.camera_parameters,
                                                                      frame_size=(self.frame_width, self.frame_height))
@@ -53,6 +61,11 @@ class Demo(QThread):
 
         # Calibration
         self.calibration_samples = dict()
+
+        self.fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+        self.VideoWriter: cv2.VideoWriter = cv2.VideoWriter("dummy.mp4", self.fourcc, 30, (self.frame_width, self.frame_height))
+        self.calibrate_neutral: bool = False
+        self.calibrate_pose: bool = False
 
         # add hotkey
         # TODO: how to handle activate mouse / toggle mouse etc. by global hotkey
@@ -79,45 +92,54 @@ class Demo(QThread):
                 self.__stop_socket()
 
     def __run_mediapipe(self):
-        with mp_face_mesh.FaceMesh(static_image_mode=False,
-               max_num_faces=1,
-               refine_landmarks=True,
-               min_detection_confidence=0.5,
-               min_tracking_confidence=0.5) as face_mesh:
-            while self.is_running and self.cam_cap.isOpened() and self.use_mediapipe:
-                success, image = self.cam_cap.read()
-                image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-                image.flags.writeable = False
-                results = face_mesh.process(image)
-                image.flags.writeable = True
-                image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+        while self.is_running and self.cam_cap.isOpened() and self.use_mediapipe:
+            success, image = self.cam_cap.read()
 
-                if not results.multi_face_landmarks:
-                    continue
-                landmarks = results.multi_face_landmarks[0]
-                np_landmarks = np.array(
-                    [(lm.x, lm.y, lm.z) for lm in
-                     landmarks.landmark])
-                if self.filter_landmarks:
-                    for i in range(468):
-                        kalman_filters_landm_complex = self.landmark_kalman[i].update(
-                            np_landmarks[i, 0] + 1j * np_landmarks[i, 1])
-                        np_landmarks[i, 0], np_landmarks[i, 1] = np.real(kalman_filters_landm_complex), np.imag(
-                            kalman_filters_landm_complex)
+            # only check videowriter not none? #
+            if self.calibrate_neutral and success:
+                self.VideoWriter.write(image)
+                continue
 
-                result = self.signal_calculator.process(np_landmarks)
+            if self.calibrate_pose and success:
+                self.VideoWriter.write(image)
+                continue
+            ########
 
-                for signal_name in self.signals:
-                    value = result[signal_name]
-                    self.signals[signal_name].set_value(value)
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            image.flags.writeable = False
+            results = self.face_mesh.process(image)
+            image.flags.writeable = True
+            image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 
-                if self.mouse_enabled:
-                    self.mouse.process_signal(self.signals)
-                # Debug
-                self.annotated_landmarks = DrawingDebug.annotate_landmark_image(landmarks, image)
-                # DrawingDebug.show_por(x_pixel, y_pixel, self.monitor.w_pixels, self.monitor.h_pixels)
+            if not results.multi_face_landmarks:
+                continue
+            landmarks = results.multi_face_landmarks[0]
 
-                self.fps = self.fps_counter()
+            np_landmarks = np.array(
+                [(lm.x, lm.y, lm.z) for lm in
+                 landmarks.landmark])
+
+            if self.filter_landmarks:
+                for i in range(468):
+                    kalman_filters_landm_complex = self.landmark_kalman[i].update(
+                        np_landmarks[i, 0] + 1j * np_landmarks[i, 1])
+                    np_landmarks[i, 0], np_landmarks[i, 1] = np.real(kalman_filters_landm_complex), np.imag(
+                        kalman_filters_landm_complex)
+
+            result = self.signal_calculator.process_ear(np_landmarks)
+
+            for signal_name in self.signals:
+                value = result[signal_name]
+                self.signals[signal_name].set_value(value)
+
+            if self.mouse_enabled:
+                self.mouse.process_signal(self.signals)
+            # Debug
+
+            self.annotated_landmarks = DrawingDebug.annotate_landmark_image(landmarks, image)
+            # DrawingDebug.show_por(x_pixel, y_pixel, self.monitor.w_pixels, self.monitor.h_pixels)
+
+            self.fps = self.fps_counter()
 
     def __run_livelinkface(self):
         while self.is_running and not self.use_mediapipe:
@@ -158,6 +180,7 @@ class Demo(QThread):
 
     def stop(self):
         self.is_running = False
+        self.face_mesh.close()
 
     def disable_gesture_mouse(self):
         # Disables gesture mouse and enables normal mouse input
@@ -224,6 +247,25 @@ class Demo(QThread):
             signal.set_threshold(min_value, max_value)
         return min_value, max_value
 
+    # Combine these methods?
+    def calibrate_neutral_start(self, name):
+        if not os.path.exists(f"calibration/{name}"):
+            os.mkdir(f"calibration/{name}")
+        self.calibrate_neutral = True
+        self.VideoWriter.open(f"calibration/{name}/{name}_neutral.mp4", self.fourcc, 30, (self.frame_width,self.frame_height))
+
+    def calibrate_neutral_stop(self):
+        self.VideoWriter.release()
+        self.calibrate_neutral = False
+    def calibrate_pose_start(self, name):
+        if not os.path.exists(f"calibration/{name}"):
+            os.mkdir(f"calibration/{name}")
+        self.calibrate_pose = True
+        self.VideoWriter.open(f"calibration/{name}/{name}_pose.mp4", self.fourcc, 30, (self.frame_width,self.frame_height))
+    def calibrate_pose_stop(self):
+        self.VideoWriter.release()
+        self.calibrate_pose = False
+    #####
 
 if __name__ == '__main__':
     demo = Demo()

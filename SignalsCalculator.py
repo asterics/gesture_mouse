@@ -113,6 +113,25 @@ class SignalsCalculater:
         self.head_pose_calculator = PnPHeadPose()
         self.pcf = PCF(1, 10000, 720, 1280)
         self.frame_size = frame_size
+        #####
+        self.random_ear_indices = np.random.choice(468, (10, 6), replace=False)
+        self.ear_indices = np.array([
+            [78, 81, 311, 208, 405, 181], #mouth inner
+            [61, 39, 269, 291, 405, 191], #mouth outer
+            [57, 39, 269, 287, 405, 191], #mouth outer fixed
+            [17, 15, 12, 0, 40, 91], #mouth left
+            [17, 15, 12, 0, 270, 291], #mouth right
+            [33, 160, 158, 133, 153, 144], #left eye
+            [362, 385, 387, 263, 373, 380], #right eye
+            [49, 186, 216, 205, 203, 165], #cheeck left upper
+            [91, 43, 202, 211, 194, 182], #cheeck left lower
+            [270, 391, 423, 425, 436, 410], #cheeck right upper
+            [321, 273, 422, 431, 418, 406], #cheeck right lower
+            [425, 266, 329, 348, 347, 280], #upper cheeck right
+            [205, 50, 118, 119, 100, 36], #upper cheeck left
+            [1, 51, 196, 168, 419, 281], # nose vert
+            [218, 220, 275, 438, 274, 237], # nose hor
+        ])
 
     def process(self, landmarks):
         rvec, tvec = self.pnp_head_pose(landmarks)
@@ -152,6 +171,36 @@ class SignalsCalculater:
         }
 
         return signals
+
+    def process_ear(self, landmarks):
+        rvec, tvec = self.pnp_head_pose(landmarks)
+        landmarks = landmarks * np.array((self.frame_size[0], self.frame_size[1],
+                                          self.frame_size[0]))  # TODO: maybe move denormalization into methods
+        r = Rotation.from_rotvec(np.squeeze(rvec))
+
+        rotationmat = r.as_matrix()
+        angles = r.as_euler("xyz", degrees=True)
+
+        signals = {
+            "HeadPitch": self.eye_aspect_ratio(landmarks,self.ear_indices[0,:]),
+            "HeadYaw": self.eye_aspect_ratio(landmarks,self.ear_indices[1,:]),
+            "HeadRoll": self.eye_aspect_ratio(landmarks,self.ear_indices[2,:]),
+            "JawOpen": self.eye_aspect_ratio(landmarks,self.ear_indices[3,:]),
+            "MouthPuck": self.eye_aspect_ratio(landmarks,self.ear_indices[4,:]),
+            "BrowOuterUpLeft": self.eye_aspect_ratio(landmarks,self.ear_indices[5,:]),
+            "BrowOuterUpRight": self.eye_aspect_ratio(landmarks,self.ear_indices[6,:]),
+            "BrowInnerUp": self.eye_aspect_ratio(landmarks,self.ear_indices[7,:]),
+            "BrowInnerDown": self.eye_aspect_ratio(landmarks,self.ear_indices[8,:]),
+            "MouthSmile": self.eye_aspect_ratio(landmarks,self.ear_indices[9,:]),
+            "ear11": self.eye_aspect_ratio(landmarks, self.ear_indices[10,:]),
+            "ear12": self.eye_aspect_ratio(landmarks, self.ear_indices[11,:]),
+            "ear13": self.eye_aspect_ratio(landmarks, self.ear_indices[12,:]),
+            "ear14": self.eye_aspect_ratio(landmarks, self.ear_indices[13,:]),
+            "ear15": self.eye_aspect_ratio(landmarks, self.ear_indices[14,:])
+        }
+
+        return signals
+
 
     def process_neutral(self, landmarks):
         pass
@@ -269,8 +318,8 @@ class SignalsCalculater:
         """
         assert len(indices) == 6
 
-        return self.five_point_cross_ratio(landmarks, [indices[0]] + indices[2:6]) / self.five_point_cross_ratio(
-            landmarks, [indices[1]] + indices[2:6])
+        return self.five_point_cross_ratio(landmarks, indices[[0,2,3,4,5]]) / self.five_point_cross_ratio(
+            landmarks, indices[[1,2,3,4,5]])
 
     def eye_aspect_ratio(self, landmarks, indices):
         """
@@ -284,9 +333,9 @@ class SignalsCalculater:
         :return: ear = (P2_P6 + P3_P5) / (2.0 * P1_P4)
         """
         assert len(indices) == 6
-        p2_p6 = np.linalg.norm(landmarks[1]-landmarks[5])
-        p3_p5 = np.linalg.norm(landmarks[2]-landmarks[4])
-        p1_p4 = np.linalg.norm(landmarks[0]-landmarks[3])
+        p2_p6 = np.linalg.norm(landmarks[indices[1]]-landmarks[indices[5]])
+        p3_p5 = np.linalg.norm(landmarks[indices[2]]-landmarks[indices[4]])
+        p1_p4 = np.linalg.norm(landmarks[indices[0]]-landmarks[indices[3]])
         return (p2_p6 + p3_p5) / (2.0 * p1_p4)
 
     def set_filter_value(self, field_name: str, filter_value: float):

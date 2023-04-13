@@ -25,6 +25,7 @@ def annotate_landmark_image(landmarks, image):
     return cv2.flip(annotated_image, 1)
 
 
+
 def show_por(x_pixel, y_pixel, width, height):
     display = np.ones((height, width, 3), np.float32)
 

@@ -52,12 +52,14 @@ class SignalVis(QtWidgets.QWidget):
         self.raw_values = False
         self.plot_area.setBackground('w')
         self.lines = {}
+        self.index = 0
 
     def add_line(self, name: str):
-        pen = pg.mkPen(color=(255, 0, 0))
+        pen = pg.mkPen(color=pg.intColor(self.index, 8, 2))
         data_line = self.plot_area.plot(x=[90, -90] * 50, y=[0] * 100, pen=pen)
         plot_handler = PlotLine(pen, data_line)
         self.lines[name] = plot_handler
+        self.index = self.index + 1
         return plot_handler
 
     def update_plot(self, signals):
@@ -231,15 +233,19 @@ class CalibrationDialog(QtWidgets.QDialog):
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
 
+        self.save_video = QtWidgets.QCheckBox(text="Save Videos")
+
         self.layout = QtWidgets.QVBoxLayout()
         self.layout.addWidget(self.label)
         self.layout.addWidget(self.do_action_label)
         self.layout.addWidget(self.webcam_label)
         self.button_layout = QtWidgets.QHBoxLayout()
         self.button_layout.addWidget(self.start_button)
+        self.button_layout.addWidget(self.save_video)
         self.button_layout.addWidget(self.buttonBox)
 
         self.layout.addLayout(self.button_layout)
+
         self.setLayout(self.layout)
 
     def update_image(self):
@@ -283,10 +289,13 @@ class CalibrationDialog(QtWidgets.QDialog):
         self.do_action_label.setText("Neutral Pose")
         self.neutral_timer.timeout.connect(self.record_gesture)
         self.recording_neutral = True
+        self.demo.calibrate_neutral_start(self.name)
         self.neutral_timer.start()
 
     def record_gesture(self):
         # TODO: save videos to create dataset?
+        self.demo.calibrate_neutral_stop()
+        self.demo.calibrate_pose_start(self.name)
         self.do_action_label.setText("Maximum Gesture")
         self.pose_timer.timeout.connect(self.finish_recording)
         self.recording_neutral = False
@@ -295,6 +304,7 @@ class CalibrationDialog(QtWidgets.QDialog):
 
     def finish_recording(self):
         self.recording_max_pose = False
+        self.demo.calibrate_pose_stop()
         self.do_action_label.setText("Finished")
 
 
