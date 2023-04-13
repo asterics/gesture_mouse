@@ -35,7 +35,7 @@ class Demo(QThread):
         self.mouse_absolute = True
         self.mouse: Mouse.Mouse = Mouse.Mouse()
 
-        self.frame_width, self.frame_height = (640, 480)
+        self.frame_width, self.frame_height = (1280, 720)
         self.annotated_landmarks = np.zeros((self.frame_height, self.frame_width, 3), dtype=np.int8)
         self.fps_counter = FPSCounter.FPSCounter(20)
         self.fps = 0
@@ -57,7 +57,7 @@ class Demo(QThread):
 
         self.use_mediapipe = True
         self.filter_landmarks = True
-        self.landmark_kalman = [Kalman1D(R=0.008 ** 2) for _ in range(468)]
+        self.landmark_kalman = [Kalman1D(R=0.0065 ** 2) for _ in range(468)] #TODO: improve values, maybe move to calculator (mediapipe landmark smoothing calculator)
 
         # Calibration
         self.calibration_samples = dict()
@@ -134,10 +134,8 @@ class Demo(QThread):
 
             if self.mouse_enabled:
                 self.mouse.process_signal(self.signals)
-            # Debug
-
-            self.annotated_landmarks = DrawingDebug.annotate_landmark_image(landmarks, image)
-            # DrawingDebug.show_por(x_pixel, y_pixel, self.monitor.w_pixels, self.monitor.h_pixels)
+                # Debug
+            self.annotated_landmarks = DrawingDebug.draw_landmarks_fast(np_landmarks, image)
 
             self.fps = self.fps_counter()
 
@@ -180,7 +178,6 @@ class Demo(QThread):
 
     def stop(self):
         self.is_running = False
-        self.face_mesh.close()
 
     def disable_gesture_mouse(self):
         # Disables gesture mouse and enables normal mouse input

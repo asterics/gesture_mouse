@@ -1,6 +1,7 @@
 import mediapipe as mp
 import cv2
 import numpy as np
+from typing import List, Optional
 
 mp_drawing = mp.solutions.drawing_utils
 mp_drawing_styles = mp.solutions.drawing_styles
@@ -23,6 +24,20 @@ def annotate_landmark_image(landmarks, image):
         .get_default_face_mesh_tesselation_style())
 
     return cv2.flip(annotated_image, 1)
+
+def draw_landmarks_fast(np_landmarks: np.ndarray, image: np.ndarray, index: Optional[List[int]]=None):
+    frame_height, frame_width, _ = image.shape
+    if index is None:
+        index = range(468)
+    pixel_landmarks = (np_landmarks[:,:2] * np.array((frame_width, frame_height))).astype(int)
+    special_landmarks = pixel_landmarks[index]
+    image[special_landmarks[:,1], special_landmarks[:,0], :] = (255,0,0)
+    image[np.maximum(special_landmarks[:,1]-1,0), special_landmarks[:,0], :] = (255,0,0)
+    image[np.minimum(special_landmarks[:,1]+1,frame_height-1), special_landmarks[:,0], :] = (255,0,0)
+    image[special_landmarks[:,1], np.maximum(special_landmarks[:,0]-1,0), :] = (255,0,0)
+    image[special_landmarks[:,1], np.minimum(special_landmarks[:,0]+1,frame_width), :] = (255,0,0)
+    return image
+
 
 
 
