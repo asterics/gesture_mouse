@@ -72,10 +72,15 @@ class Demo(QThread):
         # keyboard.add_hotkey("esc", lambda: self.stop())
         keyboard.add_hotkey("alt + 1", lambda: self.toggle_gesture_mouse())  # TODO: Linux alternative
         keyboard.add_hotkey("m", lambda: self.toggle_mouse_mode())
+        keyboard.add_hotkey("c", lambda: self.mouse.centre_mouse())
+        keyboard.on_press_key("r", lambda e: self.disable_gesture_mouse())
+        keyboard.on_release_key("r", lambda e: self.enable_gesture_mouse())
         # add mouse_events
         self.raw_signal = SignalsCalculator.SignalsResult()
         self.transformed_signals = SignalsCalculator.SignalsResult()
         self.signals: Dict[str, Signal] = {}
+
+        self.disable_gesture_mouse()
 
     def run(self):
         self.is_running = True
@@ -132,7 +137,6 @@ class Demo(QThread):
                 value = result[signal_name]
                 self.signals[signal_name].set_value(value)
 
-            if self.mouse_enabled:
                 self.mouse.process_signal(self.signals)
                 # Debug
             self.annotated_landmarks = DrawingDebug.draw_landmarks_fast(np_landmarks, image)

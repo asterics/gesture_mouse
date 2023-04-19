@@ -3,6 +3,7 @@ from pynput import mouse
 import math
 # import pygame
 import screeninfo
+from util import clamp
 
 
 class MouseMode(Enum):
@@ -27,6 +28,8 @@ class Mouse:
     def __init__(self):
         self.x = 0
         self.y = 0
+        self.dx = 0
+        self.dy = 0
         self.pitch = 0
         self.yaw = 0
         monitors = screeninfo.get_monitors()
@@ -37,8 +40,9 @@ class Mouse:
         self.w_pixels = default_screen.width
         self.mouse_listener = None
         self.mouse_controller: mouse.Controller = mouse.Controller()
+        self.mouse_enabled = True
 
-    def move(self, pitch: int, yaw: int):
+    def move(self, pitch: float, yaw: float):
         if self.mode == MouseMode.ABSOLUTE:
             self.x = self.w_pixels * yaw
             self.y = self.h_pixels * pitch
@@ -49,39 +53,40 @@ class Mouse:
             self.joystick_mouse(pitch, yaw)
 
     def move_relative(self, pitch, yaw):
+
         # Todo: use time to make it framerate independent
-        dy = (pitch - self.pitch)
-        dx = (yaw - self.yaw)
+        dy = 1920*(pitch - self.pitch)
+        dx = 1920*(yaw - self.yaw)
+
+        self.dx = dx
+        self.dy = dy
 
         mouse_speed_co = 1.1  # Todo: Param for gui
-        mouse_speed_max = 25
-        acceleration = 3
+        mouse_speed_max = 25.
+        acceleration = 0.95
 
         # TODO: Threshold / Deadzone
         mouse_speed_x = mouse_speed_y = 0
         if dx < -0.001:
-            mouse_speed_x = -min(math.pow(mouse_speed_co, abs(dx * acceleration)), mouse_speed_max) + 1
+            mouse_speed_x = -(math.pow(mouse_speed_co, abs(dx * acceleration)) - 1.)
         elif dx > 0.001:
-            mouse_speed_x = min(math.pow(mouse_speed_co, abs(dx * acceleration)), mouse_speed_max) - 1
+            mouse_speed_x = (math.pow(mouse_speed_co, abs(dx * acceleration)) - 1.)
         if dy < -0.001:
-            mouse_speed_y = -min(math.pow(mouse_speed_co, abs(dy * acceleration)), mouse_speed_max) + 1
+            mouse_speed_y = -(math.pow(mouse_speed_co, abs(dy * acceleration)) - 1.)
         elif dy > 0.001:
-            mouse_speed_y = min(math.pow(mouse_speed_co, abs(dy * acceleration)), mouse_speed_max) - 1
+            mouse_speed_y = (math.pow(mouse_speed_co, abs(dy * acceleration)) - 1.)
 
-        mouse_speed_x *= 2 * self.w_pixels
-        mouse_speed_y *= self.h_pixels
+        mouse_speed_x = 3*max(min(mouse_speed_x, mouse_speed_max), -mouse_speed_max)
+        mouse_speed_y = 3*max(min(mouse_speed_y, mouse_speed_max), -mouse_speed_max)
 
         self.x += mouse_speed_x
         self.y += mouse_speed_y
 
-        self.pitch = pitch
-        self.yaw = yaw
-
         self.mouse_controller.move(mouse_speed_x, mouse_speed_y)
 
     def joystick_mouse(self, pitch, yaw):
-        pitch = 50*(pitch-0.5)
-        yaw = 50*(yaw-0.5)
+        pitch = 50 * (pitch - 0.5)
+        yaw = 50 * (yaw - 0.5)
         mouse_speed_co = 1.1
         mouse_speed_max = 25
         acceleration = 3
@@ -94,16 +99,16 @@ class Mouse:
         # See where the user's head tilting
         if yaw < threshold[0]:
             text = "Looking Left"
-            mouse_speed_x = -1 * min(math.pow(mouse_speed_co, abs(yaw * acceleration)), mouse_speed_max)+1
+            mouse_speed_x = -1 * min(math.pow(mouse_speed_co, abs(yaw * acceleration)), mouse_speed_max) + 1
         if yaw > threshold[1]:
             text = "Looking Right"
-            mouse_speed_x = min(math.pow(mouse_speed_co, abs(yaw * acceleration)), mouse_speed_max)-1
+            mouse_speed_x = min(math.pow(mouse_speed_co, abs(yaw * acceleration)), mouse_speed_max) - 1
         if pitch < threshold[2]:
             text = "Looking Down"
-            mouse_speed_y = min(math.pow(mouse_speed_co, abs(pitch * acceleration)), mouse_speed_max)+1
+            mouse_speed_y = min(math.pow(mouse_speed_co, abs(pitch * acceleration)), mouse_speed_max) + 1
         if pitch > threshold[3]:
             text = "Looking Up"
-            mouse_speed_y = -1 * min(math.pow(mouse_speed_co, abs(pitch * acceleration)), mouse_speed_max)-1
+            mouse_speed_y = -1 * min(math.pow(mouse_speed_co, abs(pitch * acceleration)), mouse_speed_max) - 1
 
         # print(text)
         self.mouse_controller.move(mouse_speed_x, mouse_speed_y)
@@ -119,10 +124,17 @@ class Mouse:
         leftright = "HeadYaw"
         pitch = (1 - signals[updown].scaled_value)
         yaw = (1 - signals[leftright].scaled_value)
-        self.move(pitch, yaw)
+        if self.mouse_enabled:
+            self.move(pitch, yaw)
+        else:
+            self.dx = 0
+            self.dy = 0
+        self.pitch = pitch
+        self.yaw = yaw
+
 
     def enable_gesture(self):
-        pass
+        self.mouse_enabled = True
 
     def click(self, button):
         """
@@ -141,7 +153,12 @@ class Mouse:
         self.mouse_controller.click(button, 2)
 
     def disable_gesture(self):
-        pass
+        self.mouse_enabled = False
 
     def toggle_mode(self):
         self.mode = self.mode.next()
+
+    def centre_mouse(self):
+        self.x = self.w_pixels//2
+        self.y = self.h_pixels//2
+        self.mouse_controller.position = (self.x, self.y)
