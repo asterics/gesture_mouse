@@ -151,6 +151,8 @@ class SignalTab(QtWidgets.QWidget):
         size_policy.setVerticalPolicy(QtWidgets.QSizePolicy.Policy.Maximum)
         size_policy.setHorizontalPolicy(QtWidgets.QSizePolicy.Policy.Expanding)
         self.signals_vis.setSizePolicy(size_policy)
+        self.add_signal_button = QtWidgets.QPushButton("Record new Signal")
+        self.add_signal_button.clicked.connect(self.add_new_signal)
 
         self.signal_settings = dict()
         self.layout = QtWidgets.QVBoxLayout(self)
@@ -158,6 +160,7 @@ class SignalTab(QtWidgets.QWidget):
         self.layout.addWidget(self.signals_vis)
         self.setting_widget = QtWidgets.QWidget()
         self.setting_widget.setLayout(QtWidgets.QVBoxLayout())
+
 
         for json_signal in self.signal_config_defaults:
             signal_name = json_signal["name"]
@@ -189,12 +192,23 @@ class SignalTab(QtWidgets.QWidget):
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setWidget(self.setting_widget)
         self.layout.addWidget(self.scroll_area)
+        self.layout.addWidget(self.add_signal_button)
 
     def update_plots(self, signals):
         self.signals_vis.update_plot(signals)
 
+    def add_new_signal(self):
+        self.sig_diag = AddSignalDialog(self.demo)
+        self.sig_diag.accepted.connect(self.accept_new_signal)
+        self.sig_diag.webcam_timer.start()
+        self.sig_diag.open()
+
+    def accept_new_signal(self):
+        pass #TODO update gui and config
+
 
 class CalibrationDialog(QtWidgets.QDialog):
+    # TODO: add videorecording for data collection?
     def __init__(self, demo, name):
         super().__init__()
         self.demo: Demo.Demo = demo
@@ -233,19 +247,15 @@ class CalibrationDialog(QtWidgets.QDialog):
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
 
-        self.save_video = QtWidgets.QCheckBox(text="Save Videos")
-
         self.layout = QtWidgets.QVBoxLayout()
         self.layout.addWidget(self.label)
         self.layout.addWidget(self.do_action_label)
         self.layout.addWidget(self.webcam_label)
         self.button_layout = QtWidgets.QHBoxLayout()
         self.button_layout.addWidget(self.start_button)
-        self.button_layout.addWidget(self.save_video)
         self.button_layout.addWidget(self.buttonBox)
 
         self.layout.addLayout(self.button_layout)
-
         self.setLayout(self.layout)
 
     def update_image(self):
@@ -289,12 +299,108 @@ class CalibrationDialog(QtWidgets.QDialog):
         self.do_action_label.setText("Neutral Pose")
         self.neutral_timer.timeout.connect(self.record_gesture)
         self.recording_neutral = True
+        self.neutral_timer.start()
+
+    def record_gesture(self):
+        # TODO: save videos to create dataset?
+        self.do_action_label.setText("Maximum Gesture")
+        self.pose_timer.timeout.connect(self.finish_recording)
+        self.recording_neutral = False
+        self.recording_max_pose = True
+        self.pose_timer.start()
+
+    def finish_recording(self):
+        self.recording_max_pose = False
+        self.do_action_label.setText("Finished")
+
+class AddSignalDialog(QtWidgets.QDialog):
+    def __init__(self, demo):
+        super().__init__()
+        self.demo: Demo.Demo = demo
+
+        self.name = "NewPosers"
+
+        self.recording_neutral=False
+        self.recording_max_pose=False
+
+        self.do_action_label = QtWidgets.QLabel()
+        self.neutral_timer = QtCore.QTimer(self)
+        self.neutral_timer.setSingleShot(True)
+        self.neutral_timer.setInterval(2000)
+
+        self.pose_timer = QtCore.QTimer(self)
+        self.pose_timer.setSingleShot(True)
+        self.pose_timer.setInterval(2000)
+
+        ## Webcam Image
+        self.webcam_label = QtWidgets.QLabel()
+        self.webcam_label.setMinimumSize(640, 480)
+        self.webcam_label.setMaximumSize(1280, 720)
+        self.webcam_label.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
+        self.webcam_timer = QtCore.QTimer(self)
+        self.webcam_timer.setInterval(30)
+        self.webcam_timer.timeout.connect(self.update_image)
+        self.qt_image = QtGui.QImage(np.zeros((640, 480, 30), dtype=np.uint8), 480, 640,
+                                     QtGui.QImage.Format.Format_BGR888)
+
+        QBtn = QtWidgets.QDialogButtonBox.StandardButton.Ok | QtWidgets.QDialogButtonBox.StandardButton.Cancel
+        self.start_button = QtWidgets.QPushButton("Start")
+        self.start_button.clicked.connect(self.start_calibration)
+        self.buttonBox = QtWidgets.QDialogButtonBox(QBtn)
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
+
+        self.save_video = QtWidgets.QCheckBox(text="Save Videos")
+
+        self.layout = QtWidgets.QVBoxLayout()
+        self.layout.addWidget(self.do_action_label)
+        self.layout.addWidget(self.webcam_label)
+        self.button_layout = QtWidgets.QHBoxLayout()
+        self.button_layout.addWidget(self.start_button)
+        self.button_layout.addWidget(self.save_video)
+        self.button_layout.addWidget(self.buttonBox)
+
+        self.layout.addLayout(self.button_layout)
+
+        self.setLayout(self.layout)
+
+    def update_image(self):
+        w = self.webcam_label.width()
+        h = self.webcam_label.height()
+        image = self.demo.annotated_landmarks
+        self.qt_image = QtGui.QImage(image, image.shape[1], image.shape[0], QtGui.QImage.Format.Format_BGR888)
+        self.qt_image = self.qt_image.scaled(w, h, QtCore.Qt.AspectRatioMode.KeepAspectRatio,
+                                             QtCore.Qt.TransformationMode.SmoothTransformation)
+        self.webcam_label.setPixmap(QtGui.QPixmap.fromImage(self.qt_image))
+
+    def resizeEvent(self, event: QtGui.QResizeEvent) -> None:
+        super().resizeEvent(event)
+        self.webcam_label.resizeEvent(event)
+        w = self.webcam_label.width()
+        h = self.webcam_label.height()
+        self.qt_image = self.qt_image.scaled(w, h, QtCore.Qt.AspectRatioMode.KeepAspectRatio)
+        self.webcam_label.setPixmap(QtGui.QPixmap.fromImage(self.qt_image))
+
+    def accept(self) -> None:
+        self.webcam_timer.stop()
+        self.demo.recalibrate()
+        super().accept()
+
+
+    def reject(self) -> None:
+        self.webcam_timer.stop()
+        super().reject()
+
+    def start_calibration(self):
+        self.do_action_label.setText("Neutral Pose")
+        self.neutral_timer.timeout.connect(self.record_gesture)
+        self.recording_neutral = True
         self.demo.calibrate_neutral_start(self.name)
         self.neutral_timer.start()
 
     def record_gesture(self):
         # TODO: save videos to create dataset?
-        self.demo.calibrate_neutral_stop()
+        self.demo.calibrate_neutral_stop(self.name)
         self.demo.calibrate_pose_start(self.name)
         self.do_action_label.setText("Maximum Gesture")
         self.pose_timer.timeout.connect(self.finish_recording)
@@ -304,9 +410,8 @@ class CalibrationDialog(QtWidgets.QDialog):
 
     def finish_recording(self):
         self.recording_max_pose = False
-        self.demo.calibrate_pose_stop()
+        self.demo.calibrate_pose_stop(self.name)
         self.do_action_label.setText("Finished")
-
 
 class DebugVisualizetion(QtWidgets.QWidget):
     def __init__(self):

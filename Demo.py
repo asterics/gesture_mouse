@@ -65,6 +65,9 @@ class Demo(QThread):
         self.fourcc = cv2.VideoWriter_fourcc(*"mp4v")
         self.VideoWriter: cv2.VideoWriter = cv2.VideoWriter("dummy.mp4", self.fourcc, 30, (self.frame_width, self.frame_height))
         self.calibrate_neutral: bool = False
+        self.neutral_signals = []
+        self.pose_signals = []
+
         self.calibrate_pose: bool = False
 
         # add hotkey
@@ -100,16 +103,6 @@ class Demo(QThread):
         while self.is_running and self.cam_cap.isOpened() and self.use_mediapipe:
             success, image = self.cam_cap.read()
 
-            # only check videowriter not none? #
-            if self.calibrate_neutral and success:
-                self.VideoWriter.write(image)
-                continue
-
-            if self.calibrate_pose and success:
-                self.VideoWriter.write(image)
-                continue
-            ########
-
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             image.flags.writeable = False
             results = self.face_mesh.process(image)
@@ -132,6 +125,18 @@ class Demo(QThread):
                         kalman_filters_landm_complex)
 
             result = self.signal_calculator.process_ear(np_landmarks)
+
+            # only check videowriter not none? #
+            if self.calibrate_neutral and success:
+                self.VideoWriter.write(image)
+                self.neutral_signals.append(result)
+                continue
+
+            if self.calibrate_pose and success:
+                self.VideoWriter.write(image)
+                self.pose_signals.append(result)
+                continue
+            ########
 
             for signal_name in self.signals:
                 value = result[signal_name]
@@ -237,7 +242,6 @@ class Demo(QThread):
             self.signals[name] = signal
 
     def calibrate_signal(self, calibration_sample, name):
-        self.calibration_samples.update(calibration_sample)
         neutral_samples = np.array(calibration_sample[name]["neutral"])
         pose_samples = np.array(calibration_sample[name]["pose"])
         neutral_samples = neutral_samples[len(neutral_samples) // 4:3 * len(neutral_samples) // 4]
@@ -257,7 +261,7 @@ class Demo(QThread):
         self.calibrate_neutral = True
         self.VideoWriter.open(f"calibration/{name}/{name}_neutral.mp4", self.fourcc, 30, (self.frame_width,self.frame_height))
 
-    def calibrate_neutral_stop(self):
+    def calibrate_neutral_stop(self, name):
         self.VideoWriter.release()
         self.calibrate_neutral = False
     def calibrate_pose_start(self, name):
@@ -265,10 +269,14 @@ class Demo(QThread):
             os.mkdir(f"calibration/{name}")
         self.calibrate_pose = True
         self.VideoWriter.open(f"calibration/{name}/{name}_pose.mp4", self.fourcc, 30, (self.frame_width,self.frame_height))
-    def calibrate_pose_stop(self):
+    def calibrate_pose_stop(self, name):
         self.VideoWriter.release()
         self.calibrate_pose = False
+        self.calibration_samples[name] = {"neutral": self.neutral_signals, "pose": self.pose_signals}
     #####
+    def recalibrate(self):
+        print(f"=== Recalibrating === with f{len(self.calibration_samples)}")
+
 
 if __name__ == '__main__':
     demo = Demo()
