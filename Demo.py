@@ -129,12 +129,12 @@ class Demo(QThread):
             # only check videowriter not none? #
             if self.calibrate_neutral and success:
                 self.VideoWriter.write(image)
-                self.neutral_signals.append(result)
+                self.neutral_signals.append(list(result.values()))
                 continue
 
             if self.calibrate_pose and success:
                 self.VideoWriter.write(image)
-                self.pose_signals.append(result)
+                self.pose_signals.append(list(result.values()))
                 continue
             ########
 
@@ -276,6 +276,7 @@ class Demo(QThread):
     #####
     def recalibrate(self):
         print(f"=== Recalibrating === with f{len(self.calibration_samples)}")
+        print(self.calibration_samples)
 
 
 if __name__ == '__main__':

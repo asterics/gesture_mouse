@@ -350,14 +350,16 @@ class AddSignalDialog(QtWidgets.QDialog):
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
 
-        self.save_video = QtWidgets.QCheckBox(text="Save Videos")
+        self.name_label = QtWidgets.QLabel("Name")
+        self.new_name = QtWidgets.QLineEdit()
 
         self.layout = QtWidgets.QVBoxLayout()
         self.layout.addWidget(self.do_action_label)
         self.layout.addWidget(self.webcam_label)
         self.button_layout = QtWidgets.QHBoxLayout()
         self.button_layout.addWidget(self.start_button)
-        self.button_layout.addWidget(self.save_video)
+        self.button_layout.addWidget(self.name_label)
+        self.button_layout.addWidget(self.new_name)
         self.button_layout.addWidget(self.buttonBox)
 
         self.layout.addLayout(self.button_layout)
@@ -392,6 +394,14 @@ class AddSignalDialog(QtWidgets.QDialog):
         super().reject()
 
     def start_calibration(self):
+        if self.new_name.text()=="":
+            msgBox = QtWidgets.QMessageBox()
+            msgBox.setWindowTitle("Error")
+            msgBox.setText("Error occured")
+            msgBox.setInformativeText("Name is missing")
+            msgBox.exec()
+            return
+
         self.do_action_label.setText("Neutral Pose")
         self.neutral_timer.timeout.connect(self.record_gesture)
         self.recording_neutral = True
