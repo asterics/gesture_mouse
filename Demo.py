@@ -13,6 +13,8 @@ import numpy as np
 from PySide6.QtCore import QThread
 import keyboard
 
+
+
 import Mouse
 import DrawingDebug
 import SignalsCalculator
@@ -26,7 +28,7 @@ from pyLiveLinkFace import PyLiveLinkFace, FaceBlendShape
 mp_face_mesh = mp.solutions.face_mesh
 mp_face_mesh_connections = mp.solutions.face_mesh_connections
 
-colors = [(166,206,227),(31,120,180),(178,223,138),(51,160,44),(251,154,153),(227,26,28),(253,191,111),(255,127,0),(202,178,214),(106,61,154),(255,255,153),(177,89,40)]
+colors = [(166,206,227),(31,120,180),(178,223,138),(51,160,44),(251,154,153),(227,26,28),(253,191,111),(255,127,0),(202,178,214),(106,61,154),(255,255,153),(177,89,40), (0,255,0), (0,0,255), (0,255,255), (255,255,255)]
 class Demo(QThread):
     def __init__(self):
         super().__init__()
@@ -35,7 +37,7 @@ class Demo(QThread):
         self.mouse_absolute = True
         self.mouse: Mouse.Mouse = Mouse.Mouse()
 
-        self.frame_width, self.frame_height = (1280, 720)
+        self.frame_width, self.frame_height = (640, 480)
         self.annotated_landmarks = np.zeros((self.frame_height, self.frame_width, 3), dtype=np.int8)
         self.fps_counter = FPSCounter.FPSCounter(20)
         self.fps = 0
@@ -50,7 +52,7 @@ class Demo(QThread):
                min_detection_confidence=0.5,
                min_tracking_confidence=0.5)
 
-        self.camera_parameters = (1000, 1000, 1280 / 2, 720 / 2)
+        self.camera_parameters = (500, 500, 640 / 2, 480 / 2)
         self.signal_calculator = SignalsCalculator.SignalsCalculater(camera_parameters=self.camera_parameters,
                                                                      frame_size=(self.frame_width, self.frame_height))
         self.signal_calculator.set_filter_value("screen_xy", 0.022)
@@ -144,7 +146,8 @@ class Demo(QThread):
 
                 self.mouse.process_signal(self.signals)
                 # Debug
-            self.annotated_landmarks = DrawingDebug.draw_landmarks_fast(np_landmarks, image)
+            black = np.zeros((self.frame_height, self.frame_height, 3)).astype(np.uint8)
+            self.annotated_landmarks = DrawingDebug.draw_landmarks_fast(np_landmarks, black)
             for i, indices in enumerate(self.signal_calculator.ear_indices):
                 self.annotated_landmarks = DrawingDebug.draw_landmarks_fast(np_landmarks, self.annotated_landmarks, index=indices, color=colors[i%len(colors)])
 
@@ -277,6 +280,24 @@ class Demo(QThread):
     def recalibrate(self):
         print(f"=== Recalibrating === with f{len(self.calibration_samples)}")
         print(self.calibration_samples)
+
+        if len(self.calibration_samples)==0:
+            print("Nothing to calibrate")
+            return
+        data_array = []
+        label_array = []
+        for name in self.calibration_samples:
+            print(name)
+            for label, data in self.calibration_samples[name].items():
+                data = data[len(data)//4:3*len(data)//4]
+                data_array.extend(data)
+                if label == "neutral":
+                    label_array.extend([label]*len(data))
+                else:
+                    label_array.extend([name] * len(data))
+        data_array = np.array(data_array)
+        print(data_array, data_array.shape)
+        print(label_array, len(label_array))
 
 
 if __name__ == '__main__':

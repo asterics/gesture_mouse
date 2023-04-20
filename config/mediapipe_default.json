@@ -103,5 +103,26 @@
     "higher_threshold": 1,
     "filter_value": 0.0001,
     "actions":  []
+  },
+  {
+    "name": "ear16",
+    "lower_threshold": 0,
+    "higher_threshold": 1,
+    "filter_value": 0.0001,
+    "actions":  []
+  },
+  {
+    "name": "ear17",
+    "lower_threshold": 0,
+    "higher_threshold": 1,
+    "filter_value": 0.0001,
+    "actions":  []
+  },
+  {
+    "name": "ear18",
+    "lower_threshold": 0,
+    "higher_threshold": 1,
+    "filter_value": 0.0001,
+    "actions":  []
   }
 ]

@@ -3,6 +3,8 @@ import cv2
 import numpy as np
 from typing import List, Optional, Tuple
 
+import util
+
 mp_drawing = mp.solutions.drawing_utils
 mp_drawing_styles = mp.solutions.drawing_styles
 mp_face_mesh = mp.solutions.face_mesh
@@ -30,6 +32,7 @@ def draw_landmarks_fast(np_landmarks: np.ndarray, image: np.ndarray, index: Opti
     if index is None:
         index = range(468)
     pixel_landmarks = (np_landmarks[:,:2] * np.array((frame_width, frame_height))).astype(int)
+    pixel_landmarks = util.clamp_np(pixel_landmarks, np.array([0,0]), np.array([frame_width-1,frame_height-1]))
     special_landmarks = pixel_landmarks[index]
     image[special_landmarks[:,1], special_landmarks[:,0], :] = color
     image[np.maximum(special_landmarks[:,1]-1,0), special_landmarks[:,0], :] = color

@@ -116,9 +116,9 @@ class SignalsCalculater:
         #####
         self.random_ear_indices = np.random.choice(468, (10, 6), replace=False)
         self.ear_indices = np.array([
-            [78, 81, 311, 208, 405, 181], #mouth inner
-            [61, 39, 269, 291, 405, 191], #mouth outer
-            [57, 39, 269, 287, 405, 191], #mouth outer fixed
+            [78, 81, 311, 308, 402, 178], #mouth inner
+            [61, 39, 269, 291, 405, 181], #mouth outer
+            [57, 39, 269, 287, 405, 181], #mouth outer fixed
             [17, 15, 12, 0, 40, 91], #mouth left
             [17, 15, 12, 0, 270, 291], #mouth right
             [33, 160, 158, 133, 153, 144], #left eye
@@ -129,8 +129,12 @@ class SignalsCalculater:
             [321, 273, 422, 431, 418, 406], #cheeck right lower
             [425, 266, 329, 348, 347, 280], #upper cheeck right
             [205, 50, 118, 119, 100, 36], #upper cheeck left
-            [1, 51, 196, 168, 419, 281], # nose vert
+            [4, 51, 196, 168, 419, 281], # nose vert
             [218, 220, 275, 438, 274, 237], # nose hor
+            [46, 53, 65, 55, 222, 225], # left eyebrow
+            [276, 283, 295, 285, 442, 444], # right eyebrow
+            [66, 108, 337, 296, 336, 107], # between eyebrows
+            #[], # right eyebrow inner
         ])
 
     def process(self, landmarks):
@@ -196,7 +200,10 @@ class SignalsCalculater:
             "ear12": self.eye_aspect_ratio(landmarks, self.ear_indices[11,:]),
             "ear13": self.eye_aspect_ratio(landmarks, self.ear_indices[12,:]),
             "ear14": self.eye_aspect_ratio(landmarks, self.ear_indices[13,:]),
-            "ear15": self.eye_aspect_ratio(landmarks, self.ear_indices[14,:])
+            "ear15": self.eye_aspect_ratio(landmarks, self.ear_indices[14,:]),
+            "ear16": self.eye_aspect_ratio(landmarks, self.ear_indices[15,:]),
+            "ear17": self.eye_aspect_ratio(landmarks, self.ear_indices[16,:]),
+            "ear18": self.eye_aspect_ratio(landmarks, self.ear_indices[17,:])
         }
 
         return signals

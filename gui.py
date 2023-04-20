@@ -394,7 +394,9 @@ class AddSignalDialog(QtWidgets.QDialog):
         super().reject()
 
     def start_calibration(self):
-        if self.new_name.text()=="":
+        name = self.new_name.text()
+        print(name)
+        if name=="":
             msgBox = QtWidgets.QMessageBox()
             msgBox.setWindowTitle("Error")
             msgBox.setText("Error occured")
@@ -405,13 +407,14 @@ class AddSignalDialog(QtWidgets.QDialog):
         self.do_action_label.setText("Neutral Pose")
         self.neutral_timer.timeout.connect(self.record_gesture)
         self.recording_neutral = True
-        self.demo.calibrate_neutral_start(self.name)
+        self.demo.calibrate_neutral_start(name)
         self.neutral_timer.start()
 
     def record_gesture(self):
         # TODO: save videos to create dataset?
-        self.demo.calibrate_neutral_stop(self.name)
-        self.demo.calibrate_pose_start(self.name)
+        name = self.new_name.text()
+        self.demo.calibrate_neutral_stop(name)
+        self.demo.calibrate_pose_start(name)
         self.do_action_label.setText("Maximum Gesture")
         self.pose_timer.timeout.connect(self.finish_recording)
         self.recording_neutral = False
@@ -419,8 +422,9 @@ class AddSignalDialog(QtWidgets.QDialog):
         self.pose_timer.start()
 
     def finish_recording(self):
+        name = self.new_name.text()
         self.recording_max_pose = False
-        self.demo.calibrate_pose_stop(self.name)
+        self.demo.calibrate_pose_stop(name)
         self.do_action_label.setText("Finished")
 
 class DebugVisualizetion(QtWidgets.QWidget):

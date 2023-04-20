@@ -9,3 +9,4 @@ pyqtgraph
 screeninfo
 timecode
 pynput
+scikit-learn
