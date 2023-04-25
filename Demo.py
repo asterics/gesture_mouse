@@ -12,8 +12,8 @@ import cv2
 import numpy as np
 from PySide6.QtCore import QThread
 import keyboard
-
-
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.linear_model import Ridge
 
 import Mouse
 import DrawingDebug
@@ -72,14 +72,17 @@ class Demo(QThread):
 
         self.calibrate_pose: bool = False
 
+        self.onehot_encoder = OneHotEncoder(drop="first", sparse_output=False)
+        self.linear_model = Ridge(alpha=0.001)
+
         # add hotkey
         # TODO: how to handle activate mouse / toggle mouse etc. by global hotkey
         # keyboard.add_hotkey("esc", lambda: self.stop())
         keyboard.add_hotkey("alt + 1", lambda: self.toggle_gesture_mouse())  # TODO: Linux alternative
         keyboard.add_hotkey("m", lambda: self.toggle_mouse_mode())
         keyboard.add_hotkey("c", lambda: self.mouse.centre_mouse())
-        keyboard.on_press_key("r", lambda e: self.disable_gesture_mouse())
-        keyboard.on_release_key("r", lambda e: self.enable_gesture_mouse())
+        #keyboard.on_press_key("r", lambda e: self.disable_gesture_mouse())
+        #keyboard.on_release_key("r", lambda e: self.enable_gesture_mouse())
         # add mouse_events
         self.raw_signal = SignalsCalculator.SignalsResult()
         self.transformed_signals = SignalsCalculator.SignalsResult()
@@ -102,8 +105,12 @@ class Demo(QThread):
                 self.__stop_socket()
 
     def __run_mediapipe(self):
+        # TODO: split this up, it's getting crowded
         while self.is_running and self.cam_cap.isOpened() and self.use_mediapipe:
             success, image = self.cam_cap.read()
+            if not success:
+                print("couldn't read frame")
+                continue
 
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             image.flags.writeable = False
@@ -141,11 +148,16 @@ class Demo(QThread):
             ########
 
             for signal_name in self.signals:
-                value = result[signal_name]
+                value = result.get(signal_name)
+                if value is None:
+                    print(f"Tracker doesn't measure signal {signal_name}")
+                    continue
+
                 self.signals[signal_name].set_value(value)
 
-                self.mouse.process_signal(self.signals)
-                # Debug
+            self.mouse.process_signal(self.signals)
+
+            # Debug
             black = np.zeros((self.frame_height, self.frame_height, 3)).astype(np.uint8)
             self.annotated_landmarks = DrawingDebug.draw_landmarks_fast(np_landmarks, black)
             for i, indices in enumerate(self.signal_calculator.ear_indices):
@@ -167,7 +179,6 @@ class Demo(QThread):
                     self.signals[signal_name].set_value(value)
                 if self.mouse_enabled:
                     self.mouse.process_signal(self.signals)
-            self.msleep(16)
 
     def __start_camera(self):
         self.cam_cap = cv2.VideoCapture(0)
@@ -182,7 +193,7 @@ class Demo(QThread):
 
     def __start_socket(self):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.socket.setblocking(0)
+        self.socket.setblocking(False)
         self.socket.bind(("", self.UDP_PORT))
 
     def __stop_socket(self):
@@ -277,7 +288,7 @@ class Demo(QThread):
         self.calibrate_pose = False
         self.calibration_samples[name] = {"neutral": self.neutral_signals, "pose": self.pose_signals}
     #####
-    def recalibrate(self):
+    def recalibrate(self, name):
         print(f"=== Recalibrating === with f{len(self.calibration_samples)}")
         print(self.calibration_samples)
 
@@ -286,18 +297,29 @@ class Demo(QThread):
             return
         data_array = []
         label_array = []
-        for name in self.calibration_samples:
-            print(name)
-            for label, data in self.calibration_samples[name].items():
+        for pose_name in self.calibration_samples:
+            for label, data in self.calibration_samples[pose_name].items():
                 data = data[len(data)//4:3*len(data)//4]
                 data_array.extend(data)
                 if label == "neutral":
                     label_array.extend([label]*len(data))
                 else:
-                    label_array.extend([name] * len(data))
+                    label_array.extend([pose_name] * len(data))
         data_array = np.array(data_array)
+        label_array = np.array(label_array).reshape(-1,1)
         print(data_array, data_array.shape)
         print(label_array, len(label_array))
+
+        self.onehot_encoder.fit(label_array)
+        y = self.onehot_encoder.transform(label_array)
+
+        self.linear_model.fit(data_array, y)
+
+        self.signals[name] = Signal(name)
+        self.signals[name].set_higher_threshold(1.)
+        self.signals[name].set_lower_threshold(0.)
+        self.signals[name].set_filter_value(0.0001)
+
 
 
 if __name__ == '__main__':

@@ -41,7 +41,7 @@ class PlotLine:
 class SignalVis(QtWidgets.QWidget):
     def __init__(self):
         super(SignalVis, self).__init__()
-        self.plot_area: pg.PlotWidget= pg.PlotWidget()
+        self.plot_area: pg.PlotWidget = pg.PlotWidget()
         self.plot_item: pg.PlotItem = self.plot_area.getPlotItem()
         self.layout = QtWidgets.QHBoxLayout(self)
         self.layout.addWidget(self.plot_area)
@@ -74,7 +74,6 @@ class SignalVis(QtWidgets.QWidget):
             else:
                 y = signals[name].scaled_value
                 plot.plot(x, y)
-
 
     def toggle_raw(self, checked):
         print(checked)
@@ -139,10 +138,12 @@ class SignalSetting(QtWidgets.QWidget):
 
 
 class SignalTab(QtWidgets.QWidget):
+    signal_added = QtCore.Signal(dict)
+
     def __init__(self, demo, json_path):
         super().__init__()
         self.demo = demo
-        self.signal_config_defaults = json.load(open(json_path, "r"))
+        self.signal_config_defaults: dict = json.load(open(json_path, "r"))
         self.setWindowTitle("Signals Visualization")
         self.signals_vis = SignalVis()
         self.signals_vis.setMaximumHeight(250)
@@ -160,7 +161,6 @@ class SignalTab(QtWidgets.QWidget):
         self.layout.addWidget(self.signals_vis)
         self.setting_widget = QtWidgets.QWidget()
         self.setting_widget.setLayout(QtWidgets.QVBoxLayout())
-
 
         for json_signal in self.signal_config_defaults:
             signal_name = json_signal["name"]
@@ -204,7 +204,34 @@ class SignalTab(QtWidgets.QWidget):
         self.sig_diag.open()
 
     def accept_new_signal(self):
-        pass #TODO update gui and config
+        signal_name = self.sig_diag.new_name.text()
+
+        new_singal = {
+            "name": signal_name,
+            "lower_threshold": 0.,
+            "higher_threshold": 1.,
+            "filter_value": 0.0001
+        }
+
+        setting = SignalSetting(signal_name, 0., 1., demo=self.demo)
+        handler = self.signals_vis.add_line(signal_name)
+
+        setting.visualization_checkbox.stateChanged.connect(handler.set_visible)
+        setting.visualization_checkbox.setChecked(False)
+
+        setting.filter_slider.doubleValueChanged.connect(
+            lambda x, name=signal_name: self.demo.set_filter_value(name, x))
+        setting.lower_value.valueChanged.connect(
+            lambda x, name=signal_name: self.demo.signals[name].set_lower_threshold(x))
+        setting.higher_value.valueChanged.connect(
+            lambda x, name=signal_name: self.demo.signals[name].set_higher_threshold(x))
+
+        setting.filter_slider.setValue(0.0001)
+
+        self.setting_widget.layout().addWidget(setting)
+        self.signal_settings[signal_name] = setting
+
+        self.signal_added.emit(new_singal)
 
 
 class CalibrationDialog(QtWidgets.QDialog):
@@ -217,8 +244,8 @@ class CalibrationDialog(QtWidgets.QDialog):
         self.calibration_samples = {name: {"neutral": [], "pose": []}}
         self.min_value = 0.
         self.max_value = 0.
-        self.recording_neutral=False
-        self.recording_max_pose=False
+        self.recording_neutral = False
+        self.recording_max_pose = False
 
         self.do_action_label = QtWidgets.QLabel()
         self.neutral_timer = QtCore.QTimer(self)
@@ -287,9 +314,9 @@ class CalibrationDialog(QtWidgets.QDialog):
         print(self.calibration_samples)
         print(len(self.calibration_samples[self.name]["neutral"]))
         print(len(self.calibration_samples[self.name]["pose"]))
-        self.min_value, self.max_value = self.demo.calibrate_signal(calibration_sample=self.calibration_samples, name=self.name)
+        self.min_value, self.max_value = self.demo.calibrate_signal(calibration_sample=self.calibration_samples,
+                                                                    name=self.name)
         super().accept()
-
 
     def reject(self) -> None:
         self.webcam_timer.stop()
@@ -313,6 +340,7 @@ class CalibrationDialog(QtWidgets.QDialog):
         self.recording_max_pose = False
         self.do_action_label.setText("Finished")
 
+
 class AddSignalDialog(QtWidgets.QDialog):
     def __init__(self, demo):
         super().__init__()
@@ -320,8 +348,8 @@ class AddSignalDialog(QtWidgets.QDialog):
 
         self.name = "NewPosers"
 
-        self.recording_neutral=False
-        self.recording_max_pose=False
+        self.recording_neutral = False
+        self.recording_max_pose = False
 
         self.do_action_label = QtWidgets.QLabel()
         self.neutral_timer = QtCore.QTimer(self)
@@ -384,10 +412,17 @@ class AddSignalDialog(QtWidgets.QDialog):
         self.webcam_label.setPixmap(QtGui.QPixmap.fromImage(self.qt_image))
 
     def accept(self) -> None:
+        name = self.new_name.text()
+        if name == "":
+            msgBox = QtWidgets.QMessageBox()
+            msgBox.setWindowTitle("Error")
+            msgBox.setText("Error occured")
+            msgBox.setInformativeText("Name is missing")
+            msgBox.exec()
+            return
         self.webcam_timer.stop()
-        self.demo.recalibrate()
+        self.demo.recalibrate(name)
         super().accept()
-
 
     def reject(self) -> None:
         self.webcam_timer.stop()
@@ -395,8 +430,7 @@ class AddSignalDialog(QtWidgets.QDialog):
 
     def start_calibration(self):
         name = self.new_name.text()
-        print(name)
-        if name=="":
+        if name == "":
             msgBox = QtWidgets.QMessageBox()
             msgBox.setWindowTitle("Error")
             msgBox.setText("Error occured")
@@ -426,6 +460,7 @@ class AddSignalDialog(QtWidgets.QDialog):
         self.recording_max_pose = False
         self.demo.calibrate_pose_stop(name)
         self.do_action_label.setText("Finished")
+
 
 class DebugVisualizetion(QtWidgets.QWidget):
     def __init__(self):
@@ -900,6 +935,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.signals_tab = QtWidgets.QStackedWidget()
         self.signals_tab.addWidget(self.signal_tab_iphone)
         self.signals_tab.addWidget(self.signal_tab_mediapipe)
+        self.signal_tab_iphone.signal_added.connect(lambda: print("not implemented yet"))
+        self.signal_tab_mediapipe.signal_added.connect(self.add_signal)
 
         self.general_tab = GeneralTab(self.demo)
         self.general_tab.mediapipe_selector_button.clicked.connect(lambda selected: self.change_signals_tab(selected))
@@ -934,6 +971,10 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             self.signals_tab.setCurrentIndex(0)
             self.selected_signals = self.signal_tab_iphone
+        self.mouse_tab.set_signal_selector(list(self.selected_signals.signal_settings.keys()))
+        self.keyboard_tab.set_signals(list(self.selected_signals.signal_settings.keys()))
+
+    def add_signal(self, new_signal: dict):
         self.mouse_tab.set_signal_selector(list(self.selected_signals.signal_settings.keys()))
         self.keyboard_tab.set_signals(list(self.selected_signals.signal_settings.keys()))
 
