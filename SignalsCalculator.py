@@ -1,3 +1,5 @@
+import sklearn.linear_model._base
+
 import DrawingDebug
 from PnPHeadPose import PnPHeadPose
 from face_geometry import PCF, get_metric_landmarks
@@ -7,6 +9,7 @@ import KalmanFilter1D
 from scipy.spatial.transform import Rotation
 import numpy as np
 import cv2
+from sklearn.linear_model import Ridge
 
 from dataclasses import dataclass, fields
 from typing import Tuple
@@ -116,30 +119,33 @@ class SignalsCalculater:
         #####
         self.random_ear_indices = np.random.choice(468, (10, 6), replace=False)
         self.ear_indices = np.array([
-            [78, 81, 311, 308, 402, 178], #mouth inner
-            [61, 39, 269, 291, 405, 181], #mouth outer
-            [57, 39, 269, 287, 405, 181], #mouth outer fixed
-            [17, 15, 12, 0, 40, 91], #mouth left
-            [17, 15, 12, 0, 270, 291], #mouth right
-            [33, 160, 158, 133, 153, 144], #left eye
-            [362, 385, 387, 263, 373, 380], #right eye
-            [49, 186, 216, 205, 203, 165], #cheeck left upper
-            [91, 43, 202, 211, 194, 182], #cheeck left lower
-            [270, 391, 423, 425, 436, 410], #cheeck right upper
-            [321, 273, 422, 431, 418, 406], #cheeck right lower
-            [425, 266, 329, 348, 347, 280], #upper cheeck right
-            [205, 50, 118, 119, 100, 36], #upper cheeck left
-            [4, 51, 196, 168, 419, 281], # nose vert
-            [218, 220, 275, 438, 274, 237], # nose hor
-            [46, 53, 65, 55, 222, 225], # left eyebrow
-            [276, 283, 295, 285, 442, 444], # right eyebrow
-            [66, 108, 337, 296, 336, 107], # between eyebrows
-            #[], # right eyebrow inner
+            [78, 81, 311, 308, 402, 178],  # mouth inner
+            [61, 39, 269, 291, 405, 181],  # mouth outer
+            [57, 39, 269, 287, 405, 181],  # mouth outer fixed
+            [17, 15, 12, 0, 40, 91],  # mouth left
+            [17, 15, 12, 0, 270, 291],  # mouth right
+            [33, 160, 158, 133, 153, 144],  # left eye
+            [362, 385, 387, 263, 373, 380],  # right eye
+            [49, 186, 216, 205, 203, 165],  # cheeck left upper
+            [91, 43, 202, 211, 194, 182],  # cheeck left lower
+            [270, 391, 423, 425, 436, 410],  # cheeck right upper
+            [321, 273, 422, 431, 418, 406],  # cheeck right lower
+            [425, 266, 329, 348, 347, 280],  # upper cheeck right
+            [205, 50, 118, 119, 100, 36],  # upper cheeck left
+            [4, 51, 196, 168, 419, 281],  # nose vert
+            [218, 220, 275, 438, 274, 237],  # nose hor
+            [46, 53, 65, 55, 222, 225],  # left eyebrow
+            [276, 283, 295, 285, 442, 444],  # right eyebrow
+            [66, 108, 337, 296, 336, 107],  # between eyebrows
+            # [], # right eyebrow inner
         ])
 
-    def process(self, landmarks):
+    def process(self, landmarks, linear_model:Ridge, labels):
         rvec, tvec = self.pnp_head_pose(landmarks)
-        landmarks = landmarks * np.array((self.frame_size[0], self.frame_size[1], self.frame_size[0]))  # TODO: maybe move denormalization into methods
+        landmarks = landmarks * np.array((self.frame_size[0], self.frame_size[1],
+                                          self.frame_size[0]))  # TODO: maybe move denormalization into methods
+        landmarks = landmarks[:, :2]
+
         r = Rotation.from_rotvec(np.squeeze(rvec))
 
         rotationmat = r.as_matrix()
@@ -160,7 +166,12 @@ class SignalsCalculater:
         brow_inner_up = self.five_point_cross_ratio(landmarks, [9, 69, 299, 65, 295])
         l_smile = self.cross_cross_ratio(landmarks, [216, 207, 214, 212, 206, 92])
         r_smile = self.cross_cross_ratio(landmarks, [436, 427, 434, 432, 426, 322])
-        smile = 0.5 * (l_smile+r_smile)
+        smile = 0.5 * (l_smile + r_smile)
+        ear_values = np.array(self.eye_aspect_ratio_batch(landmarks,self.ear_indices)).reshape(1,-1)
+
+        # TODO better check and logic
+
+
         signals = {
             "HeadPitch": angles[0],
             "HeadYaw": angles[1],
@@ -174,40 +185,27 @@ class SignalsCalculater:
             "MouthSmile": smile
         }
 
+        if len(labels) > 0:
+            reg_result = linear_model.predict(ear_values).reshape(1,-1)
+            for i, label in enumerate(labels):
+                signals[label] = reg_result[:,i]
+
+
         return signals
 
     def process_ear(self, landmarks):
         rvec, tvec = self.pnp_head_pose(landmarks)
         landmarks = landmarks * np.array((self.frame_size[0], self.frame_size[1],
                                           self.frame_size[0]))  # TODO: maybe move denormalization into methods
+        landmarks = landmarks[:, :2]
         r = Rotation.from_rotvec(np.squeeze(rvec))
 
         rotationmat = r.as_matrix()
         angles = r.as_euler("xyz", degrees=True)
 
-        signals = {
-            "HeadPitch": self.eye_aspect_ratio(landmarks,self.ear_indices[0,:]),
-            "HeadYaw": self.eye_aspect_ratio(landmarks,self.ear_indices[1,:]),
-            "HeadRoll": self.eye_aspect_ratio(landmarks,self.ear_indices[2,:]),
-            "JawOpen": self.eye_aspect_ratio(landmarks,self.ear_indices[3,:]),
-            "MouthPuck": self.eye_aspect_ratio(landmarks,self.ear_indices[4,:]),
-            "BrowOuterUpLeft": self.eye_aspect_ratio(landmarks,self.ear_indices[5,:]),
-            "BrowOuterUpRight": self.eye_aspect_ratio(landmarks,self.ear_indices[6,:]),
-            "BrowInnerUp": self.eye_aspect_ratio(landmarks,self.ear_indices[7,:]),
-            "BrowInnerDown": self.eye_aspect_ratio(landmarks,self.ear_indices[8,:]),
-            "MouthSmile": self.eye_aspect_ratio(landmarks,self.ear_indices[9,:]),
-            "ear11": self.eye_aspect_ratio(landmarks, self.ear_indices[10,:]),
-            "ear12": self.eye_aspect_ratio(landmarks, self.ear_indices[11,:]),
-            "ear13": self.eye_aspect_ratio(landmarks, self.ear_indices[12,:]),
-            "ear14": self.eye_aspect_ratio(landmarks, self.ear_indices[13,:]),
-            "ear15": self.eye_aspect_ratio(landmarks, self.ear_indices[14,:]),
-            "ear16": self.eye_aspect_ratio(landmarks, self.ear_indices[15,:]),
-            "ear17": self.eye_aspect_ratio(landmarks, self.ear_indices[16,:]),
-            "ear18": self.eye_aspect_ratio(landmarks, self.ear_indices[17,:])
-        }
+        ear_values = self.eye_aspect_ratio_batch(landmarks, indices=self.ear_indices)
 
-        return signals
-
+        return ear_values
 
     def process_neutral(self, landmarks):
         pass
@@ -325,8 +323,8 @@ class SignalsCalculater:
         """
         assert len(indices) == 6
 
-        return self.five_point_cross_ratio(landmarks, indices[[0,2,3,4,5]]) / self.five_point_cross_ratio(
-            landmarks, indices[[1,2,3,4,5]])
+        return self.five_point_cross_ratio(landmarks, [indices[0]] + indices[2:6]) / self.five_point_cross_ratio(
+            landmarks, [indices[1]] + indices[2:6])
 
     def eye_aspect_ratio(self, landmarks, indices):
         """
@@ -340,9 +338,26 @@ class SignalsCalculater:
         :return: ear = (P2_P6 + P3_P5) / (2.0 * P1_P4)
         """
         assert len(indices) == 6
-        p2_p6 = np.linalg.norm(landmarks[indices[1]]-landmarks[indices[5]])
-        p3_p5 = np.linalg.norm(landmarks[indices[2]]-landmarks[indices[4]])
-        p1_p4 = np.linalg.norm(landmarks[indices[0]]-landmarks[indices[3]])
+        p2_p6 = np.linalg.norm(landmarks[indices[1]] - landmarks[indices[5]])
+        p3_p5 = np.linalg.norm(landmarks[indices[2]] - landmarks[indices[4]])
+        p1_p4 = np.linalg.norm(landmarks[indices[0]] - landmarks[indices[3]])
+        return (p2_p6 + p3_p5) / (2.0 * p1_p4)
+
+    def eye_aspect_ratio_batch(self, landmarks, indices):
+        """
+        Calculates the eye aspect ratio for the given indices. indices are in the order P1, P2, P3, P4, P5, P6.
+        P1, P4 are the eye corners, P2 is opposite to P6 and P3 is opposite to P5.
+        ear = (P2_P6 + P3_P5) / (2.0 * P1_P4)
+
+        :param landmarks: landmarks in pixel coordinates
+        :param indices: indices of points P1, P2, P3, P4, P5, P6, P1, P2, P3, P4, P5, P6.
+        P1, P4 are the eye corners, P2 is opposite to P6 and P3 is opposite to P5
+        :return: ear = (P2_P6 + P3_P5) / (2.0 * P1_P4)
+        """
+        assert indices.shape[1] == 6
+        p2_p6 = np.linalg.norm(landmarks[indices[:, 1]] - landmarks[indices[:, 5]], axis=1)
+        p3_p5 = np.linalg.norm(landmarks[indices[:, 2]] - landmarks[indices[:, 4]], axis=1)
+        p1_p4 = np.linalg.norm(landmarks[indices[:, 0]] - landmarks[indices[:, 3]], axis=1)
         return (p2_p6 + p3_p5) / (2.0 * p1_p4)
 
     def set_filter_value(self, field_name: str, filter_value: float):

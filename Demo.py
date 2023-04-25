@@ -5,6 +5,7 @@ import socket
 import json
 from typing import Dict
 import os
+from typing import List
 
 import PIL.Image
 import mediapipe as mp
@@ -13,7 +14,10 @@ import numpy as np
 from PySide6.QtCore import QThread
 import keyboard
 from sklearn.preprocessing import OneHotEncoder
-from sklearn.linear_model import Ridge
+from sklearn.linear_model import Ridge, Lasso, MultiTaskLassoCV, LassoLarsIC
+from sklearn.svm import SVR
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.multioutput import MultiOutputRegressor
 
 import Mouse
 import DrawingDebug
@@ -29,7 +33,7 @@ mp_face_mesh = mp.solutions.face_mesh
 mp_face_mesh_connections = mp.solutions.face_mesh_connections
 
 colors = [(166,206,227),(31,120,180),(178,223,138),(51,160,44),(251,154,153),(227,26,28),(253,191,111),(255,127,0),(202,178,214),(106,61,154),(255,255,153),(177,89,40), (0,255,0), (0,0,255), (0,255,255), (255,255,255)]
-class Demo(QThread):
+class Demo(Thread):
     def __init__(self):
         super().__init__()
         self.is_running = False
@@ -65,15 +69,16 @@ class Demo(QThread):
         self.calibration_samples = dict()
 
         self.fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-        self.VideoWriter: cv2.VideoWriter = cv2.VideoWriter("dummy.mp4", self.fourcc, 30, (self.frame_width, self.frame_height))
+        self.VideoWriter: cv2.VideoWriter = cv2.VideoWriter("dummy.mp4", self.fourcc, 30, (self.frame_height, self.frame_width))
         self.calibrate_neutral: bool = False
         self.neutral_signals = []
         self.pose_signals = []
 
         self.calibrate_pose: bool = False
 
-        self.onehot_encoder = OneHotEncoder(drop="first", sparse_output=False)
-        self.linear_model = Ridge(alpha=0.001)
+        self.onehot_encoder = OneHotEncoder(sparse_output=False, drop="first")
+        self.linear_model = MultiOutputRegressor(SVR())
+        self.linear_signals: List[str] = []
 
         # add hotkey
         # TODO: how to handle activate mouse / toggle mouse etc. by global hotkey
@@ -133,19 +138,23 @@ class Demo(QThread):
                     np_landmarks[i, 0], np_landmarks[i, 1] = np.real(kalman_filters_landm_complex), np.imag(
                         kalman_filters_landm_complex)
 
-            result = self.signal_calculator.process_ear(np_landmarks)
+
 
             # only check videowriter not none? #
             if self.calibrate_neutral and success:
+                ear_values = self.signal_calculator.process_ear(np_landmarks)
                 self.VideoWriter.write(image)
-                self.neutral_signals.append(list(result.values()))
+                self.neutral_signals.append(ear_values)
                 continue
 
             if self.calibrate_pose and success:
+                ear_values = self.signal_calculator.process_ear(np_landmarks)
                 self.VideoWriter.write(image)
-                self.pose_signals.append(list(result.values()))
+                self.pose_signals.append(ear_values)
                 continue
             ########
+
+            result = self.signal_calculator.process(np_landmarks,self.linear_model, self.linear_signals)
 
             for signal_name in self.signals:
                 value = result.get(signal_name)
@@ -263,8 +272,8 @@ class Demo(QThread):
         signal = self.signals.get(name)
         min_value = max_value = 0
         if signal is not None:
-            min_value = np.percentile(neutral_samples, 75)
-            max_value = np.percentile(pose_samples, 25)
+            min_value = np.percentile(neutral_samples, 65)
+            max_value = np.percentile(pose_samples, 35)
             signal.set_threshold(min_value, max_value)
         return min_value, max_value
 
@@ -272,8 +281,8 @@ class Demo(QThread):
     def calibrate_neutral_start(self, name):
         if not os.path.exists(f"calibration/{name}"):
             os.mkdir(f"calibration/{name}")
-        self.calibrate_neutral = True
         self.VideoWriter.open(f"calibration/{name}/{name}_neutral.mp4", self.fourcc, 30, (self.frame_width,self.frame_height))
+        self.calibrate_neutral = True
 
     def calibrate_neutral_stop(self, name):
         self.VideoWriter.release()
@@ -281,8 +290,8 @@ class Demo(QThread):
     def calibrate_pose_start(self, name):
         if not os.path.exists(f"calibration/{name}"):
             os.mkdir(f"calibration/{name}")
-        self.calibrate_pose = True
         self.VideoWriter.open(f"calibration/{name}/{name}_pose.mp4", self.fourcc, 30, (self.frame_width,self.frame_height))
+        self.calibrate_pose = True
     def calibrate_pose_stop(self, name):
         self.VideoWriter.release()
         self.calibrate_pose = False
@@ -290,7 +299,6 @@ class Demo(QThread):
     #####
     def recalibrate(self, name):
         print(f"=== Recalibrating === with f{len(self.calibration_samples)}")
-        print(self.calibration_samples)
 
         if len(self.calibration_samples)==0:
             print("Nothing to calibrate")
@@ -307,18 +315,17 @@ class Demo(QThread):
                     label_array.extend([pose_name] * len(data))
         data_array = np.array(data_array)
         label_array = np.array(label_array).reshape(-1,1)
-        print(data_array, data_array.shape)
-        print(label_array, len(label_array))
 
         self.onehot_encoder.fit(label_array)
         y = self.onehot_encoder.transform(label_array)
-
-        self.linear_model.fit(data_array, y)
 
         self.signals[name] = Signal(name)
         self.signals[name].set_higher_threshold(1.)
         self.signals[name].set_lower_threshold(0.)
         self.signals[name].set_filter_value(0.0001)
+
+        self.linear_model.fit(data_array, y)
+        self.linear_signals = list(self.calibration_samples.keys())
 
 
 
