@@ -15,9 +15,9 @@ from PySide6.QtCore import QThread
 import keyboard
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.linear_model import Ridge, Lasso, MultiTaskLassoCV, LassoLarsIC
-from sklearn.svm import SVR
+from sklearn.svm import SVR, SVC
 from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.multioutput import MultiOutputRegressor
+from sklearn.multioutput import MultiOutputRegressor, MultiOutputClassifier
 
 import Mouse
 import DrawingDebug
@@ -77,7 +77,7 @@ class Demo(Thread):
         self.calibrate_pose: bool = False
 
         self.onehot_encoder = OneHotEncoder(sparse_output=False, drop="first")
-        self.linear_model = MultiOutputRegressor(SVR())
+        self.linear_model = MultiOutputClassifier(SVC(probability=True, C=10))
         self.linear_signals: List[str] = []
 
         # add hotkey
@@ -143,15 +143,15 @@ class Demo(Thread):
             # only check videowriter not none? #
             if self.calibrate_neutral and success:
                 ear_values = self.signal_calculator.process_ear(np_landmarks)
-                self.VideoWriter.write(image)
+                #self.VideoWriter.write(image)
                 self.neutral_signals.append(ear_values)
-                continue
+                #continue
 
             if self.calibrate_pose and success:
                 ear_values = self.signal_calculator.process_ear(np_landmarks)
-                self.VideoWriter.write(image)
+                #self.VideoWriter.write(image)
                 self.pose_signals.append(ear_values)
-                continue
+                #continue
             ########
 
             result = self.signal_calculator.process(np_landmarks,self.linear_model, self.linear_signals)
@@ -305,9 +305,11 @@ class Demo(Thread):
             return
         data_array = []
         label_array = []
+        unique_labels = ["neutral"]
         for pose_name in self.calibration_samples:
+            unique_labels.append(pose_name)
             for label, data in self.calibration_samples[pose_name].items():
-                data = data[len(data)//4:3*len(data)//4]
+                data = data[20:len(data)-20]
                 data_array.extend(data)
                 if label == "neutral":
                     label_array.extend([label]*len(data))

@@ -354,11 +354,11 @@ class AddSignalDialog(QtWidgets.QDialog):
         self.do_action_label = QtWidgets.QLabel()
         self.neutral_timer = QtCore.QTimer(self)
         self.neutral_timer.setSingleShot(True)
-        self.neutral_timer.setInterval(2000)
+        self.neutral_timer.setInterval(4000)
 
         self.pose_timer = QtCore.QTimer(self)
         self.pose_timer.setSingleShot(True)
-        self.pose_timer.setInterval(2000)
+        self.pose_timer.setInterval(4000)
 
         ## Webcam Image
         self.webcam_label = QtWidgets.QLabel()

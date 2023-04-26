@@ -10,6 +10,7 @@ from scipy.spatial.transform import Rotation
 import numpy as np
 import cv2
 from sklearn.linear_model import Ridge
+from sklearn.multioutput import MultiOutputClassifier
 
 from dataclasses import dataclass, fields
 from typing import Tuple
@@ -140,7 +141,7 @@ class SignalsCalculater:
             # [], # right eyebrow inner
         ])
 
-    def process(self, landmarks, linear_model:Ridge, labels):
+    def process(self, landmarks, linear_model:MultiOutputClassifier, labels):
         rvec, tvec = self.pnp_head_pose(landmarks)
         landmarks = landmarks * np.array((self.frame_size[0], self.frame_size[1],
                                           self.frame_size[0]))  # TODO: maybe move denormalization into methods
@@ -186,9 +187,10 @@ class SignalsCalculater:
         }
 
         if len(labels) > 0:
-            reg_result = linear_model.predict(ear_values).reshape(1,-1)
+            reg_result = linear_model.predict_proba(ear_values)
+            print(reg_result)
             for i, label in enumerate(labels):
-                signals[label] = reg_result[:,i]
+                signals[label] = reg_result[i][:,0]
 
 
         return signals
