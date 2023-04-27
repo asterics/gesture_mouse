@@ -82,8 +82,8 @@ class Demo(Thread):
         self.calibrate_pose: bool = False
 
         self.onehot_encoder = OneHotEncoder(sparse_output=False, dtype=float)
-        #self.linear_model = LogisticRegression(penalty="elasticnet", solver="saga", l1_ratio=0.2)
-        self.linear_model = MLPClassifier((100,), early_stopping=True, verbose=True)
+        self.linear_model = RegressorChain(SVR())
+        #self.linear_model = MLPClassifier((100,), early_stopping=True, verbose=True)
         self.scaler = StandardScaler()
         self.linear_signals: List[str] = []
 
@@ -286,6 +286,8 @@ class Demo(Thread):
 
     # Combine these methods?
     def calibrate_neutral_start(self, name):
+        self.neutral_signals=[]
+        self.pose_signals=[]
         if not os.path.exists(f"calibration/{name}"):
             os.mkdir(f"calibration/{name}")
         self.VideoWriter.open(f"calibration/{name}/{name}_neutral.mp4", self.fourcc, 30, (self.frame_width,self.frame_height))
