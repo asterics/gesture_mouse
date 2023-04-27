@@ -180,7 +180,7 @@ class SignalsCalculater:
 
         if len(labels) > 0:
             ear_values = np.array(self.eye_aspect_ratio_batch(landmarks, self.ear_indices)).reshape(1, -1)
-            ear_values = ear_values / nose_length
+            ear_values = normalize(ear_values / nose_length)
             reg_result = linear_model.predict(ear_values)
             print(reg_result)
             for i, label in enumerate(labels):

@@ -82,7 +82,7 @@ class Demo(Thread):
         self.calibrate_pose: bool = False
 
         self.onehot_encoder = OneHotEncoder(sparse_output=False, dtype=float)
-        self.linear_model = RegressorChain(SVR())
+        self.linear_model = MultiOutputRegressor(SVR())
         #self.linear_model = MLPClassifier((100,), early_stopping=True, verbose=True)
         self.scaler = StandardScaler()
         self.linear_signals: List[str] = []
@@ -324,7 +324,7 @@ class Demo(Thread):
                     label_array.extend(["neutral"]*len(data))
                 else:
                     label_array.extend([pose_name] * len(data))
-        data_array = np.array(data_array)
+        data_array = normalize(np.array(data_array))
         label_array = np.array(label_array).reshape(-1,1)
 
         self.onehot_encoder.fit(label_array)
