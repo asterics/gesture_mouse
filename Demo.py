@@ -11,13 +11,18 @@ import PIL.Image
 import mediapipe as mp
 import cv2
 import numpy as np
+import sklearn
 from PySide6.QtCore import QThread
 import keyboard
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.linear_model import Ridge, Lasso, MultiTaskLassoCV, LassoLarsIC
-from sklearn.svm import SVR, SVC
-from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.multioutput import MultiOutputRegressor, MultiOutputClassifier
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.linear_model import Ridge, Lasso, MultiTaskLassoCV, LassoLarsIC, LogisticRegression, RidgeClassifier
+from sklearn.svm import SVR, SVC, LinearSVR
+from sklearn.ensemble import GradientBoostingRegressor, GradientBoostingClassifier
+from sklearn.multioutput import MultiOutputRegressor, MultiOutputClassifier, RegressorChain
+from sklearn.kernel_ridge import KernelRidge
+from sklearn.neural_network import MLPRegressor, MLPClassifier
+from sklearn.preprocessing import normalize
+
 
 import Mouse
 import DrawingDebug
@@ -49,6 +54,7 @@ class Demo(Thread):
 
         self.UDP_PORT = 11111
         self.socket = None
+        self.webcam_address = 0
 
         self.face_mesh = mp_face_mesh.FaceMesh(static_image_mode=False,
                max_num_faces=1,
@@ -59,7 +65,6 @@ class Demo(Thread):
         self.camera_parameters = (500, 500, 640 / 2, 480 / 2)
         self.signal_calculator = SignalsCalculator.SignalsCalculater(camera_parameters=self.camera_parameters,
                                                                      frame_size=(self.frame_width, self.frame_height))
-        self.signal_calculator.set_filter_value("screen_xy", 0.022)
 
         self.use_mediapipe = True
         self.filter_landmarks = True
@@ -76,8 +81,10 @@ class Demo(Thread):
 
         self.calibrate_pose: bool = False
 
-        self.onehot_encoder = OneHotEncoder(sparse_output=False, drop="first")
-        self.linear_model = MultiOutputClassifier(SVC(probability=True, C=10))
+        self.onehot_encoder = OneHotEncoder(sparse_output=False, dtype=float)
+        #self.linear_model = LogisticRegression(penalty="elasticnet", solver="saga", l1_ratio=0.2)
+        self.linear_model = MLPClassifier((100,), early_stopping=True, verbose=True)
+        self.scaler = StandardScaler()
         self.linear_signals: List[str] = []
 
         # add hotkey
@@ -154,7 +161,7 @@ class Demo(Thread):
                 #continue
             ########
 
-            result = self.signal_calculator.process(np_landmarks,self.linear_model, self.linear_signals)
+            result = self.signal_calculator.process(np_landmarks,self.linear_model, self.linear_signals, self.scaler)
 
             for signal_name in self.signals:
                 value = result.get(signal_name)
@@ -168,7 +175,7 @@ class Demo(Thread):
 
             # Debug
             black = np.zeros((self.frame_height, self.frame_height, 3)).astype(np.uint8)
-            self.annotated_landmarks = DrawingDebug.draw_landmarks_fast(np_landmarks, black)
+            self.annotated_landmarks = DrawingDebug.draw_landmarks_fast(np_landmarks, image)
             for i, indices in enumerate(self.signal_calculator.ear_indices):
                 self.annotated_landmarks = DrawingDebug.draw_landmarks_fast(np_landmarks, self.annotated_landmarks, index=indices, color=colors[i%len(colors)])
 
@@ -190,7 +197,7 @@ class Demo(Thread):
                     self.mouse.process_signal(self.signals)
 
     def __start_camera(self):
-        self.cam_cap = cv2.VideoCapture(0)
+        self.cam_cap = cv2.VideoCapture(self.webcam_address)
         #self.cam_cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.frame_width)
         #self.cam_cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.frame_height)
         #self.cam_cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P',
@@ -299,7 +306,7 @@ class Demo(Thread):
     #####
     def recalibrate(self, name):
         print(f"=== Recalibrating === with f{len(self.calibration_samples)}")
-
+        new_linear_model = sklearn.clone(self.linear_model)
         if len(self.calibration_samples)==0:
             print("Nothing to calibrate")
             return
@@ -312,7 +319,7 @@ class Demo(Thread):
                 data = data[20:len(data)-20]
                 data_array.extend(data)
                 if label == "neutral":
-                    label_array.extend([label]*len(data))
+                    label_array.extend(["neutral"]*len(data))
                 else:
                     label_array.extend([pose_name] * len(data))
         data_array = np.array(data_array)
@@ -321,14 +328,21 @@ class Demo(Thread):
         self.onehot_encoder.fit(label_array)
         y = self.onehot_encoder.transform(label_array)
 
+        #self.scaler.fit(data_array)
+        #data_array=self.scaler.transform(data_array)
+
         self.signals[name] = Signal(name)
         self.signals[name].set_higher_threshold(1.)
         self.signals[name].set_lower_threshold(0.)
         self.signals[name].set_filter_value(0.0001)
 
-        self.linear_model.fit(data_array, y)
-        self.linear_signals = list(self.calibration_samples.keys())
 
+        new_linear_model.fit(data_array, y)
+        self.linear_model = new_linear_model
+        self.linear_signals = self.onehot_encoder.inverse_transform(np.eye(len(unique_labels)))[:,0]
+        print(self.linear_signals)
+        #print(self.linear_model.classes_)
+        #print(self.onehot_encoder.inverse_transform(self.linear_model.classes_))
 
 
 if __name__ == '__main__':

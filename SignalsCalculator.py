@@ -10,7 +10,8 @@ from scipy.spatial.transform import Rotation
 import numpy as np
 import cv2
 from sklearn.linear_model import Ridge
-from sklearn.multioutput import MultiOutputClassifier
+from sklearn.multioutput import MultiOutputClassifier, MultiOutputRegressor
+from sklearn.preprocessing import normalize
 
 from dataclasses import dataclass, fields
 from typing import Tuple
@@ -111,7 +112,6 @@ class SignalsResult:
 
 class SignalsCalculater:
     def __init__(self, camera_parameters, frame_size: Tuple[int, int]):
-        self.result = SignalsResult()
         self.neutral_landmarks = np.zeros((478, 3))
         self.camera_parameters = camera_parameters
         self.head_pose_calculator = PnPHeadPose()
@@ -141,7 +141,7 @@ class SignalsCalculater:
             # [], # right eyebrow inner
         ])
 
-    def process(self, landmarks, linear_model:MultiOutputClassifier, labels):
+    def process(self, landmarks, linear_model:MultiOutputRegressor, labels, scaler):
         rvec, tvec = self.pnp_head_pose(landmarks)
         landmarks = landmarks * np.array((self.frame_size[0], self.frame_size[1],
                                           self.frame_size[0]))  # TODO: maybe move denormalization into methods
@@ -152,23 +152,15 @@ class SignalsCalculater:
         rotationmat = r.as_matrix()
         angles = r.as_euler("xyz", degrees=True)
         # normalized_landmarks = rotationmat.T@(landmarks-tvec.T)
-        self.result.rvec = rvec  # TODO: result not needed anymore
-        self.result.tvec = tvec
-        self.result.yaw.set(angles[1])
-        self.result.pitch.set(angles[0])
-        self.result.roll.set(angles[2])
-        self.result.nosetip = rotationmat @ self.head_pose_calculator.canonical_metric_landmarks[1, :] + tvec.squeeze()
         jaw_open = self.get_jaw_open(landmarks)
-        self.result.jaw_open.set(jaw_open)
         mouth_puck = self.get_mouth_puck(landmarks)
-        self.result.mouth_puck.set(mouth_puck)
         l_brow_outer_up = self.cross_ratio_colinear(landmarks, [225, 46, 70, 71])
         r_brow_outer_up = self.cross_ratio_colinear(landmarks, [445, 276, 300, 301])
         brow_inner_up = self.five_point_cross_ratio(landmarks, [9, 69, 299, 65, 295])
         l_smile = self.cross_cross_ratio(landmarks, [216, 207, 214, 212, 206, 92])
         r_smile = self.cross_cross_ratio(landmarks, [436, 427, 434, 432, 426, 322])
         smile = 0.5 * (l_smile + r_smile)
-        ear_values = np.array(self.eye_aspect_ratio_batch(landmarks,self.ear_indices)).reshape(1,-1)
+        nose_length = np.linalg.norm(landmarks[8,:]-landmarks[1,:])
 
         # TODO better check and logic
 
@@ -187,10 +179,14 @@ class SignalsCalculater:
         }
 
         if len(labels) > 0:
-            reg_result = linear_model.predict_proba(ear_values)
+            ear_values = np.array(self.eye_aspect_ratio_batch(landmarks, self.ear_indices)).reshape(1, -1)
+            ear_values = ear_values / nose_length
+            reg_result = linear_model.predict(ear_values)
             print(reg_result)
             for i, label in enumerate(labels):
-                signals[label] = reg_result[i][:,0]
+                if label == "neutral":
+                    continue
+                signals[label] = reg_result[0][i]
 
 
         return signals
@@ -200,14 +196,10 @@ class SignalsCalculater:
         landmarks = landmarks * np.array((self.frame_size[0], self.frame_size[1],
                                           self.frame_size[0]))  # TODO: maybe move denormalization into methods
         landmarks = landmarks[:, :2]
-        r = Rotation.from_rotvec(np.squeeze(rvec))
-
-        rotationmat = r.as_matrix()
-        angles = r.as_euler("xyz", degrees=True)
 
         ear_values = self.eye_aspect_ratio_batch(landmarks, indices=self.ear_indices)
-
-        return ear_values
+        nose_length = np.linalg.norm(landmarks[8, :] - landmarks[1,:])
+        return ear_values/nose_length
 
     def process_neutral(self, landmarks):
         pass
@@ -361,8 +353,3 @@ class SignalsCalculater:
         p3_p5 = np.linalg.norm(landmarks[indices[:, 2]] - landmarks[indices[:, 4]], axis=1)
         p1_p4 = np.linalg.norm(landmarks[indices[:, 0]] - landmarks[indices[:, 3]], axis=1)
         return (p2_p6 + p3_p5) / (2.0 * p1_p4)
-
-    def set_filter_value(self, field_name: str, filter_value: float):
-        signal = getattr(self.result, field_name, None)
-        if signal is not None:
-            signal.set_filter_value(filter_value)
