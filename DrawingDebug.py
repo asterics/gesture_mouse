@@ -32,7 +32,7 @@ def draw_landmarks_fast(np_landmarks: np.ndarray, image: np.ndarray, index: Opti
     if index is None:
         index = range(468)
     pixel_landmarks = (np_landmarks[:,:2] * np.array((frame_width, frame_height))).astype(int)
-    pixel_landmarks = util.clamp_np(pixel_landmarks, np.array([0,0]), np.array([frame_width-1,frame_height-1]))
+    pixel_landmarks = util.clamp_np(pixel_landmarks, np.array([1,1]), np.array([frame_width-2,frame_height-2]))
     special_landmarks = pixel_landmarks[index]
     image[special_landmarks[:,1], special_landmarks[:,0], :] = color
     image[np.maximum(special_landmarks[:,1]-1,0), special_landmarks[:,0], :] = color
