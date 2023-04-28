@@ -1,429 +1,431 @@
-[
-  {
-    "name": "EyeBlinkLeft",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "EyeLookDownLeft",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "EyeLookInLeft",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "EyeLookOutLeft",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "EyeLookUpLeft",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "EyeSquintLeft",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "EyeWideLeft",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "EyeBlinkRight",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "EyeLookDownRight",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "EyeLookInRight",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "EyeLookOutRight",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "EyeLookUpRight",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "EyeSquintRight",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "EyeWideRight",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "JawForward",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "JawLeft",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "JawRight",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "JawOpen",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "MouthClose",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "MouthFunnel",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "MouthPucker",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "MouthLeft",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "MouthRight",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "MouthSmileLeft",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "MouthSmileRight",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "MouthFrownLeft",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "MouthFrownRight",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "MouthDimpleLeft",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "MouthDimpleRight",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "MouthStretchLeft",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "MouthStretchRight",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "MouthRollLower",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "MouthRollUpper",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "MouthShrugLower",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "MouthShrugUpper",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "MouthPressLeft",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "MouthPressRight",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "MouthLowerDownLeft",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "MouthLowerDownRight",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "MouthUpperUpLeft",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "MouthUpperUpRight",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "BrowDownLeft",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "BrowDownRight",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "BrowInnerUp",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "BrowOuterUpLeft",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "BrowOuterUpRight",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "CheekPuff",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "CheekSquintLeft",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "CheekSquintRight",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "NoseSneerLeft",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "NoseSneerRight",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "TongueOut",
-    "lower_threshold": 0.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "HeadYaw",
-    "lower_threshold": -1.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "HeadPitch",
-    "lower_threshold": -1.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "HeadRoll",
-    "lower_threshold": -1.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "LeftEyeYaw",
-    "lower_threshold": -1.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "LeftEyePitch",
-    "lower_threshold": -1.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "LeftEyeRoll",
-    "lower_threshold": -1.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "RightEyeYaw",
-    "lower_threshold": -1.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "RightEyePitch",
-    "lower_threshold": -1.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  },
-  {
-    "name": "RightEyeRoll",
-    "lower_threshold": -1.0,
-    "higher_threshold": 1.0,
-    "filter_value": 0.0001,
-    "actions":  []
-  }
-]
+{
+  "signals": [
+    {
+      "name": "EyeBlinkLeft",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "EyeLookDownLeft",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "EyeLookInLeft",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "EyeLookOutLeft",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "EyeLookUpLeft",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "EyeSquintLeft",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "EyeWideLeft",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "EyeBlinkRight",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "EyeLookDownRight",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "EyeLookInRight",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "EyeLookOutRight",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "EyeLookUpRight",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "EyeSquintRight",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "EyeWideRight",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "JawForward",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "JawLeft",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "JawRight",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "JawOpen",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "MouthClose",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "MouthFunnel",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "MouthPucker",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "MouthLeft",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "MouthRight",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "MouthSmileLeft",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "MouthSmileRight",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "MouthFrownLeft",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "MouthFrownRight",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "MouthDimpleLeft",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "MouthDimpleRight",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "MouthStretchLeft",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "MouthStretchRight",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "MouthRollLower",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "MouthRollUpper",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "MouthShrugLower",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "MouthShrugUpper",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "MouthPressLeft",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "MouthPressRight",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "MouthLowerDownLeft",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "MouthLowerDownRight",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "MouthUpperUpLeft",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "MouthUpperUpRight",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "BrowDownLeft",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "BrowDownRight",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "BrowInnerUp",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "BrowOuterUpLeft",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "BrowOuterUpRight",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "CheekPuff",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "CheekSquintLeft",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "CheekSquintRight",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "NoseSneerLeft",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "NoseSneerRight",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "TongueOut",
+      "lower_threshold": 0.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "HeadYaw",
+      "lower_threshold": -1.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "HeadPitch",
+      "lower_threshold": -1.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "HeadRoll",
+      "lower_threshold": -1.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "LeftEyeYaw",
+      "lower_threshold": -1.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "LeftEyePitch",
+      "lower_threshold": -1.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "LeftEyeRoll",
+      "lower_threshold": -1.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "RightEyeYaw",
+      "lower_threshold": -1.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "RightEyePitch",
+      "lower_threshold": -1.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "RightEyeRoll",
+      "lower_threshold": -1.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    }
+  ]
+}

@@ -142,8 +142,7 @@ class SignalTab(QtWidgets.QWidget):
 
     def __init__(self, demo, json_path):
         super().__init__()
-        self.demo = demo
-        self.signal_config_defaults: dict = json.load(open(json_path, "r"))
+        self.demo: Demo.Demo = demo
         self.setWindowTitle("Signals Visualization")
         self.signals_vis = SignalVis()
         self.signals_vis.setMaximumHeight(250)
@@ -154,45 +153,33 @@ class SignalTab(QtWidgets.QWidget):
         self.signals_vis.setSizePolicy(size_policy)
         self.add_signal_button = QtWidgets.QPushButton("Record new Signal")
         self.add_signal_button.clicked.connect(self.add_new_signal)
+        self.save_signals_button = QtWidgets.QPushButton("Save Profile")
+        self.load_signals_button = QtWidgets.QPushButton("Load Profile")
+        self.save_signals_button.clicked.connect(self.save_signals)
+        self.load_signals_button.clicked.connect(self.load_action)
 
-        self.signal_settings = dict()
         self.layout = QtWidgets.QVBoxLayout(self)
 
         self.layout.addWidget(self.signals_vis)
-        self.setting_widget = QtWidgets.QWidget()
-        self.setting_widget.setLayout(QtWidgets.QVBoxLayout())
-
-        for json_signal in self.signal_config_defaults:
-            signal_name = json_signal["name"]
-            lower_threshold = json_signal["lower_threshold"]
-            higher_threshold = json_signal["higher_threshold"]
-            filter_value = json_signal["filter_value"]
-
-            setting = SignalSetting(signal_name, lower_threshold, higher_threshold, demo=self.demo)
-            handler = self.signals_vis.add_line(signal_name)
-
-            setting.visualization_checkbox.stateChanged.connect(handler.set_visible)
-            setting.visualization_checkbox.setChecked(False)
-
-            setting.filter_slider.doubleValueChanged.connect(
-                lambda x, name=signal_name: self.demo.set_filter_value(name, x))
-            setting.lower_value.valueChanged.connect(
-                lambda x, name=signal_name: self.demo.signals[name].set_lower_threshold(x))
-            setting.higher_value.valueChanged.connect(
-                lambda x, name=signal_name: self.demo.signals[name].set_higher_threshold(x))
-
-            setting.filter_slider.setValue(filter_value)
-
-            self.setting_widget.layout().addWidget(setting)
-            self.signal_settings[signal_name] = setting
 
         self.scroll_area = QtWidgets.QScrollArea()
         self.scroll_area.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
         self.scroll_area.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.scroll_area.setWidgetResizable(True)
-        self.scroll_area.setWidget(self.setting_widget)
+
+        self.signal_settings = dict()
+        self.setting_widget = QtWidgets.QWidget()
+        self.signal_config = dict()
+        self.load_signals(json_path)
+
         self.layout.addWidget(self.scroll_area)
-        self.layout.addWidget(self.add_signal_button)
+        button_layout = QtWidgets.QHBoxLayout(self)
+        button_layout.addWidget(self.add_signal_button)
+        button_layout.addStretch()
+        button_layout.addWidget(self.save_signals_button)
+        button_layout.addWidget(self.load_signals_button)
+        self.layout.addLayout(button_layout)
+
 
     def update_plots(self, signals):
         self.signals_vis.update_plot(signals)
@@ -233,6 +220,54 @@ class SignalTab(QtWidgets.QWidget):
 
         self.signal_added.emit(new_singal)
 
+    def save_signals(self):
+        file_name, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Select profile save file", "./config/profiles",
+                                                             "JSON (*.json)")
+        print(file_name) #TODO: no file selected
+        self.demo.save_signals(file_name)
+
+    def load_action(self):
+        file_name, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Select profile to load", "./config/profiles",
+                                                             "JSON (*.json)")
+        print(file_name) #TODO: no file selected
+        self.load_signals(file_name)
+
+    def load_signals(self, json_path):
+        # Clear widget
+        self.setting_widget = QtWidgets.QWidget()
+        self.setting_widget.setLayout(QtWidgets.QVBoxLayout())
+        self.signal_settings = dict()
+
+        #Load json
+        self.signal_config: dict = json.load(open(json_path, "r"))
+
+        for json_signal in self.signal_config["signals"]:
+            signal_name = json_signal["name"]
+            lower_threshold = json_signal["lower_threshold"]
+            higher_threshold = json_signal["higher_threshold"]
+            filter_value = json_signal["filter_value"]
+
+            setting = SignalSetting(signal_name, lower_threshold, higher_threshold, demo=self.demo)
+            handler = self.signals_vis.add_line(signal_name)
+
+            setting.visualization_checkbox.stateChanged.connect(handler.set_visible)
+            setting.visualization_checkbox.setChecked(False)
+
+            setting.filter_slider.doubleValueChanged.connect(
+                lambda x, name=signal_name: self.demo.set_filter_value(name, x))
+            setting.lower_value.valueChanged.connect(
+                lambda x, name=signal_name: self.demo.signals[name].set_lower_threshold(x))
+            setting.higher_value.valueChanged.connect(
+                lambda x, name=signal_name: self.demo.signals[name].set_higher_threshold(x))
+
+            setting.filter_slider.setValue(filter_value)
+
+            self.setting_widget.layout().addWidget(setting)
+            self.signal_settings[signal_name] = setting
+
+        # load in demo
+        self.demo.setup_signals(json_path)
+        self.scroll_area.setWidget(self.setting_widget)
 
 class CalibrationDialog(QtWidgets.QDialog):
     # TODO: add videorecording for data collection?

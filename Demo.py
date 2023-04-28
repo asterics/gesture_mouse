@@ -6,6 +6,8 @@ import json
 from typing import Dict
 import os
 from typing import List
+from pathlib import Path
+import pickle
 
 import PIL.Image
 import mediapipe as mp
@@ -14,7 +16,7 @@ import numpy as np
 import sklearn
 from PySide6.QtCore import QThread
 import keyboard
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.preprocessing import OneHotEncoder, StandardScaler, Normalizer
 from sklearn.linear_model import Ridge, Lasso, MultiTaskLassoCV, LassoLarsIC, LogisticRegression, RidgeClassifier
 from sklearn.svm import SVR, SVC, LinearSVR
 from sklearn.ensemble import GradientBoostingRegressor, GradientBoostingClassifier
@@ -22,6 +24,7 @@ from sklearn.multioutput import MultiOutputRegressor, MultiOutputClassifier, Reg
 from sklearn.kernel_ridge import KernelRidge
 from sklearn.neural_network import MLPRegressor, MLPClassifier
 from sklearn.preprocessing import normalize
+from sklearn.pipeline import Pipeline
 
 
 import Mouse
@@ -38,7 +41,7 @@ mp_face_mesh = mp.solutions.face_mesh
 mp_face_mesh_connections = mp.solutions.face_mesh_connections
 
 colors = [(166,206,227),(31,120,180),(178,223,138),(51,160,44),(251,154,153),(227,26,28),(253,191,111),(255,127,0),(202,178,214),(106,61,154),(255,255,153),(177,89,40), (0,255,0), (0,0,255), (0,255,255), (255,255,255)]
-class Demo(Thread):
+class Demo(QThread):
     def __init__(self):
         super().__init__()
         self.is_running = False
@@ -106,7 +109,7 @@ class Demo(Thread):
         self.is_running = True
         while self.is_running:
             if self.use_mediapipe:
-                self.setup_signals("config/mediapipe_default.json")
+                self.setup_signals("config/mediapipe_default.json") #TODO: change to latest
                 self.__start_camera()
                 self.__run_mediapipe()
                 self.__stop_camera()
@@ -144,7 +147,6 @@ class Demo(Thread):
                         np_landmarks[i, 0] + 1j * np_landmarks[i, 1])
                     np_landmarks[i, 0], np_landmarks[i, 1] = np.real(kalman_filters_landm_complex), np.imag(
                         kalman_filters_landm_complex)
-
 
 
             # only check videowriter not none? #
@@ -256,8 +258,9 @@ class Demo(Thread):
         Reads a config file and setup ups the available signals.
         :param json_path: Path to json
         """
-        parsed_signals = json.load(open(json_path, "r"))
+        parsed_settings = json.load(open(json_path, "r"))
         self.signals = dict()
+        parsed_signals = parsed_settings.get("signals")
         for json_signal in parsed_signals:
             # read values
             name = json_signal["name"]
@@ -270,6 +273,69 @@ class Demo(Thread):
             signal.set_filter_value(filter_value)
             signal.set_threshold(lower_threshold, higher_threshold)
             self.signals[name] = signal
+        gesture_model = parsed_settings.get("gesture_model")
+        if gesture_model is not None:
+            gesture_save_location=gesture_model.get("gesture_model_location")
+            encoder_save_location = gesture_model.get("encoder_location")
+            calibration_samples_location = gesture_model.get("calibration_samples_location")
+            if gesture_save_location is not None and os.path.exists(gesture_save_location):
+                with open(gesture_save_location, "br") as fp:
+                    self.linear_model = pickle.load(fp)
+            else:
+                f"File not found: {gesture_save_location}"
+            if encoder_save_location is not None and os.path.exists(encoder_save_location):
+                with open(encoder_save_location, "br") as fp:
+                    self.onehot_encoder = pickle.load(fp)
+                self.linear_signals = self.onehot_encoder.categories_[0]
+            else:
+                f"File not found: {encoder_save_location}"
+            if calibration_samples_location is not None and os.path.exists(calibration_samples_location):
+                with open(calibration_samples_location, "br") as fp:
+                    self.calibration_samples = pickle.load(fp)
+            else:
+                f"File not found: {encoder_save_location}"
+
+
+    def save_signals(self, save_location):
+        # save_location = "path/to/file.json"
+        path = Path(save_location)
+        folder = path.parent
+        profile_name = path.stem
+        settings_dict = {}
+        signals = []
+        for signal_name in self.signals:
+            signal = self.signals[signal_name]
+            name = signal.name
+            lower_threshold = signal.lower_threshold
+            higher_threshold = signal.higher_threshold
+            filter_value = signal.raw_value.filter_R
+            signals.append({
+                "name": name,
+                "lower_threshold": lower_threshold,
+                "higher_threshold": higher_threshold,
+                "filter_value": filter_value
+            })
+        settings_dict["signals"] = signals
+        gesture_model_location = folder / profile_name / "gesture_model.pkl"
+        encoder_location = folder / profile_name / "encoder.pkl"
+        calibration_samples_location = folder / profile_name / "calibration_samples.pkl"
+        gesture_model_location.parent.mkdir(exist_ok=True,parents=True)
+        encoder_location.parent.mkdir(exist_ok=True,parents=True)
+        calibration_samples_location.parent.mkdir(exist_ok=True,parents=True)
+        settings_dict["gesture_model"] = {
+            "gesture_model_location": str(gesture_model_location),
+            "encoder_location": str(encoder_location),
+            "calibration_samples_location": str(calibration_samples_location)
+        }
+        with open(path, "w+") as fp:
+            json.dump(settings_dict,fp, indent=2)
+        with open(gesture_model_location, "bw+") as fp:
+            pickle.dump(self.linear_model, fp)
+        with open(encoder_location, "bw+") as fp:
+            pickle.dump(self.onehot_encoder, fp)
+        with open(calibration_samples_location, "bw+") as fp:
+            pickle.dump(self.calibration_samples, fp)
+
 
     def calibrate_signal(self, calibration_sample, name):
         neutral_samples = np.array(calibration_sample[name]["neutral"])
@@ -341,7 +407,7 @@ class Demo(Thread):
 
         new_linear_model.fit(data_array, y)
         self.linear_model = new_linear_model
-        self.linear_signals = self.onehot_encoder.inverse_transform(np.eye(len(unique_labels)))[:,0]
+        self.linear_signals = self.onehot_encoder.categories_[0]
         print(self.linear_signals)
         #print(self.linear_model.classes_)
         #print(self.onehot_encoder.inverse_transform(self.linear_model.classes_))
