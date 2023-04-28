@@ -221,13 +221,13 @@ class SignalTab(QtWidgets.QWidget):
         self.signal_added.emit(new_singal)
 
     def save_signals(self):
-        file_name, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Select profile save file", "./config/profiles",
+        file_name, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Select profile save file", "./config",
                                                              "JSON (*.json)")
         print(file_name) #TODO: no file selected
         self.demo.save_signals(file_name)
 
     def load_action(self):
-        file_name, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Select profile to load", "./config/profiles",
+        file_name, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Select profile to load", "./config",
                                                              "JSON (*.json)")
         print(file_name) #TODO: no file selected
         self.load_signals(file_name)
