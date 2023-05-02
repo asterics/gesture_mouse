@@ -77,7 +77,7 @@ class Demo(QThread):
         self.calibration_samples = dict()
 
         self.fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-        self.VideoWriter: cv2.VideoWriter = cv2.VideoWriter("dummy.mp4", self.fourcc, 30, (self.frame_height, self.frame_width))
+        #self.VideoWriter: cv2.VideoWriter = cv2.VideoWriter("dummy.mp4", self.fourcc, 30, (self.frame_height, self.frame_width))
         self.calibrate_neutral: bool = False
         self.neutral_signals = []
         self.pose_signals = []
@@ -323,9 +323,9 @@ class Demo(QThread):
         encoder_location.parent.mkdir(exist_ok=True,parents=True)
         calibration_samples_location.parent.mkdir(exist_ok=True,parents=True)
         settings_dict["gesture_model"] = {
-            "gesture_model_location": str(gesture_model_location),
-            "encoder_location": str(encoder_location),
-            "calibration_samples_location": str(calibration_samples_location)
+            "gesture_model_location": str(gesture_model_location.relative_to(Path(".").absolute())),
+            "encoder_location": str(encoder_location.relative_to(Path(".").absolute())),
+            "calibration_samples_location": str(calibration_samples_location.relative_to(Path(".").absolute()))
         }
         with open(path, "w+") as fp:
             json.dump(settings_dict,fp, indent=2)
@@ -354,21 +354,21 @@ class Demo(QThread):
     def calibrate_neutral_start(self, name):
         self.neutral_signals=[]
         self.pose_signals=[]
-        if not os.path.exists(f"calibration/{name}"):
-            os.mkdir(f"calibration/{name}")
-        self.VideoWriter.open(f"calibration/{name}/{name}_neutral.mp4", self.fourcc, 30, (self.frame_width,self.frame_height))
+        #if not os.path.exists(f"calibration/{name}"):
+        #    os.mkdir(f"calibration/{name}")
+        #self.VideoWriter.open(f"calibration/{name}/{name}_neutral.mp4", self.fourcc, 30, (self.frame_width,self.frame_height))
         self.calibrate_neutral = True
 
     def calibrate_neutral_stop(self, name):
-        self.VideoWriter.release()
+       #self.VideoWriter.release()
         self.calibrate_neutral = False
     def calibrate_pose_start(self, name):
-        if not os.path.exists(f"calibration/{name}"):
-            os.mkdir(f"calibration/{name}")
-        self.VideoWriter.open(f"calibration/{name}/{name}_pose.mp4", self.fourcc, 30, (self.frame_width,self.frame_height))
+        #if not os.path.exists(f"calibration/{name}"):
+        # os.mkdir(f"calibration/{name}")
+        #self.VideoWriter.open(f"calibration/{name}/{name}_pose.mp4", self.fourcc, 30, (self.frame_width,self.frame_height))
         self.calibrate_pose = True
     def calibrate_pose_stop(self, name):
-        self.VideoWriter.release()
+        #self.VideoWriter.release()
         self.calibrate_pose = False
         self.calibration_samples[name] = {"neutral": self.neutral_signals, "pose": self.pose_signals}
     #####
