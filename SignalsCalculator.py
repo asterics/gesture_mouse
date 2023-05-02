@@ -160,8 +160,8 @@ class SignalsCalculater:
         l_smile = self.cross_cross_ratio(landmarks, [216, 207, 214, 212, 206, 92])
         r_smile = self.cross_cross_ratio(landmarks, [436, 427, 434, 432, 426, 322])
         smile = 0.5 * (l_smile + r_smile)
-        nose_length = np.linalg.norm(landmarks[8,:]-landmarks[1,:])
-
+        nose_length = np.linalg.norm(landmarks[10,:]-landmarks[9,:])
+        eye_distance = np.linalg.norm(landmarks[33, :] - landmarks[263, :])
         # TODO better check and logic
 
 
@@ -180,9 +180,8 @@ class SignalsCalculater:
 
         if len(labels) > 0:
             ear_values = np.array(self.eye_aspect_ratio_batch(landmarks, self.ear_indices)).reshape(1, -1)
-            ear_values = normalize(ear_values / nose_length)
+            ear_values = normalize(ear_values/(nose_length*eye_distance))
             reg_result = linear_model.predict(ear_values)
-            print(reg_result)
             for i, label in enumerate(labels):
                 if label == "neutral":
                     continue
@@ -197,8 +196,9 @@ class SignalsCalculater:
         landmarks = landmarks[:, :2]
 
         ear_values = self.eye_aspect_ratio_batch(landmarks, indices=self.ear_indices)
-        nose_length = np.linalg.norm(landmarks[8, :] - landmarks[1,:])
-        return ear_values/nose_length
+        forehead_length = np.linalg.norm(landmarks[10, :] - landmarks[9,:])
+        eye_distance = np.linalg.norm(landmarks[33,:] - landmarks[263,:])
+        return ear_values/(forehead_length*eye_distance)
 
     def process_neutral(self, landmarks):
         pass
