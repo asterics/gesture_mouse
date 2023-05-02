@@ -478,6 +478,8 @@ class AddSignalDialog(QtWidgets.QDialog):
         self.recording_neutral = True
         self.demo.calibrate_neutral_start(name)
         self.neutral_timer.start()
+        self.setStyleSheet("background-color:rgb(255,0,0)")
+
 
     def record_gesture(self):
         # TODO: save videos to create dataset?
@@ -489,12 +491,14 @@ class AddSignalDialog(QtWidgets.QDialog):
         self.recording_neutral = False
         self.recording_max_pose = True
         self.pose_timer.start()
+        self.setStyleSheet("background-color:rgb(0,0,255)")
 
     def finish_recording(self):
         name = self.new_name.text()
         self.recording_max_pose = False
         self.demo.calibrate_pose_stop(name)
         self.do_action_label.setText("Finished")
+        self.setStyleSheet("")
 
 
 class DebugVisualizetion(QtWidgets.QWidget):
