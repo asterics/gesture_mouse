@@ -192,7 +192,6 @@ class SignalsCalculater:
         return signals
 
     def process_ear(self, landmarks):
-        rvec, tvec = self.pnp_head_pose(landmarks)
         landmarks = landmarks * np.array((self.frame_size[0], self.frame_size[1],
                                           self.frame_size[0]))  # TODO: maybe move denormalization into methods
         landmarks = landmarks[:, :2]
