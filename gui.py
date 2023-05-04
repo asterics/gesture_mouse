@@ -389,11 +389,11 @@ class AddSignalDialog(QtWidgets.QDialog):
         self.do_action_label = QtWidgets.QLabel()
         self.neutral_timer = QtCore.QTimer(self)
         self.neutral_timer.setSingleShot(True)
-        self.neutral_timer.setInterval(4000)
+        self.neutral_timer.setInterval(5000)
 
         self.pose_timer = QtCore.QTimer(self)
         self.pose_timer.setSingleShot(True)
-        self.pose_timer.setInterval(4000)
+        self.pose_timer.setInterval(5000)
 
         ## Webcam Image
         self.webcam_label = QtWidgets.QLabel()
@@ -478,7 +478,7 @@ class AddSignalDialog(QtWidgets.QDialog):
         self.recording_neutral = True
         self.demo.calibrate_neutral_start(name)
         self.neutral_timer.start()
-        self.setStyleSheet("background-color:rgb(255,0,0)")
+        self.setStyleSheet("background-color:rgb(18,102,80)")
 
 
     def record_gesture(self):
@@ -491,7 +491,7 @@ class AddSignalDialog(QtWidgets.QDialog):
         self.recording_neutral = False
         self.recording_max_pose = True
         self.pose_timer.start()
-        self.setStyleSheet("background-color:rgb(0,0,255)")
+        self.setStyleSheet("background-color:rgb(96,70,8)")
 
     def finish_recording(self):
         name = self.new_name.text()

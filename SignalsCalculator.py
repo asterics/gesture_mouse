@@ -119,26 +119,25 @@ class SignalsCalculater:
         self.frame_size = frame_size
         #####
         self.random_ear_indices = np.random.choice(468, (10, 6), replace=False)
-        self.ear_indices = np.array([
-            [78, 81, 311, 308, 402, 178],  # mouth inner
-            [61, 39, 269, 291, 405, 181],  # mouth outer
-            [57, 39, 269, 287, 405, 181],  # mouth outer fixed
-            [17, 15, 12, 0, 40, 91],  # mouth left
-            [17, 15, 12, 0, 270, 291],  # mouth right
-            [33, 160, 158, 133, 153, 144],  # left eye
-            [362, 385, 387, 263, 373, 380],  # right eye
-            [49, 186, 216, 205, 203, 165],  # cheeck left upper
-            [91, 43, 202, 211, 194, 182],  # cheeck left lower
-            [270, 391, 423, 425, 436, 410],  # cheeck right upper
-            [321, 273, 422, 431, 418, 406],  # cheeck right lower
-            [425, 266, 329, 348, 347, 280],  # upper cheeck right
-            [205, 50, 118, 119, 100, 36],  # upper cheeck left
-            [4, 51, 196, 168, 419, 281],  # nose vert
-            [218, 220, 275, 438, 274, 237],  # nose hor
-            [46, 53, 65, 55, 222, 225],  # left eyebrow
-            [276, 283, 295, 285, 442, 444],  # right eyebrow
-            [66, 108, 337, 296, 336, 107],  # between eyebrows
-            # [], # right eyebrow inner
+        self.ear_indices = np.array([    #ear_indice[:,:6]:vertex index, ear_indices[:,6:9]:normal, ear_indices[:,9] area
+            [78, 81, 311, 308, 402, 178, 0., -0.1906561, -0.40034158, 1.8274426314614112], # mouth inner
+            [61, 39, 269, 291, 405, 181,  0., 0.08793061, -0.4217718 , 6.965312397209321],  # mouth outer
+            [57, 39, 269, 287, 405, 181, -1.38777878e-17,  9.03058640e-02, -4.45348249e-01, 7.9764583345578925], # mouth outer fixed
+            [17, 15, 12, 0, 40, 91, 0.15523308, -0.10622105,  0.44505134, 3.115830982338437],  # mouth left
+            [17, 15, 12, 0, 270, 291, 0.17388527,  0.16740425, -0.40149569, 3.4556381580062356], # mouth right
+            [33, 160, 158, 133, 153, 144, -0.09720521,  0.0714113 , -0.47136507, 1.1367722762253367],  # left eye
+            [362, 385, 387, 263, 373, 380,  0.09730816,  0.07140773, -0.47134993, 1.1367719391562168], # right eye
+            [40, 186, 216, 205, 203, 165, -0.23456783,  0.00322106, -0.43405604, 3.960626388572969],  # cheeck left upper
+            [91, 43, 202, 211, 194, 182, 0.25866352, -0.04603036,  0.4230459, 2.9545777904087633], # cheeck left lower
+            [270, 391, 423, 425, 436, 410, 0.23379701, -0.00649398, -0.43399638, 3.960051990701081],  # cheeck right upper
+            [321, 273, 422, 431, 418, 406, 0.25866352,  0.04603036, -0.4230459, 2.9545777904087633], # cheeck right lower
+            [425, 266, 329, 348, 347, 280, 0.18473214, -0.09978947, -0.4516154, 4.180198480141474], # upper cheeck right
+            [205, 50, 118, 119, 100, 36, -0.18428129, -0.09857468, -0.4524286, 4.175765494555663], # upper cheeck left
+            [4, 51, 196, 168, 419, 281,  0.        , -0.2754948 , -0.41623592, 3.015552169786011], # nose vert
+            [218, 220, 275, 438, 274, 237, -0.07362273,  0.05102245, -0.38420666, 1.2001167586923467], # nose hor
+            [46, 53, 65, 55, 222, 225, -0.17137895,  0.23102974, -0.40053643, 3.0242659712461393], # left eyebrow
+            [276, 283, 295, 285, 442, 444, -0.16176268, -0.22153086,  0.40675938, 2.60853924624981] , # right eyebrow
+            [66, 108, 337, 296, 336, 107, -3.46944695e-18, -1.12986826e-01, -4.81997983e-01, 7.172903919610362] # between eyebrows
         ])
 
     def process(self, landmarks, linear_model:MultiOutputRegressor, labels, scaler):
@@ -149,7 +148,9 @@ class SignalsCalculater:
 
         r = Rotation.from_rotvec(np.squeeze(rvec))
 
-        rotationmat = r.as_matrix()
+        #TODO: Calculate stuff if head is tilted too much (yaw and pitch), or supress signals. Maybe error is better then unwanted actions
+
+        rotmat, _ = cv2.Rodrigues(rvec)
         angles = r.as_euler("xyz", degrees=True)
         # normalized_landmarks = rotationmat.T@(landmarks-tvec.T)
         jaw_open = self.get_jaw_open(landmarks)
@@ -160,7 +161,7 @@ class SignalsCalculater:
         l_smile = self.cross_cross_ratio(landmarks, [216, 207, 214, 212, 206, 92])
         r_smile = self.cross_cross_ratio(landmarks, [436, 427, 434, 432, 426, 322])
         smile = 0.5 * (l_smile + r_smile)
-        nose_length = np.linalg.norm(landmarks[10,:]-landmarks[9,:])
+        forehead_length = np.linalg.norm(landmarks[10,:]-landmarks[8,:])
         eye_distance = np.linalg.norm(landmarks[33, :] - landmarks[263, :])
         # TODO better check and logic
 
@@ -180,7 +181,12 @@ class SignalsCalculater:
 
         if len(labels) > 0:
             ear_values = np.array(self.eye_aspect_ratio_batch(landmarks, self.ear_indices)).reshape(1, -1)
-            ear_values = normalize(ear_values/(nose_length*eye_distance))
+            normals = self.ear_indices[:, 6:9]
+            rotated_normal = np.matmul(rotmat, normals.T).T
+            area = self.ear_indices[:, 9]
+            correction_factor = abs(1 / (area * rotated_normal[:, 2]))
+            ear_values=ear_values*correction_factor
+            ear_values = scaler.transform(ear_values)
             reg_result = linear_model.predict(ear_values)
             for i, label in enumerate(labels):
                 if label == "neutral":
@@ -191,14 +197,23 @@ class SignalsCalculater:
         return signals
 
     def process_ear(self, landmarks):
+        rvec, tvec = self.pnp_head_pose(landmarks)
+
+        rotmat, _ = cv2.Rodrigues(rvec)
+
         landmarks = landmarks * np.array((self.frame_size[0], self.frame_size[1],
                                           self.frame_size[0]))  # TODO: maybe move denormalization into methods
         landmarks = landmarks[:, :2]
 
         ear_values = self.eye_aspect_ratio_batch(landmarks, indices=self.ear_indices)
-        forehead_length = np.linalg.norm(landmarks[10, :] - landmarks[9,:])
-        eye_distance = np.linalg.norm(landmarks[33,:] - landmarks[263,:])
-        return ear_values/(forehead_length*eye_distance)
+        normals = self.ear_indices[:,6:9]
+        rotated_normal = np.matmul(rotmat,normals.T).T
+        rotation_factor = rotated_normal[:,2]
+        area = self.ear_indices[:,9]
+        correction_factor = abs(1/(area*rotation_factor))
+        #forehead_length = np.linalg.norm(landmarks[10, :] - landmarks[8,:])
+        #eye_distance = np.linalg.norm(landmarks[33,:] - landmarks[263,:])
+        return ear_values*correction_factor
 
     def process_neutral(self, landmarks):
         pass
@@ -286,7 +301,7 @@ class SignalsCalculater:
         :param indices: indices of 5 landmarks to use
         :return: cross_ratio of the 5 points (is invariant under projective transformations
         """
-        assert len(indices) == 5
+#        assert len(indices) == 5
         p1, p2, p3, p4, p5 = landmarks[indices, :2]
         m124 = np.ones((3, 3))
         m124[:2, 0] = p1
@@ -314,7 +329,7 @@ class SignalsCalculater:
         :param indices: indices of 6 landmarks to use
         :return: cross cross ratio
         """
-        assert len(indices) == 6
+       # assert len(indices) == 6
 
         return self.five_point_cross_ratio(landmarks, [indices[0]] + indices[2:6]) / self.five_point_cross_ratio(
             landmarks, [indices[1]] + indices[2:6])
@@ -347,8 +362,9 @@ class SignalsCalculater:
         P1, P4 are the eye corners, P2 is opposite to P6 and P3 is opposite to P5
         :return: ear = (P2_P6 + P3_P5) / (2.0 * P1_P4)
         """
-        assert indices.shape[1] == 6
-        p2_p6 = np.linalg.norm(landmarks[indices[:, 1]] - landmarks[indices[:, 5]], axis=1)
-        p3_p5 = np.linalg.norm(landmarks[indices[:, 2]] - landmarks[indices[:, 4]], axis=1)
-        p1_p4 = np.linalg.norm(landmarks[indices[:, 0]] - landmarks[indices[:, 3]], axis=1)
+        assert indices.shape[1] == 10
+        p2_p6 = np.linalg.norm(landmarks[indices[:, 1].astype(int)] - landmarks[indices[:, 5].astype(int)], axis=1)
+        p3_p5 = np.linalg.norm(landmarks[indices[:, 2].astype(int)] - landmarks[indices[:, 4].astype(int)], axis=1)
+        p1_p4 = np.linalg.norm(landmarks[indices[:, 0].astype(int)] - landmarks[indices[:, 3].astype(int)], axis=1)
         return (p2_p6 + p3_p5) / (2.0 * p1_p4)
+

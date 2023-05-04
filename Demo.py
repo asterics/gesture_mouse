@@ -1,4 +1,5 @@
 import dataclasses
+import random
 import time
 from threading import Thread
 import socket
@@ -16,16 +17,21 @@ import numpy as np
 import sklearn
 from PySide6.QtCore import QThread
 import keyboard
-from sklearn.preprocessing import OneHotEncoder, StandardScaler, Normalizer
+
+from sklearn.preprocessing import OneHotEncoder, StandardScaler, Normalizer, MinMaxScaler
 from sklearn.linear_model import Ridge, Lasso, MultiTaskLassoCV, LassoLarsIC, LogisticRegression, RidgeClassifier
 from sklearn.svm import SVR, SVC, LinearSVR
 from sklearn.ensemble import GradientBoostingRegressor, GradientBoostingClassifier
 from sklearn.multioutput import MultiOutputRegressor, MultiOutputClassifier, RegressorChain
 from sklearn.kernel_ridge import KernelRidge
 from sklearn.neural_network import MLPRegressor, MLPClassifier
+from sklearn.neighbors import KNeighborsRegressor
 from sklearn.preprocessing import normalize
+import sklearn.preprocessing as preprocessing
+from sklearn.metrics.pairwise import cosine_similarity, chi2_kernel, cosine_distances
 from sklearn.pipeline import Pipeline
 
+from scipy.spatial.transform import Rotation
 
 import Mouse
 import DrawingDebug
@@ -40,7 +46,7 @@ from pyLiveLinkFace import PyLiveLinkFace, FaceBlendShape
 mp_face_mesh = mp.solutions.face_mesh
 mp_face_mesh_connections = mp.solutions.face_mesh_connections
 
-colors = [(166,206,227),(31,120,180),(178,223,138),(51,160,44),(251,154,153),(227,26,28),(253,191,111),(255,127,0),(202,178,214),(106,61,154),(255,255,153),(177,89,40), (0,255,0), (0,0,255), (0,255,255), (255,255,255)]
+colors = [(166,206,227),(31,120,180),(178,223,138),(51,160,44),(151,154,53),(227,26,28),(153,91,111),(255,127,0),(202,178,214),(106,61,154),(255,255,153),(177,89,40), (0,255,0), (0,0,255), (0,255,255), (255,255,255)]
 
 class Demo(QThread):
     def __init__(self):
@@ -86,9 +92,9 @@ class Demo(QThread):
         self.calibrate_pose: bool = False
 
         self.onehot_encoder = OneHotEncoder(sparse_output=False, dtype=float)
+        self.scaler = Normalizer()
         self.linear_model = MultiOutputRegressor(SVR())
-        #self.linear_model = MLPClassifier((100,), early_stopping=True, verbose=True)
-        self.scaler = StandardScaler()
+        #self.linear_model = KNeighborsRegressor(metric="cosine")
         self.linear_signals: List[str] = []
 
         # add hotkey
@@ -100,8 +106,6 @@ class Demo(QThread):
         #keyboard.on_press_key("r", lambda e: self.disable_gesture_mouse())
         #keyboard.on_release_key("r", lambda e: self.enable_gesture_mouse())
         # add mouse_events
-        self.raw_signal = SignalsCalculator.SignalsResult()
-        self.transformed_signals = SignalsCalculator.SignalsResult()
         self.signals: Dict[str, Signal] = {}
 
         self.disable_gesture_mouse()
@@ -180,7 +184,7 @@ class Demo(QThread):
             black = np.zeros((self.frame_height, self.frame_height, 3)).astype(np.uint8)
             self.annotated_landmarks = DrawingDebug.draw_landmarks_fast(np_landmarks, image)
             for i, indices in enumerate(self.signal_calculator.ear_indices):
-                self.annotated_landmarks = DrawingDebug.draw_landmarks_fast(np_landmarks, self.annotated_landmarks, index=indices, color=colors[i%len(colors)])
+                self.annotated_landmarks = DrawingDebug.draw_landmarks_fast(np_landmarks, self.annotated_landmarks, index=indices[:6].astype(int), color=colors[i%len(colors)])
 
             self.fps = self.fps_counter()
 
@@ -200,7 +204,7 @@ class Demo(QThread):
                     self.mouse.process_signal(self.signals)
 
     def __start_camera(self):
-        self.cam_cap = cv2.VideoCapture(self.webcam_address)
+        self.cam_cap = cv2.VideoCapture(0)
         #self.cam_cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.frame_width)
         #self.cam_cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.frame_height)
         #self.cam_cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P',
@@ -391,14 +395,14 @@ class Demo(QThread):
                     label_array.extend(["neutral"]*len(data))
                 else:
                     label_array.extend([pose_name] * len(data))
-        data_array = normalize(np.array(data_array))
+        data_array = np.array(data_array)
         label_array = np.array(label_array).reshape(-1,1)
 
         self.onehot_encoder.fit(label_array)
         y = self.onehot_encoder.transform(label_array)
 
-        #self.scaler.fit(data_array)
-        #data_array=self.scaler.transform(data_array)
+        self.scaler.fit(data_array)
+        data_array=self.scaler.transform(data_array)
 
         self.signals[name] = Signal(name)
         self.signals[name].set_higher_threshold(1.)
@@ -409,10 +413,8 @@ class Demo(QThread):
         new_linear_model.fit(data_array, y)
         self.linear_model = new_linear_model
         self.linear_signals = self.onehot_encoder.categories_[0]
-        print(self.linear_signals)
         #print(self.linear_model.classes_)
         #print(self.onehot_encoder.inverse_transform(self.linear_model.classes_))
-
 
 if __name__ == '__main__':
     demo = Demo()

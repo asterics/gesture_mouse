@@ -1,11 +1,7 @@
 import numpy as np
-import cv2
-import mediapipe as mp
+import open3d as o3d
 
-
-class PnPHeadPose:
-    def __init__(self):
-        self.canonical_metric_landmarks = np.array(
+canonical_metric_landmarks = np.array(
             [0.000000, -3.406404, 5.979507, 0.499977, 0.652534, 0.000000, -1.126865, 7.475604, 0.500026, 0.547487,
              0.000000,
              -2.089024, 6.058267, 0.499974, 0.602372, -0.463928, 0.955357, 6.633583, 0.482113, 0.471979, 0.000000,
@@ -431,73 +427,52 @@ class PnPHeadPose:
              2.467144, 4.203800, 0.560698, 0.395332, 1.031362, 2.382663, 4.615849, 0.549756, 0.399751, 4.253081,
              2.772296,
              3.315305, 0.710288, 0.368253, 4.530000, 2.910000, 3.339685, 0.723330, 0.363373])
-        self.procrustes_landmark_basis = [(4, 0.070909939706326), (6, 0.032100144773722), (10, 0.008446550928056),
-                                          (33, 0.058724168688059), (54, 0.007667080033571), (67, 0.009078059345484),
-                                          (117, 0.009791937656701), (119, 0.014565368182957), (121, 0.018591361120343),
-                                          (127, 0.005197994410992), (129, 0.120625205338001), (132, 0.005560018587857),
-                                          (133, 0.05328618362546), (136, 0.066890455782413), (143, 0.014816547743976),
-                                          (147, 0.014262833632529), (198, 0.025462191551924), (205, 0.047252278774977),
-                                          (263, 0.058724168688059), (284, 0.007667080033571), (297, 0.009078059345484),
-                                          (346, 0.009791937656701), (348, 0.014565368182957), (350, 0.018591361120343),
-                                          (356, 0.005197994410992), (358, 0.120625205338001), (361, 0.005560018587857),
-                                          (362, 0.05328618362546), (365, 0.066890455782413), (372, 0.014816547743976),
-                                          (376, 0.014262833632529), (420, 0.025462191551924), (425, 0.047252278774977)]
-        self.canonical_metric_landmarks = np.reshape(self.canonical_metric_landmarks,
-                                                     (self.canonical_metric_landmarks.shape[0] // 5, 5))
-        self.canonical_metric_landmarks = self.canonical_metric_landmarks[:, :3]
 
-        # Rotate face around
-        rotate_mat = np.asarray([[1, 0, 0], [0, -1, 0], [0, 0, -1]], dtype=np.float64)
-        self.canonical_metric_landmarks = np.matmul(self.canonical_metric_landmarks.reshape(-1, 3), rotate_mat)
+canonical_metric_landmarks = np.reshape(canonical_metric_landmarks,
+                                             (canonical_metric_landmarks.shape[0] // 5, 5))
+canonical_metric_landmarks = canonical_metric_landmarks[:, :3]
 
-        #self.points_idx = [4, 6, 10, 33, 54, 67, 117, 119, 121, 127, 129, 132, 133, 136, 143, 147, 198, 205, 263, 284, 297, 346, 348, 350, 356, 358, 361, 362, 365, 372, 376, 420, 425]
-        #self.points_idx.append([33, 263, 1, 61, 291, 199])
-        self.points_idx = [33,263,1,61,291,199]
-        self.points_idx = list(set(self.points_idx))
-        self.points_idx.sort()
+# Rotate face around
+rotate_mat = np.asarray([[1, 0, 0], [0, -1, 0], [0, 0, -1]], dtype=np.float64)
+canonical_metric_landmarks = np.matmul(canonical_metric_landmarks.reshape(-1, 3), rotate_mat)
 
+ear_indices = np.array([
+            [78, 81, 311, 308, 402, 178],  # mouth inner
+            [61, 39, 269, 291, 405, 181],  # mouth outer
+            [57, 39, 269, 287, 405, 181],  # mouth outer fixed
+            [17, 15, 12, 0, 40, 91],  # mouth left
+            [17, 15, 12, 0, 270, 291],  # mouth right
+            [33, 160, 158, 133, 153, 144],  # left eye
+            [362, 385, 387, 263, 373, 380],  # right eye
+            [40, 186, 216, 205, 203, 165],  # cheeck left upper
+            [91, 43, 202, 211, 194, 182],  # cheeck left lower
+            [270, 391, 423, 425, 436, 410],  # cheeck right upper
+            [321, 273, 422, 431, 418, 406],  # cheeck right lower
+            [425, 266, 329, 348, 347, 280],  # upper cheeck right
+            [205, 50, 118, 119, 100, 36],  # upper cheeck left
+            [4, 51, 196, 168, 419, 281],  # nose vert
+            [218, 220, 275, 438, 274, 237],  # nose hor
+            [46, 53, 65, 55, 222, 225],  # left eyebrow
 
-        self.canoncial_metric_landmarks_pnp = self.canonical_metric_landmarks[self.points_idx, :]
-        self.LEFT_EYE = {idx for connection in mp.solutions.face_mesh.FACEMESH_LEFT_EYE for idx in connection}
-        self.RIGHT_EYE = {idx for connection in mp.solutions.face_mesh.FACEMESH_RIGHT_EYE for idx in connection}
-        self.eye_idx = list(self.LEFT_EYE.union(self.RIGHT_EYE))
+            [276, 283, 295, 285, 442, 444],  # right eyebrow
 
-    def fit_func(self, landmarks, camera_parameters):
-        fx, fy, cx, cy = camera_parameters
-        landmarks = landmarks[self.points_idx, :]
-        # Initial fit
-        camera_matrix = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]], dtype=np.float64)
-        success, rvec, tvec, inliers = cv2.solvePnPRansac(self.canoncial_metric_landmarks_pnp, landmarks,
-                                                          camera_matrix, None, flags=cv2.SOLVEPNP_EPNP)
-
-        # Second fit for higher accuracy
-        success, rvec, tvec = cv2.solvePnP(self.canoncial_metric_landmarks_pnp, landmarks, camera_matrix, None,
-                                           rvec=rvec, tvec=tvec, useExtrinsicGuess=True, flags=cv2.SOLVEPNP_ITERATIVE)
-
-        return rvec, tvec
-
-    def drawPose(self, img, r, t, cam, dist):
-        modelAxes = np.array([
-            np.array([0., -20., 0.]).reshape(1, 3),
-            np.array([50., -20., 0.]).reshape(1, 3),
-            np.array([0., -70., 0.]).reshape(1, 3),
-            np.array([0., -20., -50.]).reshape(1, 3)
+            [66, 108, 337, 296, 336, 107],  # between eyebrows
+            # [], # right eyebrow inner
         ])
 
-        projAxes, jac = cv2.projectPoints(modelAxes, r, t, cam, dist)
+print("[")
+a = []
+for i, indices in enumerate(ear_indices):
 
-        cv2.line(img, (int(projAxes[0, 0, 0]), int(projAxes[0, 0, 1])),
-                 (int(projAxes[1, 0, 0]), int(projAxes[1, 0, 1])),
-                 (0, 255, 255), 2)
-        cv2.line(img, (int(projAxes[0, 0, 0]), int(projAxes[0, 0, 1])),
-                 (int(projAxes[2, 0, 0]), int(projAxes[2, 0, 1])),
-                 (255, 0, 255), 2)
-        cv2.line(img, (int(projAxes[0, 0, 0]), int(projAxes[0, 0, 1])),
-                 (int(projAxes[3, 0, 0]), int(projAxes[3, 0, 1])),
-                 (255, 255, 0), 2)
-
-    def project_model(self, rvec, tvec, camera_parameters):
-        fx, fy, cx, cy = camera_parameters
-        camera_matrix = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]], dtype=np.float64)
-        points, _ = cv2.projectPoints(self.canonical_metric_landmarks, rvec, tvec, camera_matrix, None)
-        return points.squeeze(1)
+    subset = canonical_metric_landmarks[indices]
+    triangles = [[0,5,1], [1,5,2], [2,5,4],[2,4,3]]
+    mesh = o3d.geometry.TriangleMesh(o3d.utility.Vector3dVector(subset),o3d.utility.Vector3iVector(triangles))
+    mesh.compute_vertex_normals()
+    mesh.compute_triangle_normals()
+    area = mesh.get_surface_area()
+    normals = np.asarray(mesh.triangle_normals)
+    mean_normal = np.mean(normals, axis=0)
+    mean_normal = mean_normal/np.linalg.norm(normals)
+    a.append((indices,mean_normal,area))
+    #o3d.visualization.draw(mesh)
+print(*a, sep="\n")
