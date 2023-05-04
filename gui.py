@@ -55,7 +55,7 @@ class SignalVis(QtWidgets.QWidget):
         self.index = 0
 
     def add_line(self, name: str):
-        pen = pg.mkPen(color=pg.intColor(self.index, 8, 2))
+        pen = pg.mkPen(color=pg.intColor(self.index, 8, 2), width=2)
         data_line = self.plot_area.plot(x=[90, -90] * 50, y=[0] * 100, pen=pen)
         plot_handler = PlotLine(pen, data_line)
         self.lines[name] = plot_handler

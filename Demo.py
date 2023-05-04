@@ -401,8 +401,8 @@ class Demo(QThread):
         self.onehot_encoder.fit(label_array)
         y = self.onehot_encoder.transform(label_array)
 
-        self.scaler.fit(data_array)
-        data_array=self.scaler.transform(data_array)
+        #self.scaler.fit(data_array)
+        #data_array=self.scaler.transform(data_array)
 
         self.signals[name] = Signal(name)
         self.signals[name].set_higher_threshold(1.)

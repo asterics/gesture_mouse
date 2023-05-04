@@ -186,7 +186,7 @@ class SignalsCalculater:
             area = self.ear_indices[:, 9]
             correction_factor = abs(1 / (area * rotated_normal[:, 2]))
             ear_values=ear_values*correction_factor
-            ear_values = scaler.transform(ear_values)
+            #ear_values = scaler.transform(ear_values)
             reg_result = linear_model.predict(ear_values)
             for i, label in enumerate(labels):
                 if label == "neutral":
