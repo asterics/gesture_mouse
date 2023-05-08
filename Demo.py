@@ -93,8 +93,9 @@ class Demo(QThread):
 
         self.onehot_encoder = OneHotEncoder(sparse_output=False, dtype=float)
         self.scaler = Normalizer()
-        self.linear_model = MultiOutputRegressor(SVR())
-        #self.linear_model = KNeighborsRegressor(metric="cosine")
+        self.linear_model = MultiOutputRegressor(SVR(C=0.1))
+        #self.linear_model = MultiOutputRegressor(KNeighborsRegressor(metric="cosine"))
+        self.linear_model = MultiOutputRegressor(GradientBoostingRegressor(max_features=6,verbose=1,loss="huber"))
         self.linear_signals: List[str] = []
 
         # add hotkey
@@ -409,7 +410,7 @@ class Demo(QThread):
         self.signals[name].set_lower_threshold(0.)
         self.signals[name].set_filter_value(0.0001)
 
-
+        data_array = np.tanh(data_array)
         new_linear_model.fit(data_array, y)
         self.linear_model = new_linear_model
         self.linear_signals = self.onehot_encoder.categories_[0]

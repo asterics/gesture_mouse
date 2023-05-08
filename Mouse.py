@@ -10,6 +10,7 @@ class MouseMode(Enum):
     ABSOLUTE = 1
     RELATIVE = 2
     JOYSTICK = 3
+    HYBRID = 4
 
     def next(self):
         cls = self.__class__
@@ -51,6 +52,8 @@ class Mouse:
             self.move_relative(pitch, yaw)
         elif self.mode == MouseMode.JOYSTICK:
             self.joystick_mouse(pitch, yaw)
+        elif self.mode == MouseMode.HYBRID:
+            self.hybrid_mouse_joystick(pitch,yaw)
 
     def move_relative(self, pitch, yaw):
 
@@ -86,10 +89,10 @@ class Mouse:
 
     def joystick_mouse(self, pitch, yaw):
         pitch = 50 * (pitch - 0.5)
-        yaw = 50 * (yaw - 0.5)
+        yaw = -50 * (yaw - 0.5)
         mouse_speed_co = 1.1
         mouse_speed_max = 25
-        acceleration = 3
+        acceleration = 2
 
         threshold = (-2, 2, -0, 2)
 
@@ -112,6 +115,46 @@ class Mouse:
 
         # print(text)
         self.mouse_controller.move(mouse_speed_x, mouse_speed_y)
+
+    def hybrid_mouse_joystick(self, pitch:float, yaw:float) -> None:
+        dead_zone = 2.5
+        fine_zone = 9.
+        mouse_speed_co = 1.1
+        mouse_speed_max = 25
+        acceleration = 2
+
+        pitch = -50 * (pitch - 0.5)
+        yaw = 50 * (yaw - 0.5)
+
+        if abs(yaw) < dead_zone and abs(pitch) < dead_zone:
+            return
+        if abs(yaw) < fine_zone and abs(pitch) < fine_zone:
+            self.x = self.x + 0.25*yaw
+            self.y = self.y - 0.25*pitch
+            self.mouse_controller.position = (self.x,self.y)
+            return
+
+        print(abs(yaw),abs(pitch))
+        mouse_speed_x = mouse_speed_y = 0
+        if yaw < 0:
+            text = "Looking Left"
+            mouse_speed_x = -1 * min(math.pow(mouse_speed_co, abs(yaw * acceleration)), mouse_speed_max) + 1
+        if yaw > 0:
+            text = "Looking Right"
+            mouse_speed_x = min(math.pow(mouse_speed_co, abs(yaw * acceleration)), mouse_speed_max) - 1
+        if pitch < 0:
+            text = "Looking Down"
+            mouse_speed_y = min(math.pow(mouse_speed_co, abs(pitch * acceleration)), mouse_speed_max) + 1
+        if pitch > 0:
+            text = "Looking Up"
+            mouse_speed_y = -1 * min(math.pow(mouse_speed_co, abs(pitch * acceleration)), mouse_speed_max) - 1
+        self.x, self.y = self.mouse_controller.position
+        self.x = self.x + mouse_speed_x
+        self.y = self.y + mouse_speed_y
+
+        self.mouse_controller.move(mouse_speed_x, mouse_speed_y)
+
+
 
     def update(self, x, y):
         self.x = x

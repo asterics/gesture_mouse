@@ -232,7 +232,7 @@ class SignalsCalculater:
         # Initial fit
         camera_matrix = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]], dtype=np.float64)
         success, rvec, tvec, inliers = cv2.solvePnPRansac(landmarks_3d, screen_landmarks,
-                                                          camera_matrix, None, flags=cv2.SOLVEPNP_EPNP)
+                                                          camera_matrix, None, flags=cv2.SOLVEPNP_EPNP, reprojectionError=1)
         # Second fit for higher accuracy
         success, rvec, tvec = cv2.solvePnP(landmarks_3d, screen_landmarks, camera_matrix, None,
                                            rvec=rvec, tvec=tvec, useExtrinsicGuess=True, flags=cv2.SOLVEPNP_ITERATIVE)
