@@ -64,7 +64,8 @@ class Demo(QThread):
 
         self.UDP_PORT = 11111
         self.socket = None
-        self.webcam_address = 0
+        self.webcam_dev_nr = 0
+        self.vid_source_file=None
 
         self.face_mesh = mp_face_mesh.FaceMesh(static_image_mode=False,
                max_num_faces=1,
@@ -204,7 +205,10 @@ class Demo(QThread):
                     self.mouse.process_signal(self.signals)
 
     def __start_camera(self):
-        self.cam_cap = cv2.VideoCapture(0)
+        if self.vid_source_file:
+            self.cam_cap = cv2.VideoCapture(self.vid_source_file)
+        else:
+            self.cam_cap = cv2.VideoCapture(self.webcam_dev_nr)
         #self.cam_cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.frame_width)
         #self.cam_cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.frame_height)
         #self.cam_cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P',
@@ -224,8 +228,28 @@ class Demo(QThread):
             self.socket.close()
             self.socket = None
 
+    def stop_tracking(self):
+        self.stop()
+
+    def start_tracking(self):
+        self.start()
+
     def stop(self):
+        print("Stopping tracking..")
         self.is_running = False
+        #self.__stop_camera()
+        #self.__stop_socket()
+
+    def update_webcam_device_selection(self,device_nr):
+        print(f"Setting camera with device nr {device_nr}")
+        self.webcam_dev_nr=int(device_nr)
+        # unset video source file for now.
+        # TODO: Use enum to have radio logic between the 3 modes.
+        self.vid_source_file=None
+
+    def update_webcam_video_file_selection(self,vid_source_file):
+        print(f"Setting camera with video file {vid_source_file}")
+        self.vid_source_file=vid_source_file
 
     def disable_gesture_mouse(self):
         # Disables gesture mouse and enables normal mouse input
