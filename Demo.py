@@ -1,6 +1,7 @@
 import dataclasses
 import random
 import time
+import uuid
 from threading import Thread
 import socket
 import json
@@ -9,6 +10,7 @@ import os
 from typing import List
 from pathlib import Path
 import pickle
+import csv
 
 import PIL.Image
 import mediapipe as mp
@@ -17,6 +19,7 @@ import numpy as np
 import sklearn
 from PySide6.QtCore import QThread
 import keyboard
+import pynput
 
 from sklearn.preprocessing import OneHotEncoder, StandardScaler, Normalizer, MinMaxScaler
 from sklearn.linear_model import Ridge, Lasso, MultiTaskLassoCV, LassoLarsIC, LogisticRegression, RidgeClassifier
@@ -92,10 +95,10 @@ class Demo(QThread):
         self.calibrate_pose: bool = False
 
         self.onehot_encoder = OneHotEncoder(sparse_output=False, dtype=float)
-        self.scaler = Normalizer()
+        self.scaler = StandardScaler()
         self.linear_model = MultiOutputRegressor(SVR(C=0.1))
         #self.linear_model = MultiOutputRegressor(KNeighborsRegressor(metric="cosine"))
-        self.linear_model = MultiOutputRegressor(GradientBoostingRegressor(max_features=6,verbose=1,loss="huber"))
+        #self.linear_model = MultiOutputRegressor(GradientBoostingRegressor(max_features=6,verbose=1,loss="huber"))
         self.linear_signals: List[str] = []
 
         # add hotkey
@@ -110,6 +113,11 @@ class Demo(QThread):
         self.signals: Dict[str, Signal] = {}
 
         self.disable_gesture_mouse()
+
+        self.write_csv = False
+        self.csv_file_name = "log.csv" #TODO: or select
+        self.csv_writer = csv.writer(open(self.csv_file_name,"w+", newline=""))
+        print(self.csv_file_name)
 
     def run(self):
         self.is_running = True
@@ -156,14 +164,14 @@ class Demo(QThread):
 
 
             # only check videowriter not none? #
+            ear_values = self.signal_calculator.process_ear(np_landmarks)
             if self.calibrate_neutral and success:
-                ear_values = self.signal_calculator.process_ear(np_landmarks)
+
                 #self.VideoWriter.write(image)
                 self.neutral_signals.append(ear_values)
                 #continue
 
             if self.calibrate_pose and success:
-                ear_values = self.signal_calculator.process_ear(np_landmarks)
                 #self.VideoWriter.write(image)
                 self.pose_signals.append(ear_values)
                 #continue
@@ -182,10 +190,43 @@ class Demo(QThread):
             self.mouse.process_signal(self.signals)
 
             # Debug
-            black = np.zeros((self.frame_height, self.frame_height, 3)).astype(np.uint8)
+            #black = np.zeros((self.frame_height, self.frame_height, 3)).astype(np.uint8)
             self.annotated_landmarks = DrawingDebug.draw_landmarks_fast(np_landmarks, image)
             for i, indices in enumerate(self.signal_calculator.ear_indices):
                 self.annotated_landmarks = DrawingDebug.draw_landmarks_fast(np_landmarks, self.annotated_landmarks, index=indices[:6].astype(int), color=colors[i%len(colors)])
+
+            if self.write_csv:
+                gesture="neutral"
+                if keyboard.is_pressed("q"):
+                    gesture="JawOpen"
+                elif keyboard.is_pressed("w"):
+                    gesture="Smile"
+                elif keyboard.is_pressed("e"):
+                    gesture="Frown"
+                elif keyboard.is_pressed("r"):
+                    gesture="CheekPuff"
+                elif keyboard.is_pressed("t"):
+                    gesture="MouthPuck"
+                elif keyboard.is_pressed("z"):
+                    gesture="BlinkLeft"
+                elif keyboard.is_pressed("u"):
+                    gesture="BlinkRight"
+                elif keyboard.is_pressed("i"):
+                    gesture="BrowUp"
+                elif keyboard.is_pressed("o"):
+                    gesture="BrowDown"
+                elif keyboard.is_pressed("p"):
+                    gesture="BrowUpLeft"
+                elif keyboard.is_pressed("a"):
+                    gesture="BrowUpRight"
+                elif keyboard.is_pressed("s"):
+                    gesture="NoseSneer"
+
+                row = [time.time(),*np_landmarks.flatten(), *ear_values.flatten(), gesture]
+                self.csv_writer.writerow(row)
+                print(gesture)
+                print(row)
+
 
             self.fps = self.fps_counter()
 
@@ -201,6 +242,8 @@ class Demo(QThread):
                 for signal_name in self.signals:
                     value = live_link_face.get_blendshape(FaceBlendShape[signal_name])
                     self.signals[signal_name].set_value(value)
+                if self.write_csv:
+                    pass
                 if self.mouse_enabled:
                     self.mouse.process_signal(self.signals)
 
@@ -255,6 +298,9 @@ class Demo(QThread):
 
     def set_filter_landmarks(self, enabled: bool):
         self.filter_landmarks = enabled
+
+    def set_write_csv(self, enabled:bool):
+        self.write_csv = enabled
 
     def toggle_mouse_mode(self):
         self.mouse.toggle_mode()
