@@ -48,10 +48,11 @@ mp_face_mesh_connections = mp.solutions.face_mesh_connections
 
 colors = [(166,206,227),(31,120,180),(178,223,138),(51,160,44),(151,154,53),(227,26,28),(153,91,111),(255,127,0),(202,178,214),(106,61,154),(255,255,153),(177,89,40), (0,255,0), (0,0,255), (0,255,255), (255,255,255)]
 
-class Demo(QThread):
+class Demo(Thread):
     def __init__(self):
         super().__init__()
         self.is_running = False
+        self.is_tracking = False
         self.mouse_enabled = False
         self.mouse_absolute = True
         self.mouse: Mouse.Mouse = Mouse.Mouse()
@@ -114,20 +115,22 @@ class Demo(QThread):
     def run(self):
         self.is_running = True
         while self.is_running:
-            if self.use_mediapipe:
-                self.setup_signals("config/mediapipe_default.json") #TODO: change to latest
-                self.__start_camera()
-                self.__run_mediapipe()
-                self.__stop_camera()
-            else:
-                self.setup_signals("config/iphone_default.json")
-                self.__start_socket()
-                self.__run_livelinkface()
-                self.__stop_socket()
+            if self.is_tracking:
+                if self.use_mediapipe:
+                    self.setup_signals("config/mediapipe_default.json") #TODO: change to latest
+                    self.__start_camera()
+                    self.__run_mediapipe()
+                    self.__stop_camera()
+                else:
+                    self.setup_signals("config/iphone_default.json")
+                    self.__start_socket()
+                    self.__run_livelinkface()
+                    self.__stop_socket()
+            time.sleep(0.5)
 
     def __run_mediapipe(self):
         # TODO: split this up, it's getting crowded
-        while self.is_running and self.cam_cap.isOpened() and self.use_mediapipe:
+        while self.is_running and self.is_tracking and self.cam_cap.isOpened() and self.use_mediapipe:
             success, image = self.cam_cap.read()
             if not success:
                 print("couldn't read frame")
@@ -190,7 +193,7 @@ class Demo(QThread):
             self.fps = self.fps_counter()
 
     def __run_livelinkface(self):
-        while self.is_running and not self.use_mediapipe:
+        while self.is_running and self.is_tracking and not self.use_mediapipe:
             try:
                 data, addr = self.socket.recvfrom(1024)
                 success, live_link_face = PyLiveLinkFace.decode(data)
@@ -229,10 +232,12 @@ class Demo(QThread):
             self.socket = None
 
     def stop_tracking(self):
-        self.stop()
+        print("Stopping tracking..")
+        self.is_tracking = False
 
     def start_tracking(self):
-        self.start()
+        print("Starting tracking..")
+        self.is_tracking = True
 
     def stop(self):
         print("Stopping tracking..")

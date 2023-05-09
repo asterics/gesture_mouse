@@ -557,9 +557,9 @@ class GeneralTab(QtWidgets.QWidget):
         self.debug_window_button.clicked.connect(self.toggle_debug_window)
 
         self.vid_source_start = QtWidgets.QPushButton("Start tracking")
-        self.vid_source_start.clicked.connect(self.demo.start_tracking())
+        self.vid_source_start.clicked.connect(self.demo.start_tracking)
         self.vid_source_stop = QtWidgets.QPushButton("Stop tracking")
-        self.vid_source_stop.clicked.connect(self.demo.stop_tracking())
+        self.vid_source_stop.clicked.connect(self.demo.stop_tracking)
 
         self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.video_source_grp)
