@@ -19,7 +19,7 @@ from PySide6.QtCore import QThread
 import keyboard
 
 from sklearn.preprocessing import OneHotEncoder, StandardScaler, Normalizer, MinMaxScaler
-from sklearn.linear_model import Ridge, Lasso, MultiTaskLassoCV, LassoLarsIC, LogisticRegression, RidgeClassifier
+from sklearn.linear_model import Ridge, Lasso, MultiTaskLassoCV, LassoLarsIC, LogisticRegression, RidgeClassifier, LassoLarsCV
 from sklearn.svm import SVR, SVC, LinearSVR
 from sklearn.ensemble import GradientBoostingRegressor, GradientBoostingClassifier
 from sklearn.multioutput import MultiOutputRegressor, MultiOutputClassifier, RegressorChain
@@ -95,9 +95,9 @@ class Demo(Thread):
 
         self.onehot_encoder = OneHotEncoder(sparse_output=False, dtype=float)
         self.scaler = Normalizer()
-        self.linear_model = MultiOutputRegressor(SVR(C=0.1))
+        self.linear_model = MultiOutputRegressor(SVR())
         #self.linear_model = MultiOutputRegressor(KNeighborsRegressor(metric="cosine"))
-        self.linear_model = MultiOutputRegressor(GradientBoostingRegressor(max_features=6,verbose=1,loss="huber"))
+        #self.linear_model = MultiOutputRegressor(GradientBoostingRegressor(max_features=6,verbose=1,loss="huber"))
         self.linear_signals: List[str] = []
 
         # add hotkey

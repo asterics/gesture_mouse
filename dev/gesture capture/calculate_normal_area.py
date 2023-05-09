@@ -472,7 +472,8 @@ for i, indices in enumerate(ear_indices):
     area = mesh.get_surface_area()
     normals = np.asarray(mesh.triangle_normals)
     mean_normal = np.mean(normals, axis=0)
-    mean_normal = mean_normal/np.linalg.norm(normals)
-    a.append((indices,mean_normal,area))
+    mean_normal = mean_normal/np.linalg.norm(mean_normal)
+    a.append((indices,mean_normal,np.array( [area])))
     #o3d.visualization.draw(mesh)
-print(*a, sep="\n")
+for line in a:
+ print(line[1].tolist())
