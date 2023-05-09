@@ -12,10 +12,12 @@ from pynput import keyboard
 # import pygame
 import pyqtgraph as pg
 from PySide6 import QtWidgets, QtCore, QtGui
+from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QGroupBox, QFileDialog
 import numpy as np
 
 import Demo
 import Signal
+import util
 from gui_widgets import LogarithmicSlider
 import re
 
@@ -537,23 +539,95 @@ class GeneralTab(QtWidgets.QWidget):
     def __init__(self, demo):
         super().__init__()
         self.demo: Demo.Demo = demo
+
+        #add group box for video source and other settings
+        self.video_source_grp=QGroupBox("Camera / Video source")
+        self.filter_grp=QGroupBox("Filter settings")
+
         self.mediapipe_selector_button = QtWidgets.QCheckBox(text="Use web cam tracking.")
         self.mediapipe_selector_button.setChecked(self.demo.use_mediapipe)
         self.mediapipe_selector_button.clicked.connect(lambda selected: self.demo.set_use_mediapipe(selected))
+
+
         self.landmark_filter_button = QtWidgets.QCheckBox(text="Filter Landmarks.")
         self.landmark_filter_button.setChecked(self.demo.filter_landmarks)
         self.landmark_filter_button.clicked.connect(lambda selected: self.demo.set_filter_landmarks(selected))
         self.record_csv_button = QtWidgets.QRadioButton("Record CSV")
         self.record_csv_button.clicked.connect(self.demo.set_write_csv)
         self.debug_window = DebugVisualizetion()
-        self.debug_window_button = QtWidgets.QPushButton("Open Debug Menu")
+        self.debug_window_button = QtWidgets.QPushButton("Open Camera/Video Display")
         self.debug_window_button.clicked.connect(self.toggle_debug_window)
+
+        self.vid_source_start = QtWidgets.QPushButton("Start tracking")
+        self.vid_source_start.clicked.connect(self.demo.start_tracking)
+        self.vid_source_stop = QtWidgets.QPushButton("Stop tracking")
+        self.vid_source_stop.clicked.connect(self.demo.stop_tracking)
+
         self.layout = QtWidgets.QVBoxLayout(self)
-        self.layout.addWidget(self.mediapipe_selector_button)
-        self.layout.addWidget(self.landmark_filter_button)
-        self.layout.addWidget(self.record_csv_button)
-        self.layout.addWidget(self.debug_window_button)
+        self.layout.addWidget(self.video_source_grp)
+        self.layout.addWidget(self.filter_grp)
+
+        self.vid_main_layout=QtWidgets.QVBoxLayout()
+        self.vid_mode_layout=QtWidgets.QHBoxLayout()
+        self.vid_mode_grp=QtWidgets.QGroupBox("Video mode selection")
+        self.vid_mode_grp.setLayout(self.vid_mode_layout)
+
+        self.vid_webcam_grp=QGroupBox("Use webcam")
+        self.vid_webcam_grp.setCheckable(True)
+        self.vid_webcam_grp.setChecked(self.demo.use_mediapipe)
+        self.vid_webcam_layout=QtWidgets.QFormLayout()
+        self.vid_webcam_grp.setLayout(self.vid_webcam_layout)
+
+        self.vid_iphone3d_grp=QGroupBox("Use iPhone 3D camera")
+        self.vid_iphone3d_grp.setCheckable(True)
+        self.vid_iphone3d_grp.setChecked(not self.demo.use_mediapipe)
+        self.vid_iphone3d_layout=QtWidgets.QFormLayout()
+        self.vid_iphone3d_layout.addRow(QtWidgets.QLabel("My IP address: "),QtWidgets.QLabel("xxxxxx"))
+        self.vid_iphone3d_layout.addRow(QtWidgets.QLabel("My UPD port: "), QtWidgets.QLabel(str(self.demo.UDP_PORT)))
+        self.vid_iphone3d_grp.setLayout(self.vid_iphone3d_layout)
+
+        self.vid_vidfile_grp=QGroupBox("Use video file")
+        self.vid_vidfile_grp.setCheckable(True)
+        self.vid_vidfile_grp.setChecked(False)
+        self.vid_vidfile_layout=QtWidgets.QFormLayout()
+        self.vid_vidfile_openfile = QtWidgets.QPushButton("Select video file")
+        self.vid_vidfile_openfile.clicked.connect(self.open_file_dialog)
+        self.vid_vidfile_layout.addWidget(self.vid_vidfile_openfile)
+        self.vid_vidfile_grp.setLayout(self.vid_vidfile_layout)
+
+        self.vid_mode_layout.addWidget(self.vid_webcam_grp)
+        self.vid_mode_layout.addWidget(self.vid_iphone3d_grp)
+        self.vid_mode_layout.addWidget(self.vid_vidfile_grp)
+
+        self.vid_webcam_device=QtWidgets.QComboBox()
+        webcam_available_ports,self.vid_webcam_devices,webcam_non_working_ports=util.list_camera_ports()
+        self.vid_webcam_devices=map(str,self.vid_webcam_devices)
+        print(self.vid_webcam_devices)
+        self.vid_webcam_device.addItems(self.vid_webcam_devices)
+        self.vid_webcam_device.currentTextChanged.connect(lambda arg__1: self.demo.update_webcam_device_selection(arg__1))
+        self.vid_webcam_layout.addRow(QtWidgets.QLabel("Camera device"),self.vid_webcam_device)
+
+        self.vid_mode_layout.addWidget(self.vid_webcam_grp)
+        self.vid_mode_layout.addWidget(self.vid_iphone3d_grp)
+        self.vid_mode_layout.addWidget(self.vid_vidfile_grp)
+
+        self.vid_main_layout.addWidget(self.vid_mode_grp)
+        self.vid_main_layout.addWidget(self.vid_source_start)
+        self.vid_main_layout.addWidget(self.vid_source_stop)
+        self.vid_main_layout.addWidget(self.debug_window_button)
+        self.video_source_grp.setLayout(self.vid_main_layout)
+
+        self.filter_grp_layout = QtWidgets.QVBoxLayout()
+        self.filter_grp_layout.addWidget(self.landmark_filter_button)
+        self.filter_grp.setLayout(self.filter_grp_layout)
+
         self.layout.addStretch()
+
+    def open_file_dialog(self):
+        fileName = QFileDialog.getOpenFileName(self, "Open File")
+        print(f"selected file {fileName[0]}")
+        if fileName[0]:
+            self.demo.update_webcam_video_file_selection(fileName[0])
 
     def toggle_debug_window(self):
         self.debug_window.show()
@@ -1033,7 +1107,6 @@ def test_gui():
     window.show()
     app.exec()
     print("hallo")
-
 
 if __name__ == '__main__':
     test_gui()
