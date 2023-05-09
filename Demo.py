@@ -48,10 +48,11 @@ mp_face_mesh_connections = mp.solutions.face_mesh_connections
 
 colors = [(166,206,227),(31,120,180),(178,223,138),(51,160,44),(151,154,53),(227,26,28),(153,91,111),(255,127,0),(202,178,214),(106,61,154),(255,255,153),(177,89,40), (0,255,0), (0,0,255), (0,255,255), (255,255,255)]
 
-class Demo(QThread):
+class Demo(Thread):
     def __init__(self):
         super().__init__()
         self.is_running = False
+        self.is_tracking = False
         self.mouse_enabled = False
         self.mouse_absolute = True
         self.mouse: Mouse.Mouse = Mouse.Mouse()
@@ -64,7 +65,8 @@ class Demo(QThread):
 
         self.UDP_PORT = 11111
         self.socket = None
-        self.webcam_address = 0
+        self.webcam_dev_nr = 0
+        self.vid_source_file=None
 
         self.face_mesh = mp_face_mesh.FaceMesh(static_image_mode=False,
                max_num_faces=1,
@@ -114,20 +116,22 @@ class Demo(QThread):
     def run(self):
         self.is_running = True
         while self.is_running:
-            if self.use_mediapipe:
-                self.setup_signals("config/mediapipe_default.json") #TODO: change to latest
-                self.__start_camera()
-                self.__run_mediapipe()
-                self.__stop_camera()
-            else:
-                self.setup_signals("config/iphone_default.json")
-                self.__start_socket()
-                self.__run_livelinkface()
-                self.__stop_socket()
+            if self.is_tracking:
+                if self.use_mediapipe:
+                    self.setup_signals("config/mediapipe_default.json") #TODO: change to latest
+                    self.__start_camera()
+                    self.__run_mediapipe()
+                    self.__stop_camera()
+                else:
+                    self.setup_signals("config/iphone_default.json")
+                    self.__start_socket()
+                    self.__run_livelinkface()
+                    self.__stop_socket()
+            time.sleep(0.5)
 
     def __run_mediapipe(self):
         # TODO: split this up, it's getting crowded
-        while self.is_running and self.cam_cap.isOpened() and self.use_mediapipe:
+        while self.is_running and self.is_tracking and self.cam_cap.isOpened() and self.use_mediapipe:
             success, image = self.cam_cap.read()
             if not success:
                 print("couldn't read frame")
@@ -190,7 +194,7 @@ class Demo(QThread):
             self.fps = self.fps_counter()
 
     def __run_livelinkface(self):
-        while self.is_running and not self.use_mediapipe:
+        while self.is_running and self.is_tracking and not self.use_mediapipe:
             try:
                 data, addr = self.socket.recvfrom(1024)
                 success, live_link_face = PyLiveLinkFace.decode(data)
@@ -205,7 +209,10 @@ class Demo(QThread):
                     self.mouse.process_signal(self.signals)
 
     def __start_camera(self):
-        self.cam_cap = cv2.VideoCapture(0)
+        if self.vid_source_file:
+            self.cam_cap = cv2.VideoCapture(self.vid_source_file)
+        else:
+            self.cam_cap = cv2.VideoCapture(self.webcam_dev_nr)
         #self.cam_cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.frame_width)
         #self.cam_cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.frame_height)
         #self.cam_cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P',
@@ -225,8 +232,30 @@ class Demo(QThread):
             self.socket.close()
             self.socket = None
 
+    def stop_tracking(self):
+        print("Stopping tracking..")
+        self.is_tracking = False
+
+    def start_tracking(self):
+        print("Starting tracking..")
+        self.is_tracking = True
+
     def stop(self):
+        print("Stopping tracking..")
         self.is_running = False
+        #self.__stop_camera()
+        #self.__stop_socket()
+
+    def update_webcam_device_selection(self,device_nr):
+        print(f"Setting camera with device nr {device_nr}")
+        self.webcam_dev_nr=int(device_nr)
+        # unset video source file for now.
+        # TODO: Use enum to have radio logic between the 3 modes.
+        self.vid_source_file=None
+
+    def update_webcam_video_file_selection(self,vid_source_file):
+        print(f"Setting camera with video file {vid_source_file}")
+        self.vid_source_file=vid_source_file
 
     def disable_gesture_mouse(self):
         # Disables gesture mouse and enables normal mouse input
