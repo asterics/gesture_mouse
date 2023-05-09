@@ -33,6 +33,7 @@ def list_camera_ports():
                 print("Port %s for camera ( %s x %s) is present but does not reads." %(dev_port,h,w))
                 available_ports.append(dev_port)
         dev_port +=1
+        camera.release()
     return available_ports,working_ports,non_working_ports
 
 if __name__ == '__main__':
