@@ -1124,6 +1124,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def closeEvent(self, event: QtGui.QCloseEvent) -> None:
         self.demo.stop()
+        QApplication.closeAllWindows()
         event.accept()
 
 
