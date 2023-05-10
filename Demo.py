@@ -118,7 +118,9 @@ class Demo(Thread):
 
         self.write_csv = False
         self.csv_file_name = "log.csv" #TODO: or select
-        self.csv_writer = csv.writer(open(self.csv_file_name,"w+", newline=""))
+        self.csv_file_fp = open(self.csv_file_name)
+        self.csv_writer = None
+
         print(self.csv_file_name)
 
     def run(self):
@@ -226,7 +228,7 @@ class Demo(Thread):
                 elif keyboard.is_pressed("s"):
                     gesture="NoseSneer"
 
-                row = [time.time(),*np_landmarks.flatten(), *ear_values.flatten(), gesture]
+                row = [time.time(),*np_landmarks.astype(np.float32).flatten(), *ear_values.astype(np.float32).flatten(), gesture]
                 self.csv_writer.writerow(row)
                 print(gesture)
                 print(row)
@@ -284,10 +286,10 @@ class Demo(Thread):
         self.is_tracking = True
 
     def stop(self):
-        print("Stopping tracking..")
+        print("Stopping Demo..")
         self.is_running = False
-        #self.__stop_camera()
-        #self.__stop_socket()
+        if self.csv_file_fp is not None:
+            self.csv_file_fp.close()
 
     def update_webcam_device_selection(self,device_nr):
         print(f"Setting camera with device nr {device_nr}")
@@ -328,8 +330,18 @@ class Demo(Thread):
     def set_filter_landmarks(self, enabled: bool):
         self.filter_landmarks = enabled
 
-    def set_write_csv(self, enabled:bool):
-        self.write_csv = enabled
+    def start_write_csv(self, file_name:str):
+        self.csv_file_name = file_name
+        self.csv_file_fp = open(self.csv_file_name, "w+", newline="")
+        self.csv_writer = csv.writer(self.csv_file_fp)
+        self.write_csv = True
+
+    def stop_write_csv(self):
+        self.write_csv = False
+        if self.csv_file_fp is not None:
+            self.csv_file_fp.close()
+            self.csv_file_fp = None
+            self.csv_writer = None
 
     def toggle_mouse_mode(self):
         self.mouse.toggle_mode()

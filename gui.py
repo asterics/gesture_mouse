@@ -552,8 +552,7 @@ class GeneralTab(QtWidgets.QWidget):
         self.landmark_filter_button = QtWidgets.QCheckBox(text="Filter Landmarks.")
         self.landmark_filter_button.setChecked(self.demo.filter_landmarks)
         self.landmark_filter_button.clicked.connect(lambda selected: self.demo.set_filter_landmarks(selected))
-        self.record_csv_button = QtWidgets.QRadioButton("Record CSV")
-        self.record_csv_button.clicked.connect(self.demo.set_write_csv)
+
         self.debug_window = DebugVisualizetion()
         self.debug_window_button = QtWidgets.QPushButton("Open Camera/Video Display")
         self.debug_window_button.clicked.connect(self.toggle_debug_window)
@@ -607,6 +606,17 @@ class GeneralTab(QtWidgets.QWidget):
         self.vid_webcam_device.currentTextChanged.connect(lambda arg__1: self.demo.update_webcam_device_selection(arg__1))
         self.vid_webcam_layout.addRow(QtWidgets.QLabel("Camera device"),self.vid_webcam_device)
 
+        self.csv_write_group = QGroupBox("CSV Settings")
+        self.csv_start_button = QtWidgets.QPushButton("Start")
+        self.csv_stop_button = QtWidgets.QPushButton("Stop")
+        self.csv_file_selection_button = QtWidgets.QPushButton("Select file location")
+        self.csv_file_label = QtWidgets.QLabel("File Location")
+        self.csv_file_path = ""
+        # Events
+        self.csv_file_selection_button.clicked.connect(self.csv_save_dialog)
+        self.csv_start_button.clicked.connect(self.start_csv_recording)
+        self.csv_stop_button.clicked.connect(self.demo.stop_write_csv)
+
         self.vid_mode_layout.addWidget(self.vid_webcam_grp)
         self.vid_mode_layout.addWidget(self.vid_iphone3d_grp)
         self.vid_mode_layout.addWidget(self.vid_vidfile_grp)
@@ -621,6 +631,15 @@ class GeneralTab(QtWidgets.QWidget):
         self.filter_grp_layout.addWidget(self.landmark_filter_button)
         self.filter_grp.setLayout(self.filter_grp_layout)
 
+        self.csv_writer_layout = QtWidgets.QHBoxLayout()
+        self.csv_writer_layout.addWidget(self.csv_file_selection_button)
+        self.csv_writer_layout.addWidget(self.csv_file_label)
+        self.csv_writer_layout.addStretch()
+        self.csv_writer_layout.addWidget(self.csv_start_button)
+        self.csv_writer_layout.addWidget(self.csv_stop_button)
+        self.csv_write_group.setLayout(self.csv_writer_layout)
+        self.layout.addWidget(self.csv_write_group)
+
         self.layout.addStretch()
 
     def open_file_dialog(self):
@@ -628,6 +647,15 @@ class GeneralTab(QtWidgets.QWidget):
         print(f"selected file {fileName[0]}")
         if fileName[0]:
             self.demo.update_webcam_video_file_selection(fileName[0])
+
+    def csv_save_dialog(self):
+        file_name = QFileDialog.getSaveFileName(self, "Select File", filter="*.csv")[0]
+        if file_name:
+            self.csv_file_path = file_name
+            self.csv_file_label.setText(self.csv_file_path)
+
+    def start_csv_recording(self):
+        self.demo.start_write_csv(self.csv_file_path)
 
     def toggle_debug_window(self):
         self.debug_window.show()
