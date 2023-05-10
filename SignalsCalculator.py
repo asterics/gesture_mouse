@@ -118,26 +118,27 @@ class SignalsCalculater:
         self.pcf = PCF(1, 10000, 720, 1280)
         self.frame_size = frame_size
         #####
-        self.random_ear_indices = np.random.choice(468, (10, 6), replace=False)
-        self.ear_indices = np.array([    #ear_indice[:,:6]:vertex index, ear_indices[:,6:9]:normal, ear_indices[:,9] area
-            [78, 81, 311, 308, 402, 178, 0.0, -0.42996529795527055, -0.9028454145390757, 1.8274426314614112], # mouth inner
-            [61, 39, 269, 291, 405, 181,  0.0, 0.2040910245076216, -0.9789519159363391 , 6.965312397209321],  # mouth outer
-            [57, 39, 269, 287, 405, 181, -3.054010372444962e-17, 0.19873127411683472, -0.9800540192703152, 7.9764583345578925], # mouth outer fixed
-            [17, 15, 12, 0, 40, 91, 0.3212820652962719, -0.21984308419466744, 0.9211117482969906, 3.115830982338437],  # mouth left
-            [17, 15, 12, 0, 270, 291, 0.3711812550939365, 0.3573466573499048, -0.8570459978015998, 3.4556381580062356], # mouth right
-            [33, 160, 158, 133, 153, 144, -0.19978355429549854, 0.14676994328387, -0.9687853813830528, 1.1367722762253367],  # left eye
-            [362, 385, 387, 263, 373, 380,  0.19999291692562285, 0.14676098146597613, -0.9687435406229681, 1.1367719391562168], # right eye
-            [40, 186, 216, 205, 203, 165, -0.47541740761254164, 0.006528390240965514, -0.8797361358156388, 3.960626388572969],  # cheeck left upper
-            [91, 43, 202, 211, 194, 182, 0.5194157137308583, -0.09243240323843337, 0.8495078381987012, 2.9545777904087633], # cheeck left lower
-            [270, 391, 423, 425, 436, 410, 0.474226383535992, -0.013172185571143313, -0.8803043966070223, 3.960051990701081],  # cheeck right upper
-            [321, 273, 422, 431, 418, 406, 0.5194157137308583, 0.09243240323843337, -0.8495078381987012, 2.9545777904087633], # cheeck right lower
-            [425, 266, 329, 348, 347, 280, 0.3709208733164779, -0.2003657706562296, -0.9067917421809026, 4.180198480141474], # upper cheeck right
-            [205, 50, 118, 119, 100, 36, -0.3697713372049223, -0.19779594392096944, -0.9078248304326647, 4.175765494555663], # upper cheeck left
-            [4, 51, 196, 168, 419, 281,  0.0, -0.5519289870388973, -0.8338911159535258, 3.015552169786011], # nose vert
-            [218, 220, 275, 438, 274, 237, -0.18661803873499494, 0.1293311129911196, -0.9738825241430211, 1.2001167586923467], # nose hor
-            [46, 53, 65, 55, 222, 225, -0.34753463146024194, 0.4684988128464185, -0.8122367526142179, 3.0242659712461393], # left eyebrow
-            [276, 283, 295, 285, 442, 444, -0.3297187477116141, -0.45154345458259165, 0.8290923085103998, 2.60853924624981] , # right eyebrow
-            [66, 108, 337, 296, 336, 107, -7.00808173621624e-18, -0.2282268394431662, -0.9736079856686588, 7.172903919610362] # between eyebrows
+        #self.random_ear_indices = np.random.choice(468, (10, 6), replace=False)
+        # indices = self.ear_indices[:,0:6], d1= self.ear_indices[:,6:9], d2 = self.ear_indices[:,9:12]
+        self.ear_indices = np.array([
+            [78,81,311,308,402,178,0.0,-0.9378740000000008,0.38806799999999875,-8.612336,0.0,0.0],
+            [61,39,269,291,405,181,0.0,-3.2111079999999994,-0.582358000000001,-9.824824,0.0,0.0],
+            [57,39,269,287,405,181,0.0,-3.2111079999999994,-0.582358000000001,-12.410568,0.0,0.0],
+            [17,15,12,0,40,91,3.753534,0.03198600000000029,-1.2462199999999992,0.0,3.917437999999999,0.8881320000000006],
+            [17,15,12,0,270,291,-4.371116,0.5181109999999998,-1.786073,0.0,3.917437999999999,0.8881320000000006],
+            [33,160,158,133,153,144,0.0,-1.2135689999999997,-0.18371100000000018,-5.178853999999999,-0.1574920000000004,1.168964],
+            [362,385,387,263,373,380,0.0,-1.2135689999999997,-0.18371100000000018,-5.178853999999999,0.1574920000000004,-1.168964],
+            [40,186,216,205,203,165,-2.2548919999999995,2.6113569999999995,1.188009,3.836036,4.5316399999999994,-1.7823980000000006],
+            [91,43,202,211,194,182,-2.453915,-2.047639,1.2947430000000009,2.4908259999999998,-3.962192,-2.019084000000001],
+            [270,391,423,425,436,410,-2.2548919999999995,-2.6113569999999995,-1.188009,-3.836036,4.5316399999999994,-1.7823980000000006],
+            [321,273,422,431,418,406,2.453915,-2.047639,1.2947430000000009,-2.4908259999999998,-3.962192,-2.019084000000001],
+            [425,266,329,348,347,280,-4.01056,0.1691879999999999,-1.6701860000000002,1.0644939999999998,4.797934,-0.5298939999999996],
+            [205,50,118,119,100,36,-4.01056,-0.1691879999999999,1.6701860000000002,-1.0644939999999998,4.797934,-0.5298939999999996],
+            [4,51,196,168,419,281,-1.989758,0.0,0.0,0.0,7.468394,-4.701129999999999],
+            [218,220,275,438,274,237,-0.08659899999999993,-1.0574679999999999,-0.0053200000000002134,-4.504488,0.0,0.0],
+            [46,53,65,55,222,225,0.022348000000000035,-1.6381720000000004,-0.9590930000000006,-8.064732000000001,0.5211660000000009,3.4857520000000006],
+            [276,283,295,285,442,444,0.5247960000000003,-1.4374500000000006,-0.5293510000000001,8.064732000000001,0.5211660000000009,3.4857520000000006],
+            [66,108,337,296,336,107,0.0,-3.174508000000001,0.7898519999999998,-11.041168,0.0,0.0]
         ])
 
     def process(self, landmarks, linear_model:MultiOutputRegressor, labels, scaler):
@@ -181,11 +182,14 @@ class SignalsCalculater:
 
         if len(labels) > 0:
             ear_values = np.array(self.eye_aspect_ratio_batch(landmarks, self.ear_indices)).reshape(1, -1)
-            normals = self.ear_indices[:, 6:9]
-            rotated_normal = np.matmul(rotmat, normals.T).T
-            rotation_factor = np.maximum(abs(rotated_normal[:,2]),0.6)
-            area = self.ear_indices[:, 9]
-            correction_factor = 1 / rotation_factor
+            d1 = self.ear_indices[:, 6:9]
+            d2 = self.ear_indices[:,9:12]
+            cam_normal = np.array([0,0,1])
+            rotated_d1 = np.matmul(rotmat, d1.T).T
+            rotated_d2 = np.matmul(rotmat, d2.T).T
+            projected_d1 = np.linalg.norm(np.cross(np.cross(cam_normal,rotated_d1),cam_normal))
+            projected_d2 = np.linalg.norm(np.cross(np.cross(cam_normal,rotated_d2),cam_normal))
+            correction_factor = projected_d2/projected_d1
             ear_values = ear_values*correction_factor
             #ear_values = scaler.transform(ear_values)
             reg_result = linear_model.predict(ear_values)
@@ -207,12 +211,15 @@ class SignalsCalculater:
         landmarks = landmarks[:, :2]
 
         ear_values = self.eye_aspect_ratio_batch(landmarks, indices=self.ear_indices)
-        normals = self.ear_indices[:,6:9]
-        rotated_normal = np.matmul(rotmat,normals.T).T
-        rotation_factor = np.maximum(abs(rotated_normal[:,2]),0.6)
-        area = self.ear_indices[:,9]
-        correction_factor = 1/rotation_factor
-        print(rotation_factor[1])
+
+        d1 = self.ear_indices[:, 6:9]
+        d2 = self.ear_indices[:, 9:12]
+        cam_normal = np.array([0, 0, 1])
+        rotated_d1 = np.matmul(rotmat, d1.T).T
+        rotated_d2 = np.matmul(rotmat, d2.T).T
+        projected_d1 = np.linalg.norm(np.cross(np.cross(cam_normal, rotated_d1), cam_normal))
+        projected_d2 = np.linalg.norm(np.cross(np.cross(cam_normal, rotated_d2), cam_normal))
+        correction_factor = projected_d2 / projected_d1
         #forehead_length = np.linalg.norm(landmarks[10, :] - landmarks[8,:])
         #eye_distance = np.linalg.norm(landmarks[33,:] - landmarks[263,:])
         return ear_values, ear_values*correction_factor
@@ -364,7 +371,7 @@ class SignalsCalculater:
         P1, P4 are the eye corners, P2 is opposite to P6 and P3 is opposite to P5
         :return: ear = (P2_P6 + P3_P5) / (2.0 * P1_P4)
         """
-        assert indices.shape[1] == 10
+        #assert indices.shape[1] == 10
         p2_p6 = np.linalg.norm(landmarks[indices[:, 1].astype(int)] - landmarks[indices[:, 5].astype(int)], axis=1)
         p3_p5 = np.linalg.norm(landmarks[indices[:, 2].astype(int)] - landmarks[indices[:, 4].astype(int)], axis=1)
         p1_p4 = np.linalg.norm(landmarks[indices[:, 0].astype(int)] - landmarks[indices[:, 3].astype(int)], axis=1)
