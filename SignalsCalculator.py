@@ -183,9 +183,9 @@ class SignalsCalculater:
             ear_values = np.array(self.eye_aspect_ratio_batch(landmarks, self.ear_indices)).reshape(1, -1)
             normals = self.ear_indices[:, 6:9]
             rotated_normal = np.matmul(rotmat, normals.T).T
-            rotation_factor = np.maximum(abs(rotated_normal[:,2]),0.1)
+            rotation_factor = np.maximum(abs(rotated_normal[:,2]),0.6)
             area = self.ear_indices[:, 9]
-            correction_factor = 1 / (area * rotation_factor)
+            correction_factor = 1 / rotation_factor
             ear_values = ear_values*correction_factor
             #ear_values = scaler.transform(ear_values)
             reg_result = linear_model.predict(ear_values)
@@ -209,12 +209,13 @@ class SignalsCalculater:
         ear_values = self.eye_aspect_ratio_batch(landmarks, indices=self.ear_indices)
         normals = self.ear_indices[:,6:9]
         rotated_normal = np.matmul(rotmat,normals.T).T
-        rotation_factor = np.maximum(abs(rotated_normal[:,2]),0.01)
+        rotation_factor = np.maximum(abs(rotated_normal[:,2]),0.6)
         area = self.ear_indices[:,9]
-        correction_factor = 1/(area*rotation_factor)
+        correction_factor = 1/rotation_factor
+        print(rotation_factor[1])
         #forehead_length = np.linalg.norm(landmarks[10, :] - landmarks[8,:])
         #eye_distance = np.linalg.norm(landmarks[33,:] - landmarks[263,:])
-        return ear_values*correction_factor
+        return ear_values, ear_values*correction_factor
 
     def process_neutral(self, landmarks):
         pass

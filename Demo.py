@@ -170,16 +170,16 @@ class Demo(Thread):
 
 
             # only check videowriter not none? #
-            ear_values = self.signal_calculator.process_ear(np_landmarks)
+            ear_values, ear_values_corrected = self.signal_calculator.process_ear(np_landmarks)
             if self.calibrate_neutral and success:
 
                 #self.VideoWriter.write(image)
-                self.neutral_signals.append(ear_values)
+                self.neutral_signals.append(ear_values_corrected)
                 #continue
 
             if self.calibrate_pose and success:
                 #self.VideoWriter.write(image)
-                self.pose_signals.append(ear_values)
+                self.pose_signals.append(ear_values_corrected)
                 #continue
             ########
 
@@ -228,7 +228,7 @@ class Demo(Thread):
                 elif keyboard.is_pressed("s"):
                     gesture="NoseSneer"
 
-                row = [time.time(),*np_landmarks.astype(np.float32).flatten(), *ear_values.astype(np.float32).flatten(), gesture]
+                row = [time.time(),*np_landmarks.astype(np.float32).flatten(), *ear_values.astype(np.float32).flatten(), *ear_values_corrected.astype(np.float32).flatten(), gesture, *result.values()]
                 self.csv_writer.writerow(row)
                 print(gesture)
                 print(row)
@@ -245,11 +245,13 @@ class Demo(Thread):
                 success = False
 
             if success:
+                row = [time.time()]
                 for signal_name in self.signals:
                     value = live_link_face.get_blendshape(FaceBlendShape[signal_name])
+                    row.append(value)
                     self.signals[signal_name].set_value(value)
                 if self.write_csv:
-                    pass
+                    self.csv_writer.writerow(row)
                 if self.mouse_enabled:
                     self.mouse.process_signal(self.signals)
 
@@ -334,6 +336,22 @@ class Demo(Thread):
         self.csv_file_name = file_name
         self.csv_file_fp = open(self.csv_file_name, "w+", newline="")
         self.csv_writer = csv.writer(self.csv_file_fp)
+        if self.use_mediapipe:
+            row = ["time"]
+            for i in range(478):
+                row.append(f"landmark_{i}_x")
+                row.append(f"landmark_{i}_y")
+                row.append(f"landmark_{i}_z")
+            for i in range(len(self.signal_calculator.ear_indices)):
+                row.append(f"ear_{i}")
+            for i in range(len(self.signal_calculator.ear_indices)):
+                row.append(f"corrected_ear_{i}")
+            row.append("Gesture")
+            for signal in self.signals.keys():
+                row.append(signal)
+            self.csv_writer.writerow(row)
+        else:
+            pass
         self.write_csv = True
 
     def stop_write_csv(self):
