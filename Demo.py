@@ -24,7 +24,7 @@ import pynput
 from sklearn.preprocessing import OneHotEncoder, StandardScaler, Normalizer, MinMaxScaler
 from sklearn.linear_model import Ridge, Lasso, MultiTaskLassoCV, LassoLarsIC, LogisticRegression, RidgeClassifier, LassoLarsCV
 from sklearn.svm import SVR, SVC, LinearSVR
-from sklearn.ensemble import GradientBoostingRegressor, GradientBoostingClassifier
+from sklearn.ensemble import GradientBoostingRegressor, GradientBoostingClassifier, HistGradientBoostingRegressor
 from sklearn.multioutput import MultiOutputRegressor, MultiOutputClassifier, RegressorChain
 from sklearn.kernel_ridge import KernelRidge
 from sklearn.neural_network import MLPRegressor, MLPClassifier
@@ -118,7 +118,7 @@ class Demo(Thread):
 
         self.write_csv = False
         self.csv_file_name = "log.csv" #TODO: or select
-        self.csv_file_fp = open(self.csv_file_name)
+        self.csv_file_fp = None
         self.csv_writer = None
 
         print(self.csv_file_name)
@@ -515,7 +515,6 @@ class Demo(Thread):
         self.signals[name].set_lower_threshold(0.)
         self.signals[name].set_filter_value(0.0001)
 
-        data_array = np.tanh(data_array)
         new_linear_model.fit(data_array, y)
         self.linear_model = new_linear_model
         self.linear_signals = self.onehot_encoder.categories_[0]

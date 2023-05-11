@@ -184,12 +184,16 @@ class SignalsCalculater:
             ear_values = np.array(self.eye_aspect_ratio_batch(landmarks, self.ear_indices)).reshape(1, -1)
             d1 = self.ear_indices[:, 6:9]
             d2 = self.ear_indices[:,9:12]
-            cam_normal = np.array([0,0,1])
+            cam_normal = np.array([0,0,-1])
             rotated_d1 = np.matmul(rotmat, d1.T).T
             rotated_d2 = np.matmul(rotmat, d2.T).T
-            projected_d1 = np.linalg.norm(np.cross(np.cross(cam_normal,rotated_d1),cam_normal))
-            projected_d2 = np.linalg.norm(np.cross(np.cross(cam_normal,rotated_d2),cam_normal))
-            correction_factor = projected_d2/projected_d1
+            projected_d1 = np.cross(np.cross(cam_normal,rotated_d1),cam_normal)
+            projected_d2 = np.cross(np.cross(cam_normal,rotated_d2),cam_normal)
+            projected_d1 = projected_d1[:,:2]*np.array(self.frame_size)
+            projected_d2 = projected_d2[:,:2]*np.array(self.frame_size)
+            projected_d1 = np.linalg.norm(projected_d1, axis=1)
+            projected_d2 = np.linalg.norm(projected_d2, axis=1)
+            correction_factor = projected_d2 / (projected_d1)
             ear_values = ear_values*correction_factor
             #ear_values = scaler.transform(ear_values)
             reg_result = linear_model.predict(ear_values)
@@ -214,12 +218,19 @@ class SignalsCalculater:
 
         d1 = self.ear_indices[:, 6:9]
         d2 = self.ear_indices[:, 9:12]
-        cam_normal = np.array([0, 0, 1])
+        cam_normal = np.array([0, 0, -1])
+
         rotated_d1 = np.matmul(rotmat, d1.T).T
         rotated_d2 = np.matmul(rotmat, d2.T).T
-        projected_d1 = np.linalg.norm(np.cross(np.cross(cam_normal, rotated_d1), cam_normal))
-        projected_d2 = np.linalg.norm(np.cross(np.cross(cam_normal, rotated_d2), cam_normal))
-        correction_factor = projected_d2 / projected_d1
+
+        projected_d1 = np.cross(np.cross(cam_normal, rotated_d1), cam_normal)
+        projected_d2 = np.cross(np.cross(cam_normal, rotated_d2), cam_normal)
+        projected_d1 = projected_d1[:, :2] * np.array(self.frame_size)
+        projected_d2 = projected_d2[:, :2] * np.array(self.frame_size)
+        projected_d1 = np.linalg.norm(projected_d1, axis=1)
+        projected_d2 = np.linalg.norm(projected_d2, axis=1)
+        correction_factor = projected_d2/projected_d1
+
         #forehead_length = np.linalg.norm(landmarks[10, :] - landmarks[8,:])
         #eye_distance = np.linalg.norm(landmarks[33,:] - landmarks[263,:])
         return ear_values, ear_values*correction_factor
