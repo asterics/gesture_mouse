@@ -249,14 +249,23 @@ class Demo(Thread):
             if success:
                 row = [time.time()]
                 blendshapes = []
-                for signal_name in self.signals:
-                    value = live_link_face.get_blendshape(FaceBlendShape[signal_name])
+                for blendshape in FaceBlendShape:
+                    value = live_link_face.get_blendshape(blendshape)
                     blendshapes.append(value)
                     row.append(value)
-                    self.signals[signal_name].set_value(value)
+                    self.signals[blendshape.name].set_value(value)
                 #Calibration
                 blendshapes = np.array(blendshapes)
+
+                if len(self.linear_signals) > 0:
+                    reg_result = self.linear_model.predict(blendshapes.reshape(1, -1))
+                    for i, label in enumerate(self.linear_signals):
+                        if label == "neutral":
+                            continue
+                        self.signals.get(label).set_value(reg_result[0][i])
+
                 if self.calibrate_neutral and success:
+                    #TODO: Ignore Head/Eye Pose?
                     # self.VideoWriter.write(image)
                     self.neutral_signals.append(blendshapes)
                     # continue
