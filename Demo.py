@@ -43,6 +43,7 @@ import monitor
 from Signal import Signal
 from KalmanFilter1D import Kalman1D
 import FPSCounter
+import util
 
 from pyLiveLinkFace import PyLiveLinkFace, FaceBlendShape
 
@@ -67,6 +68,7 @@ class Demo(Thread):
         self.cam_cap = None
 
         self.UDP_PORT = 11111
+        self.my_ip = util.get_ip()
         self.socket = None
         self.webcam_dev_nr = 0
         self.vid_source_file=None
@@ -246,10 +248,23 @@ class Demo(Thread):
 
             if success:
                 row = [time.time()]
+                blendshapes = []
                 for signal_name in self.signals:
                     value = live_link_face.get_blendshape(FaceBlendShape[signal_name])
+                    blendshapes.append(value)
                     row.append(value)
                     self.signals[signal_name].set_value(value)
+                #Calibration
+                blendshapes = np.array(blendshapes)
+                if self.calibrate_neutral and success:
+                    # self.VideoWriter.write(image)
+                    self.neutral_signals.append(blendshapes)
+                    # continue
+
+                if self.calibrate_pose and success:
+                    # self.VideoWriter.write(image)
+                    self.pose_signals.append(blendshapes)
+
                 if self.write_csv:
                     self.csv_writer.writerow(row)
                 if self.mouse_enabled:
@@ -351,7 +366,10 @@ class Demo(Thread):
                 row.append(signal)
             self.csv_writer.writerow(row)
         else:
-            pass
+            row = ["time"]
+            for signal in self.signals:
+                row.append(signal)
+            self.csv_writer.writerow(row)
         self.write_csv = True
 
     def stop_write_csv(self):

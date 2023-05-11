@@ -569,25 +569,29 @@ class GeneralTab(QtWidgets.QWidget):
         self.vid_main_layout=QtWidgets.QVBoxLayout()
         self.vid_mode_layout=QtWidgets.QHBoxLayout()
         self.vid_mode_grp=QtWidgets.QGroupBox("Video mode selection")
+
         self.vid_mode_grp.setLayout(self.vid_mode_layout)
 
         self.vid_webcam_grp=QGroupBox("Use webcam")
         self.vid_webcam_grp.setCheckable(True)
         self.vid_webcam_grp.setChecked(self.demo.use_mediapipe)
+        self.vid_webcam_grp.toggled.connect(self.webcam_grp_toggled)
         self.vid_webcam_layout=QtWidgets.QFormLayout()
         self.vid_webcam_grp.setLayout(self.vid_webcam_layout)
 
         self.vid_iphone3d_grp=QGroupBox("Use iPhone 3D camera")
         self.vid_iphone3d_grp.setCheckable(True)
         self.vid_iphone3d_grp.setChecked(not self.demo.use_mediapipe)
+        self.vid_iphone3d_grp.toggled.connect(self.iphone_grp_toggled)
         self.vid_iphone3d_layout=QtWidgets.QFormLayout()
-        self.vid_iphone3d_layout.addRow(QtWidgets.QLabel("My IP address: "),QtWidgets.QLabel("xxxxxx"))
+        self.vid_iphone3d_layout.addRow(QtWidgets.QLabel("My IP address: "),QtWidgets.QLabel(self.demo.my_ip))
         self.vid_iphone3d_layout.addRow(QtWidgets.QLabel("My UPD port: "), QtWidgets.QLabel(str(self.demo.UDP_PORT)))
         self.vid_iphone3d_grp.setLayout(self.vid_iphone3d_layout)
 
         self.vid_vidfile_grp=QGroupBox("Use video file")
         self.vid_vidfile_grp.setCheckable(True)
         self.vid_vidfile_grp.setChecked(False)
+        self.vid_vidfile_grp.toggled.connect(self.vidfile_grp_toggled)
         self.vid_vidfile_layout=QtWidgets.QFormLayout()
         self.vid_vidfile_openfile = QtWidgets.QPushButton("Select video file")
         self.vid_vidfile_openfile.clicked.connect(self.open_file_dialog)
@@ -663,6 +667,51 @@ class GeneralTab(QtWidgets.QWidget):
     def update_debug_visualization(self):
         self.debug_window.update_image(self.demo.annotated_landmarks)
         self.debug_window.status_bar.showMessage(f"FPS: {self.demo.fps}, Mode: {self.demo.mouse.mode}")
+
+    def webcam_grp_toggled(self, on:bool):
+        if on:
+            self.vid_iphone3d_grp.blockSignals(True)
+            self.vid_iphone3d_grp.setChecked(False)
+            self.vid_iphone3d_grp.blockSignals(False)
+
+            self.vid_vidfile_grp.blockSignals(True)
+            self.vid_vidfile_grp.setChecked(False)
+            self.vid_vidfile_grp.blockSignals(False)
+            self.demo.use_mediapipe = True
+        else:
+            self.vid_webcam_grp.blockSignals(True)
+            self.vid_webcam_grp.setChecked(False)
+            self.vid_webcam_grp.blockSignals(False)
+
+    def iphone_grp_toggled(self, on:bool):
+        if on:
+            self.vid_webcam_grp.blockSignals(True)
+            self.vid_webcam_grp.setChecked(False)
+            self.vid_webcam_grp.blockSignals(False)
+
+            self.vid_vidfile_grp.blockSignals(True)
+            self.vid_vidfile_grp.setChecked(False)
+            self.vid_vidfile_grp.blockSignals(False)
+            self.demo.use_mediapipe = False
+        else:
+            self.vid_iphone3d_grp.blockSignals(True)
+            self.vid_iphone3d_grp.setChecked(False)
+            self.vid_iphone3d_grp.blockSignals(False)
+
+    def vidfile_grp_toggled(self, on:bool):
+        if on:
+            self.vid_webcam_grp.blockSignals(True)
+            self.vid_webcam_grp.setChecked(False)
+            self.vid_webcam_grp.blockSignals(False)
+
+            self.vid_iphone3d_grp.blockSignals(True)
+            self.vid_iphone3d_grp.setChecked(False)
+            self.vid_iphone3d_grp.blockSignals(False)
+            self.demo.use_mediapipe = True
+        else:
+            self.vid_vidfile_grp.blockSignals(True)
+            self.vid_vidfile_grp.setChecked(False)
+            self.vid_vidfile_grp.blockSignals(False)
 
 
 class MouseTab(QtWidgets.QWidget):
@@ -1083,7 +1132,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.signal_tab_mediapipe.signal_added.connect(self.add_signal)
 
         self.general_tab = GeneralTab(self.demo)
-        self.general_tab.mediapipe_selector_button.clicked.connect(lambda selected: self.change_signals_tab(selected))
+        #self.general_tab.mediapipe_selector_button.clicked.connect(lambda selected: self.change_signals_tab(selected))
+        self.general_tab.vid_iphone3d_grp.toggled.connect(lambda on: self.change_signals_tab(not on))
         self.keyboard_tab = KeyboardTab(self.demo)
         self.mouse_tab = MouseTab(self.demo)
 

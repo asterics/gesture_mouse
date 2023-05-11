@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+import socket
 
 def clamp(value, min_val, max_val):
     return min(max(value, min_val), max_val)
@@ -35,6 +36,11 @@ def list_camera_ports():
         dev_port +=1
         camera.release()
     return available_ports,working_ports,non_working_ports
+
+def get_ip():
+    hostname = socket.gethostname()
+    ip_addr = socket.gethostbyname(hostname)
+    return ip_addr
 
 if __name__ == '__main__':
     list_camera_ports()
