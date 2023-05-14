@@ -47,6 +47,18 @@ import util
 
 from pyLiveLinkFace import PyLiveLinkFace, FaceBlendShape
 
+from mediapipe.tasks import python
+from mediapipe.tasks.python import vision
+
+model_path = '/data/model/face_landmarker.task'
+BaseOptions = mp.tasks.BaseOptions
+FaceLandmarker = mp.tasks.vision.FaceLandmarker
+FaceLandmarkerOptions = mp.tasks.vision.FaceLandmarkerOptions
+FaceLandmarkerResult = mp.tasks.vision.FaceLandmarkerResult
+VisionRunningMode = mp.tasks.vision.RunningMode
+
+
+
 mp_face_mesh = mp.solutions.face_mesh
 mp_face_mesh_connections = mp.solutions.face_mesh_connections
 
@@ -72,6 +84,12 @@ class Demo(Thread):
         self.socket = None
         self.webcam_dev_nr = 0
         self.vid_source_file=None
+
+        options = FaceLandmarkerOptions(
+            base_options=BaseOptions(model_asset_path=model_path),
+            running_mode = VisionRunningMode.LIVE_STREAM,
+            result_callback = self.mp_callback
+        )
 
         self.face_mesh = mp_face_mesh.FaceMesh(static_image_mode=False,
                max_num_faces=1,
@@ -547,6 +565,10 @@ class Demo(Thread):
         self.linear_signals = self.onehot_encoder.categories_[0]
         #print(self.linear_model.classes_)
         #print(self.onehot_encoder.inverse_transform(self.linear_model.classes_))
+
+    def mp_callback(self, result: FaceLandmarkerResult, output_image: mp.Image, timestamp_ms: int):
+        pass
+        
 
 if __name__ == '__main__':
     demo = Demo()
