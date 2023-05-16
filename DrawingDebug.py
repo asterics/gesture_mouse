@@ -39,7 +39,7 @@ def draw_landmarks_fast(np_landmarks: np.ndarray, image: np.ndarray, index: Opti
     image[np.minimum(special_landmarks[:,1]+1,frame_height-1), special_landmarks[:,0], :] = color
     image[special_landmarks[:,1], np.maximum(special_landmarks[:,0]-1,0), :] = color
     image[special_landmarks[:,1], np.minimum(special_landmarks[:,0]+1,frame_width), :] = color
-    return cv2.flip(image,1)
+    return image
 
 def show_por(x_pixel, y_pixel, width, height):
     display = np.ones((height, width, 3), np.float32)

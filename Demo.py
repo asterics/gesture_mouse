@@ -199,10 +199,10 @@ class Demo(Thread):
 
             # Debug
             #black = np.zeros((self.frame_height, self.frame_height, 3)).astype(np.uint8)
-            self.annotated_landmarks = DrawingDebug.draw_landmarks_fast(np_landmarks, image)
+            annotated_img = DrawingDebug.draw_landmarks_fast(np_landmarks, image)
             for i, indices in enumerate(self.signal_calculator.ear_indices):
-                self.annotated_landmarks = DrawingDebug.draw_landmarks_fast(np_landmarks, self.annotated_landmarks, index=indices[:6].astype(int), color=colors[i%len(colors)])
-
+                annotated_img = DrawingDebug.draw_landmarks_fast(np_landmarks, annotated_img, index=indices[:6].astype(int), color=colors[i%len(colors)])
+            self.annotated_landmarks = cv2.flip(annotated_img,1)
             if self.write_csv:
                 gesture="neutral"
                 if keyboard.is_pressed("q"):
