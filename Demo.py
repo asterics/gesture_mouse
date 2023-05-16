@@ -99,7 +99,7 @@ class Demo(Thread):
         self.calibrate_pose: bool = False
 
         self.onehot_encoder = OneHotEncoder(sparse_output=False, dtype=float)
-        self.scaler = Normalizer()
+        self.scaler = StandardScaler()
         self.linear_model = MultiOutputRegressor(SVR())
         #self.linear_model = MultiOutputRegressor(KNeighborsRegressor(metric="cosine"))
         #self.linear_model = MultiOutputRegressor(GradientBoostingRegressor(max_features=6,verbose=1,loss="huber"))
@@ -359,7 +359,7 @@ class Demo(Thread):
     def start_write_csv(self, file_name:str):
         self.csv_file_name = file_name
         self.csv_file_fp = open(self.csv_file_name, "w+", newline="")
-        self.csv_writer = csv.writer(self.csv_file_fp)
+        self.csv_writer = csv.writer(self.csv_file_fp, delimiter=";")
         if self.use_mediapipe:
             row = ["time"]
             for i in range(478):
