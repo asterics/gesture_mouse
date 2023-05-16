@@ -463,6 +463,12 @@ class AddSignalDialog(QtWidgets.QDialog):
 
     def reject(self) -> None:
         self.webcam_timer.stop()
+        self.neutral_timer.blockSignals(True)
+        self.pose_timer.blockSignals(True)
+        self.neutral_timer.stop()
+        self.pose_timer.stop()
+        self.neutral_timer.blockSignals(False)
+        self.pose_timer.blockSignals(False)
         super().reject()
 
     def start_calibration(self):

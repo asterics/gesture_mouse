@@ -508,6 +508,7 @@ class Demo(Thread):
     def calibrate_pose_stop(self, name):
         #self.VideoWriter.release()
         self.calibrate_pose = False
+        print("Accepting calibration samples")
         self.calibration_samples[name] = {"neutral": self.neutral_signals, "pose": self.pose_signals}
     #####
     def recalibrate(self, name):
