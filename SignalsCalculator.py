@@ -146,7 +146,7 @@ class SignalsCalculater:
             [66,108,337,296,336,107,0.0,-3.174508000000001,0.7898519999999998,-11.041168,0.0,0.0]
         ])
 
-    def process(self, landmarks, linear_model:MultiOutputRegressor, labels, facial_transformation_matrix):
+    def process(self, landmarks, linear_model:MultiOutputRegressor, labels, facial_transformation_matrix, scaler):
         U, _, V = np.linalg.svd(facial_transformation_matrix[:3,:3])
         R = U@V
         r = Rotation.from_matrix(R)
@@ -187,7 +187,6 @@ class SignalsCalculater:
             d1[:, :3] = self.ear_indices[:, 6:9]
             d2[:, :3] = self.ear_indices[:, 9:12]
 
-            facial_transformation_matrix[:3, :3] = R
 
             rotated_d1 = np.matmul(self.camera_matrix@facial_transformation_matrix, d1.T).T
             rotated_d2 = np.matmul(self.camera_matrix@facial_transformation_matrix, d2.T).T
@@ -198,7 +197,7 @@ class SignalsCalculater:
             correction_factor = np.linalg.norm(projected_d2, axis=1) / np.linalg.norm(projected_d1, axis=1)
             ear_values = ear_values*correction_factor
 
-            #ear_values = scaler.transform(ear_values)
+            #ear_values = ear_values/scaler
             reg_result = linear_model.predict(ear_values)
             for i, label in enumerate(labels):
                 if label == "neutral":
@@ -212,10 +211,6 @@ class SignalsCalculater:
         landmarks = landmarks * np.array((self.frame_size[0], self.frame_size[1],
                                           self.frame_size[0]))  # TODO: maybe move denormalization into methods
         landmarks = landmarks[:, :2]
-
-        U, _, V = np.linalg.svd(facial_transformation_matrix[:3,:3])
-        R = U@V
-        facial_transformation_matrix[:3,:3]=R
 
 
         ear_values = self.eye_aspect_ratio_batch(landmarks, indices=self.ear_indices)

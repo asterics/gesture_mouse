@@ -120,10 +120,11 @@ class Demo(Thread):
         self.calibrate_pose: bool = False
 
         self.onehot_encoder = OneHotEncoder(sparse_output=False, dtype=float)
-        self.scaler = StandardScaler()
+        self.scaler = Normalizer()
+        self.means = np.ones((18,1))
         self.linear_model = MultiOutputRegressor(SVR())
         #self.linear_model = MLPClassifier()
-        #self.linear_model = MultiOutputRegressor(KNeighborsRegressor(metric="cosine"))
+        #elf.linear_model = MultiOutputRegressor(KNeighborsRegressor(metric="cosine"))
         #self.linear_model = MultiOutputRegressor(GradientBoostingRegressor(max_features=6,verbose=1,loss="huber"))
         self.linear_signals: List[str] = []
 
@@ -481,6 +482,8 @@ class Demo(Thread):
 
         #self.scaler.fit(data_array)
         #data_array=self.scaler.transform(data_array)
+        self.means = np.mean(data_array,axis=0)
+        #data_array = data_array/self.means
 
         self.signals[name] = Signal(name)
         self.signals[name].set_higher_threshold(1.)
@@ -525,7 +528,7 @@ class Demo(Thread):
             #continue
         ########
 
-        result = self.signal_calculator.process(np_landmarks, self.linear_model, self.linear_signals, transformation_matrix)
+        result = self.signal_calculator.process(np_landmarks, self.linear_model, self.linear_signals, transformation_matrix, self.means)
 
         for signal_name in self.signals:
             value = result.get(signal_name)
