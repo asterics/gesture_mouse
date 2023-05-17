@@ -50,7 +50,7 @@ from pyLiveLinkFace import PyLiveLinkFace, FaceBlendShape
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
-model_path = '/data/model/face_landmarker.task'
+model_path = './data/model/face_landmarker.task'
 BaseOptions = mp.tasks.BaseOptions
 FaceLandmarker = mp.tasks.vision.FaceLandmarker
 FaceLandmarkerOptions = mp.tasks.vision.FaceLandmarkerOptions
@@ -87,17 +87,20 @@ class Demo(Thread):
 
         options = FaceLandmarkerOptions(
             base_options=BaseOptions(model_asset_path=model_path),
-            running_mode = VisionRunningMode.LIVE_STREAM,
-            result_callback = self.mp_callback
+            running_mode = VisionRunningMode.VIDEO,
+            output_facial_transformation_matrixes=True,
+            output_face_blendshapes=True,
+            #result_callback = self.mp_callback
         )
 
-        self.face_mesh = mp_face_mesh.FaceMesh(static_image_mode=False,
-               max_num_faces=1,
-               refine_landmarks=True,
-               min_detection_confidence=0.5,
-               min_tracking_confidence=0.5)
+        # self.face_mesh = mp_face_mesh.FaceMesh(static_image_mode=False,
+        #        max_num_faces=1,
+        #        refine_landmarks=True,
+        #        min_detection_confidence=0.5,
+        #        min_tracking_confidence=0.5)
+        self.face_mesh = FaceLandmarker.create_from_options(options)
 
-        self.camera_parameters = (500, 500, 640 / 2, 480 / 2)
+        self.camera_parameters = (480, 480, 640 / 2, 480 / 2)
         self.signal_calculator = SignalsCalculator.SignalsCalculater(camera_parameters=self.camera_parameters,
                                                                      frame_size=(self.frame_width, self.frame_height))
 
@@ -118,8 +121,8 @@ class Demo(Thread):
 
         self.onehot_encoder = OneHotEncoder(sparse_output=False, dtype=float)
         self.scaler = StandardScaler()
-        #self.linear_model = MultiOutputRegressor(SVR())
-        self.linear_model = MLPClassifier()
+        self.linear_model = MultiOutputRegressor(SVR())
+        #self.linear_model = MLPClassifier()
         #self.linear_model = MultiOutputRegressor(KNeighborsRegressor(metric="cosine"))
         #self.linear_model = MultiOutputRegressor(GradientBoostingRegressor(max_features=6,verbose=1,loss="huber"))
         self.linear_signals: List[str] = []
@@ -168,96 +171,14 @@ class Demo(Thread):
                 print("couldn't read frame")
                 continue
 
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            #image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             image.flags.writeable = False
-            results = self.face_mesh.process(image)
-            image.flags.writeable = True
-            image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+            timestamp = int(1000*time.time())
+            #results = self.face_mesh.process(image)
+            image_mp = mp.Image(image_format=mp.ImageFormat.SRGB, data=image)
+            result = self.face_mesh.detect_for_video(image_mp,timestamp)
+            self.mp_callback(result,image_mp,timestamp)
 
-            if not results.multi_face_landmarks:
-                continue
-            landmarks = results.multi_face_landmarks[0]
-
-            np_landmarks = np.array(
-                [(lm.x, lm.y, lm.z) for lm in
-                 landmarks.landmark])
-
-            if self.filter_landmarks:
-                for i in range(468):
-                    kalman_filters_landm_complex = self.landmark_kalman[i].update(
-                        np_landmarks[i, 0] + 1j * np_landmarks[i, 1])
-                    np_landmarks[i, 0], np_landmarks[i, 1] = np.real(kalman_filters_landm_complex), np.imag(
-                        kalman_filters_landm_complex)
-
-
-            # only check videowriter not none? #
-            ear_values, ear_values_corrected = self.signal_calculator.process_ear(np_landmarks)
-            if self.calibrate_neutral and success:
-
-                #self.VideoWriter.write(image)
-                self.neutral_signals.append(ear_values_corrected)
-                #continue
-
-            if self.calibrate_pose and success:
-                #self.VideoWriter.write(image)
-                self.pose_signals.append(ear_values_corrected)
-                #continue
-            ########
-
-            result = self.signal_calculator.process(np_landmarks, self.linear_model, self.linear_signals, self.scaler)
-
-            for signal_name in self.signals:
-                value = result.get(signal_name)
-                if value is None:
-                    print(f"Tracker doesn't measure signal {signal_name}")
-                    continue
-
-                self.signals[signal_name].set_value(value)
-
-            self.mouse.process_signal(self.signals)
-
-            # Debug
-            #black = np.zeros((self.frame_height, self.frame_height, 3)).astype(np.uint8)
-            annotated_img = DrawingDebug.draw_landmarks_fast(np_landmarks, image)
-            for i, indices in enumerate(self.signal_calculator.ear_indices):
-                annotated_img = DrawingDebug.draw_landmarks_fast(np_landmarks, annotated_img, index=indices[:6].astype(int), color=colors[i%len(colors)])
-            self.annotated_landmarks = cv2.flip(annotated_img,1)
-            if self.write_csv:
-                gesture="neutral"
-                if self.calibrate_pose or self.calibrate_neutral:
-                    gesture = self.calibration_name
-                elif keyboard.is_pressed("q"):
-                    gesture="JawOpen"
-                elif keyboard.is_pressed("w"):
-                    gesture="Smile"
-                elif keyboard.is_pressed("e"):
-                    gesture="Frown"
-                elif keyboard.is_pressed("r"):
-                    gesture="CheekPuff"
-                elif keyboard.is_pressed("t"):
-                    gesture="MouthPuck"
-                elif keyboard.is_pressed("z"):
-                    gesture="BlinkLeft"
-                elif keyboard.is_pressed("u"):
-                    gesture="BlinkRight"
-                elif keyboard.is_pressed("i"):
-                    gesture="BrowUp"
-                elif keyboard.is_pressed("o"):
-                    gesture="BrowDown"
-                elif keyboard.is_pressed("p"):
-                    gesture="BrowUpLeft"
-                elif keyboard.is_pressed("a"):
-                    gesture="BrowUpRight"
-                elif keyboard.is_pressed("s"):
-                    gesture="NoseSneer"
-
-                row = [time.time(),*np_landmarks.astype(np.float32).flatten(), *ear_values.astype(np.float32).flatten(), *ear_values_corrected.astype(np.float32).flatten(), gesture, *result.values()]
-                self.csv_writer.writerow(row)
-                print(gesture)
-                print(row)
-
-
-            self.fps = self.fps_counter()
 
     def __run_livelinkface(self):
         while self.is_running and self.is_tracking and not self.use_mediapipe:
@@ -573,7 +494,90 @@ class Demo(Thread):
         #print(self.onehot_encoder.inverse_transform(self.linear_model.classes_))
 
     def mp_callback(self, result: FaceLandmarkerResult, output_image: mp.Image, timestamp_ms: int):
-        pass
+        #print(result)
+        if not result.face_landmarks:
+            return
+        transformation_matrix = result.facial_transformation_matrixes[0]
+        print(transformation_matrix)
+        mp_landmarks = result.face_landmarks[0]
+
+        np_landmarks = np.array(
+             [(lm.x, lm.y, lm.z) for lm in
+              mp_landmarks])
+
+        if self.filter_landmarks:
+            for i in range(468):
+                kalman_filters_landm_complex = self.landmark_kalman[i].update(
+                    np_landmarks[i, 0] + 1j * np_landmarks[i, 1])
+                np_landmarks[i, 0], np_landmarks[i, 1] = np.real(kalman_filters_landm_complex), np.imag(
+                    kalman_filters_landm_complex)
+
+        ear_values, ear_values_corrected = self.signal_calculator.process_ear(np_landmarks, facial_transformation_matrix=transformation_matrix,random_augmentation=(self.calibrate_pose or self.calibrate_neutral))
+        if self.calibrate_neutral:
+
+            #self.VideoWriter.write(image)
+            self.neutral_signals.append(ear_values_corrected)
+            #continue
+
+        if self.calibrate_pose:
+            #self.VideoWriter.write(image)
+            self.pose_signals.append(ear_values_corrected)
+            #continue
+        ########
+
+        result = self.signal_calculator.process(np_landmarks, self.linear_model, self.linear_signals, transformation_matrix)
+
+        for signal_name in self.signals:
+            value = result.get(signal_name)
+            if value is None:
+                print(f"Tracker doesn't measure signal {signal_name}")
+                continue
+
+            self.signals[signal_name].set_value(value)
+
+        self.mouse.process_signal(self.signals)
+
+        # Debug
+        #black = np.zeros((self.frame_height, self.frame_height, 3)).astype(np.uint8)
+        image = output_image.numpy_view().copy()
+        annotated_img = DrawingDebug.draw_landmarks_fast(np_landmarks, image)
+        for i, indices in enumerate(self.signal_calculator.ear_indices):
+            annotated_img = DrawingDebug.draw_landmarks_fast(np_landmarks, annotated_img, index=indices[:6].astype(int), color=colors[i%len(colors)])
+        self.annotated_landmarks = cv2.flip(annotated_img,1)
+        if self.write_csv:
+            gesture="neutral"
+            if self.calibrate_pose or self.calibrate_neutral:
+                gesture = self.calibration_name
+            elif keyboard.is_pressed("q"):
+                gesture="JawOpen"
+            elif keyboard.is_pressed("w"):
+                gesture="Smile"
+            elif keyboard.is_pressed("e"):
+                gesture="Frown"
+            elif keyboard.is_pressed("r"):
+                gesture="CheekPuff"
+            elif keyboard.is_pressed("t"):
+                gesture="MouthPuck"
+            elif keyboard.is_pressed("z"):
+                gesture="BlinkLeft"
+            elif keyboard.is_pressed("u"):
+                gesture="BlinkRight"
+            elif keyboard.is_pressed("i"):
+                gesture="BrowUp"
+            elif keyboard.is_pressed("o"):
+                gesture="BrowDown"
+            elif keyboard.is_pressed("p"):
+                gesture="BrowUpLeft"
+            elif keyboard.is_pressed("a"):
+                gesture="BrowUpRight"
+            elif keyboard.is_pressed("s"):
+                gesture="NoseSneer"
+
+            row = [time.time(),*np_landmarks.astype(np.float32).flatten(), *ear_values.astype(np.float32).flatten(), *ear_values_corrected.astype(np.float32).flatten(), gesture, *result.values()]
+            self.csv_writer.writerow(row)
+            print(gesture)
+            print(row)
+        self.fps = self.fps_counter()
         
 
 if __name__ == '__main__':

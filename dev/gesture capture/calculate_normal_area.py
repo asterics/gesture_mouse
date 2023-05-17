@@ -465,6 +465,8 @@ a = []
 for i, indices in enumerate(ear_indices):
 
     subset = canonical_metric_landmarks[indices]
+    pcd =o3d.geometry.PointCloud(o3d.utility.Vector3dVector(subset))
+    o3d.visualization.draw(pcd)
     p2_p6 = subset[1,:]-subset[5,:]
     p3_p5 = subset[2,:]-subset[4,:]
     p1_p4 = subset[0,:]-subset[3,:]

@@ -114,6 +114,11 @@ class SignalsCalculater:
     def __init__(self, camera_parameters, frame_size: Tuple[int, int]):
         self.neutral_landmarks = np.zeros((478, 3))
         self.camera_parameters = camera_parameters
+        self.camera_matrix = np.array([
+            [self.camera_parameters[0],0,self.camera_parameters[2],0],
+            [self.camera_parameters[1],0,self.camera_parameters[3],0],
+            [0,0,1,0]
+        ])
         self.head_pose_calculator = PnPHeadPose()
         self.pcf = PCF(1, 10000, 720, 1280)
         self.frame_size = frame_size
@@ -141,18 +146,12 @@ class SignalsCalculater:
             [66,108,337,296,336,107,0.0,-3.174508000000001,0.7898519999999998,-11.041168,0.0,0.0]
         ])
 
-    def process(self, landmarks, linear_model:MultiOutputRegressor, labels, scaler):
-        rvec, tvec = self.pnp_head_pose(landmarks)
-        landmarks = landmarks * np.array((self.frame_size[0], self.frame_size[1],
-                                          self.frame_size[0]))  # TODO: maybe move denormalization into methods
-        landmarks = landmarks[:, :2]
-
-        r = Rotation.from_rotvec(np.squeeze(rvec))
-
-        #TODO: Calculate stuff if head is tilted too much (yaw and pitch), or supress signals. Maybe error is better then unwanted actions
-
-        rotmat, _ = cv2.Rodrigues(rvec)
+    def process(self, landmarks, linear_model:MultiOutputRegressor, labels, facial_transformation_matrix):
+        U, _, V = np.linalg.svd(facial_transformation_matrix[:3,:3])
+        R = U@V
+        r = Rotation.from_matrix(R)
         angles = r.as_euler("xyz", degrees=True)
+
         # normalized_landmarks = rotationmat.T@(landmarks-tvec.T)
         jaw_open = self.get_jaw_open(landmarks)
         mouth_puck = self.get_mouth_puck(landmarks)
@@ -169,7 +168,7 @@ class SignalsCalculater:
 
         signals = {
             "HeadPitch": angles[0],
-            "HeadYaw": angles[1],
+            "HeadYaw": -angles[1],
             "HeadRoll": angles[2],
             "JawOpen": jaw_open,
             "MouthPuck": mouth_puck,
@@ -182,19 +181,23 @@ class SignalsCalculater:
 
         if len(labels) > 0:
             ear_values = np.array(self.eye_aspect_ratio_batch(landmarks, self.ear_indices)).reshape(1, -1)
-            d1 = self.ear_indices[:, 6:9]
-            d2 = self.ear_indices[:,9:12]
-            cam_normal = np.array([0,0,-1])
-            rotated_d1 = np.matmul(rotmat, d1.T).T
-            rotated_d2 = np.matmul(rotmat, d2.T).T
-            projected_d1 = np.cross(np.cross(cam_normal,rotated_d1),cam_normal)
-            projected_d2 = np.cross(np.cross(cam_normal,rotated_d2),cam_normal)
-            projected_d1 = projected_d1[:,:2]*np.array(self.frame_size)
-            projected_d2 = projected_d2[:,:2]*np.array(self.frame_size)
-            projected_d1 = np.linalg.norm(projected_d1, axis=1)
-            projected_d2 = np.linalg.norm(projected_d2, axis=1)
-            correction_factor = projected_d2 / (projected_d1)
+
+            d1 = np.ones((18, 4))
+            d2 = np.ones((18, 4))
+            d1[:, :3] = self.ear_indices[:, 6:9]
+            d2[:, :3] = self.ear_indices[:, 9:12]
+
+            facial_transformation_matrix[:3, :3] = R
+
+            rotated_d1 = np.matmul(self.camera_matrix@facial_transformation_matrix, d1.T).T
+            rotated_d2 = np.matmul(self.camera_matrix@facial_transformation_matrix, d2.T).T
+
+            projected_d1 = rotated_d1[:, :2] / rotated_d1[:, [2]]
+            projected_d2 = rotated_d2[:, :2] / rotated_d2[:, [2]]
+
+            correction_factor = np.linalg.norm(projected_d2, axis=1) / np.linalg.norm(projected_d1, axis=1)
             ear_values = ear_values*correction_factor
+
             #ear_values = scaler.transform(ear_values)
             reg_result = linear_model.predict(ear_values)
             for i, label in enumerate(labels):
@@ -205,34 +208,31 @@ class SignalsCalculater:
 
         return signals
 
-    def process_ear(self, landmarks):
-        rvec, tvec = self.pnp_head_pose(landmarks)
-
-        rotmat, _ = cv2.Rodrigues(rvec)
-
+    def process_ear(self, landmarks, facial_transformation_matrix, random_augmentation=False):
         landmarks = landmarks * np.array((self.frame_size[0], self.frame_size[1],
                                           self.frame_size[0]))  # TODO: maybe move denormalization into methods
         landmarks = landmarks[:, :2]
 
+        U, _, V = np.linalg.svd(facial_transformation_matrix[:3,:3])
+        R = U@V
+        facial_transformation_matrix[:3,:3]=R
+
+
         ear_values = self.eye_aspect_ratio_batch(landmarks, indices=self.ear_indices)
 
-        d1 = self.ear_indices[:, 6:9]
-        d2 = self.ear_indices[:, 9:12]
-        cam_normal = np.array([0, 0, -1])
+        d1 = np.ones((18,4))
+        d2 = np.ones((18,4))
+        d1[:,:3] = self.ear_indices[:, 6:9]
+        d2[:,:3] = self.ear_indices[:, 9:12]
 
-        rotated_d1 = np.matmul(rotmat, d1.T).T
-        rotated_d2 = np.matmul(rotmat, d2.T).T
+        rotated_d1 = np.matmul(self.camera_matrix @ facial_transformation_matrix, d1.T).T
+        rotated_d2 = np.matmul(self.camera_matrix @ facial_transformation_matrix, d2.T).T
 
-        projected_d1 = np.cross(np.cross(cam_normal, rotated_d1), cam_normal)
-        projected_d2 = np.cross(np.cross(cam_normal, rotated_d2), cam_normal)
-        projected_d1 = projected_d1[:, :2] * np.array(self.frame_size)
-        projected_d2 = projected_d2[:, :2] * np.array(self.frame_size)
-        projected_d1 = np.linalg.norm(projected_d1, axis=1)
-        projected_d2 = np.linalg.norm(projected_d2, axis=1)
-        correction_factor = projected_d2/projected_d1
+        projected_d1 = rotated_d1[:,:2]/rotated_d1[:,[2]]
+        projected_d2 = rotated_d2[:,:2]/rotated_d2[:,[2]]
 
-        #forehead_length = np.linalg.norm(landmarks[10, :] - landmarks[8,:])
-        #eye_distance = np.linalg.norm(landmarks[33,:] - landmarks[263,:])
+        correction_factor = np.linalg.norm(projected_d2,axis=1)/np.linalg.norm(projected_d1,axis=1)
+
         return ear_values, ear_values*correction_factor
 
     def process_neutral(self, landmarks):

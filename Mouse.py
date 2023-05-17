@@ -45,8 +45,8 @@ class Mouse:
 
     def move(self, pitch: float, yaw: float):
         if self.mode == MouseMode.ABSOLUTE:
-            self.x = 10*self.w_pixels * 0.5*(yaw+1)
-            self.y = 10*self.h_pixels * 0.5*(pitch+1)
+            self.x = self.w_pixels * yaw
+            self.y = self.h_pixels * pitch
             self.mouse_controller.position = (self.x, self.y)
         elif self.mode == MouseMode.RELATIVE:
             self.move_relative(pitch, yaw)
@@ -81,8 +81,8 @@ class Mouse:
 
         #mouse_speed_x = 10*max(min(mouse_speed_x, mouse_speed_max), -mouse_speed_max)
         #mouse_speed_y = 10*max(min(mouse_speed_y, mouse_speed_max), -mouse_speed_max)
-        mouse_speed_x = 3*dx
-        mouse_speed_y = 3*dy
+        mouse_speed_x = 2*dx
+        mouse_speed_y = 2*dy
         self.x += mouse_speed_x
         self.y += mouse_speed_y
 
