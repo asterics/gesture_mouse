@@ -117,8 +117,9 @@ class Demo(Thread):
         self.calibrate_pose: bool = False
 
         self.onehot_encoder = OneHotEncoder(sparse_output=False, dtype=float)
-        self.scaler = Normalizer()
-        self.linear_model = MultiOutputRegressor(SVR())
+        self.scaler = StandardScaler()
+        #self.linear_model = MultiOutputRegressor(SVR())
+        self.linear_model = MLPClassifier()
         #self.linear_model = MultiOutputRegressor(KNeighborsRegressor(metric="cosine"))
         #self.linear_model = MultiOutputRegressor(GradientBoostingRegressor(max_features=6,verbose=1,loss="huber"))
         self.linear_signals: List[str] = []
@@ -203,7 +204,7 @@ class Demo(Thread):
                 #continue
             ########
 
-            result = self.signal_calculator.process(np_landmarks,self.linear_model, self.linear_signals, self.scaler)
+            result = self.signal_calculator.process(np_landmarks, self.linear_model, self.linear_signals, self.scaler)
 
             for signal_name in self.signals:
                 value = result.get(signal_name)
@@ -217,13 +218,15 @@ class Demo(Thread):
 
             # Debug
             #black = np.zeros((self.frame_height, self.frame_height, 3)).astype(np.uint8)
-            self.annotated_landmarks = DrawingDebug.draw_landmarks_fast(np_landmarks, image)
+            annotated_img = DrawingDebug.draw_landmarks_fast(np_landmarks, image)
             for i, indices in enumerate(self.signal_calculator.ear_indices):
-                self.annotated_landmarks = DrawingDebug.draw_landmarks_fast(np_landmarks, self.annotated_landmarks, index=indices[:6].astype(int), color=colors[i%len(colors)])
-
+                annotated_img = DrawingDebug.draw_landmarks_fast(np_landmarks, annotated_img, index=indices[:6].astype(int), color=colors[i%len(colors)])
+            self.annotated_landmarks = cv2.flip(annotated_img,1)
             if self.write_csv:
                 gesture="neutral"
-                if keyboard.is_pressed("q"):
+                if self.calibrate_pose or self.calibrate_neutral:
+                    gesture = self.calibration_name
+                elif keyboard.is_pressed("q"):
                     gesture="JawOpen"
                 elif keyboard.is_pressed("w"):
                     gesture="Smile"
@@ -377,7 +380,7 @@ class Demo(Thread):
     def start_write_csv(self, file_name:str):
         self.csv_file_name = file_name
         self.csv_file_fp = open(self.csv_file_name, "w+", newline="")
-        self.csv_writer = csv.writer(self.csv_file_fp)
+        self.csv_writer = csv.writer(self.csv_file_fp, delimiter=";")
         if self.use_mediapipe:
             row = ["time"]
             for i in range(478):
@@ -514,6 +517,7 @@ class Demo(Thread):
         #    os.mkdir(f"calibration/{name}")
         #self.VideoWriter.open(f"calibration/{name}/{name}_neutral.mp4", self.fourcc, 30, (self.frame_width,self.frame_height))
         self.calibrate_neutral = True
+        self.calibration_name = "calibration_neutral"
 
     def calibrate_neutral_stop(self, name):
        #self.VideoWriter.release()
@@ -523,9 +527,11 @@ class Demo(Thread):
         # os.mkdir(f"calibration/{name}")
         #self.VideoWriter.open(f"calibration/{name}/{name}_pose.mp4", self.fourcc, 30, (self.frame_width,self.frame_height))
         self.calibrate_pose = True
+        self.calibration_name = "calibration_"+name
     def calibrate_pose_stop(self, name):
         #self.VideoWriter.release()
         self.calibrate_pose = False
+        print("Accepting calibration samples")
         self.calibration_samples[name] = {"neutral": self.neutral_signals, "pose": self.pose_signals}
     #####
     def recalibrate(self, name):

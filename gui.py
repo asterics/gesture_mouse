@@ -266,6 +266,7 @@ class SignalTab(QtWidgets.QWidget):
 
             self.setting_widget.layout().addWidget(setting)
             self.signal_settings[signal_name] = setting
+            #self.signal_added.emit()
 
         # load in demo
         self.demo.setup_signals(json_path)
@@ -463,6 +464,12 @@ class AddSignalDialog(QtWidgets.QDialog):
 
     def reject(self) -> None:
         self.webcam_timer.stop()
+        self.neutral_timer.blockSignals(True)
+        self.pose_timer.blockSignals(True)
+        self.neutral_timer.stop()
+        self.pose_timer.stop()
+        self.neutral_timer.blockSignals(False)
+        self.pose_timer.blockSignals(False)
         super().reject()
 
     def start_calibration(self):
