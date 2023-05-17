@@ -45,8 +45,8 @@ class Mouse:
 
     def move(self, pitch: float, yaw: float):
         if self.mode == MouseMode.ABSOLUTE:
-            self.x = self.w_pixels * yaw
-            self.y = self.h_pixels * pitch
+            self.x = 10*self.w_pixels * 0.5*(yaw+1)
+            self.y = 10*self.h_pixels * 0.5*(pitch+1)
             self.mouse_controller.position = (self.x, self.y)
         elif self.mode == MouseMode.RELATIVE:
             self.move_relative(pitch, yaw)
@@ -70,18 +70,19 @@ class Mouse:
 
         # TODO: Threshold / Deadzone
         mouse_speed_x = mouse_speed_y = 0
-        if dx < -0.001:
+        if dx < -0.00:
             mouse_speed_x = -(math.pow(mouse_speed_co, abs(dx * acceleration)) - 1.)
-        elif dx > 0.001:
+        elif dx > 0.00:
             mouse_speed_x = (math.pow(mouse_speed_co, abs(dx * acceleration)) - 1.)
-        if dy < -0.001:
+        if dy < -0.00:
             mouse_speed_y = -(math.pow(mouse_speed_co, abs(dy * acceleration)) - 1.)
-        elif dy > 0.001:
+        elif dy > 0.00:
             mouse_speed_y = (math.pow(mouse_speed_co, abs(dy * acceleration)) - 1.)
 
-        mouse_speed_x = 3*max(min(mouse_speed_x, mouse_speed_max), -mouse_speed_max)
-        mouse_speed_y = 3*max(min(mouse_speed_y, mouse_speed_max), -mouse_speed_max)
-
+        #mouse_speed_x = 10*max(min(mouse_speed_x, mouse_speed_max), -mouse_speed_max)
+        #mouse_speed_y = 10*max(min(mouse_speed_y, mouse_speed_max), -mouse_speed_max)
+        mouse_speed_x = 3*dx
+        mouse_speed_y = 3*dy
         self.x += mouse_speed_x
         self.y += mouse_speed_y
 

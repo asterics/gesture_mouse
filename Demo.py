@@ -100,7 +100,8 @@ class Demo(Thread):
 
         self.onehot_encoder = OneHotEncoder(sparse_output=False, dtype=float)
         self.scaler = StandardScaler()
-        self.linear_model = MultiOutputRegressor(SVR())
+        #self.linear_model = MultiOutputRegressor(SVR())
+        self.linear_model = MLPClassifier()
         #self.linear_model = MultiOutputRegressor(KNeighborsRegressor(metric="cosine"))
         #self.linear_model = MultiOutputRegressor(GradientBoostingRegressor(max_features=6,verbose=1,loss="huber"))
         self.linear_signals: List[str] = []
@@ -185,7 +186,7 @@ class Demo(Thread):
                 #continue
             ########
 
-            result = self.signal_calculator.process(np_landmarks,self.linear_model, self.linear_signals, self.scaler)
+            result = self.signal_calculator.process(np_landmarks, self.linear_model, self.linear_signals, self.scaler)
 
             for signal_name in self.signals:
                 value = result.get(signal_name)
@@ -205,7 +206,9 @@ class Demo(Thread):
             self.annotated_landmarks = cv2.flip(annotated_img,1)
             if self.write_csv:
                 gesture="neutral"
-                if keyboard.is_pressed("q"):
+                if self.calibrate_pose or self.calibrate_neutral:
+                    gesture = self.calibration_name
+                elif keyboard.is_pressed("q"):
                     gesture="JawOpen"
                 elif keyboard.is_pressed("w"):
                     gesture="Smile"
@@ -496,6 +499,7 @@ class Demo(Thread):
         #    os.mkdir(f"calibration/{name}")
         #self.VideoWriter.open(f"calibration/{name}/{name}_neutral.mp4", self.fourcc, 30, (self.frame_width,self.frame_height))
         self.calibrate_neutral = True
+        self.calibration_name = "calibration_neutral"
 
     def calibrate_neutral_stop(self, name):
        #self.VideoWriter.release()
@@ -505,6 +509,7 @@ class Demo(Thread):
         # os.mkdir(f"calibration/{name}")
         #self.VideoWriter.open(f"calibration/{name}/{name}_pose.mp4", self.fourcc, 30, (self.frame_width,self.frame_height))
         self.calibrate_pose = True
+        self.calibration_name = "calibration_"+name
     def calibrate_pose_stop(self, name):
         #self.VideoWriter.release()
         self.calibrate_pose = False

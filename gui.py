@@ -266,6 +266,7 @@ class SignalTab(QtWidgets.QWidget):
 
             self.setting_widget.layout().addWidget(setting)
             self.signal_settings[signal_name] = setting
+            #self.signal_added.emit()
 
         # load in demo
         self.demo.setup_signals(json_path)

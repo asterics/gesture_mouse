@@ -454,6 +454,7 @@ class PnPHeadPose:
         #self.points_idx.append([33, 263, 1, 61, 291, 199])
         #self.points_idx = [33,263,1,61,291,199]
         self.points_idx = list(set(self.points_idx))
+       # self.points_idx = list(set(range(468)))
         self.points_idx.sort()
 
 
