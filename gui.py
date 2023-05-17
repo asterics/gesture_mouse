@@ -1130,7 +1130,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.central_widget = QtWidgets.QTabWidget()
 
         self.signal_tab_iphone = SignalTab(self.demo, "config/iphone_default.json")
-        self.signal_tab_mediapipe = SignalTab(self.demo, "config/mediapipe_default.json")
+        self.signal_tab_mediapipe = SignalTab(self.demo, "config/mediapipe_blendshape.json")
 
         self.signals_tab = QtWidgets.QStackedWidget()
         self.signals_tab.addWidget(self.signal_tab_iphone)

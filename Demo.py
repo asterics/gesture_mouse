@@ -59,6 +59,7 @@ VisionRunningMode = mp.tasks.vision.RunningMode
 
 
 
+
 mp_face_mesh = mp.solutions.face_mesh
 mp_face_mesh_connections = mp.solutions.face_mesh_connections
 
@@ -153,7 +154,7 @@ class Demo(Thread):
         while self.is_running:
             if self.is_tracking:
                 if self.use_mediapipe:
-                    self.setup_signals("config/mediapipe_default.json") #TODO: change to latest
+                    self.setup_signals("config/mediapipe_blendshape.json") #TODO: change to latest
                     self.__start_camera()
                     self.__run_mediapipe()
                     self.__stop_camera()
@@ -503,6 +504,7 @@ class Demo(Thread):
         transformation_matrix = result.facial_transformation_matrixes[0]
         print(transformation_matrix)
         mp_landmarks = result.face_landmarks[0]
+        blendshapes = result.face_blendshapes[0]
 
         np_landmarks = np.array(
              [(lm.x, lm.y, lm.z) for lm in
@@ -529,6 +531,9 @@ class Demo(Thread):
         ########
 
         result = self.signal_calculator.process(np_landmarks, self.linear_model, self.linear_signals, transformation_matrix, self.means)
+
+        for blendshape in blendshapes:
+            result[blendshape.category_name]=blendshape.score
 
         for signal_name in self.signals:
             value = result.get(signal_name)
