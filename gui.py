@@ -605,9 +605,21 @@ class GeneralTab(QtWidgets.QWidget):
         self.vid_vidfile_layout.addWidget(self.vid_vidfile_openfile)
         self.vid_vidfile_grp.setLayout(self.vid_vidfile_layout)
 
+        self.csv_record_group = QGroupBox("Record all signals")
+        self.csv_record_group.setCheckable(True)
+        self.csv_record_group.setChecked(False)
+        self.csv_record_group.toggled.connect(self.csv_grp_toggled)
+        label = QtWidgets.QLabel("Helper Mode to evaluate system")
+        self.csv_grp_layout = QtWidgets.QFormLayout()
+        self.csv_grp_layout.addWidget(label)
+        self.csv_record_group.setLayout(self.csv_grp_layout)
+
+
+
         self.vid_mode_layout.addWidget(self.vid_webcam_grp)
         self.vid_mode_layout.addWidget(self.vid_iphone3d_grp)
         self.vid_mode_layout.addWidget(self.vid_vidfile_grp)
+        self.vid_mode_layout.addWidget(self.csv_record_group)
 
         self.vid_webcam_device=QtWidgets.QComboBox()
         webcam_available_ports,self.vid_webcam_devices,webcam_non_working_ports=util.list_camera_ports()
@@ -699,6 +711,11 @@ class GeneralTab(QtWidgets.QWidget):
             self.vid_vidfile_grp.blockSignals(True)
             self.vid_vidfile_grp.setChecked(False)
             self.vid_vidfile_grp.blockSignals(False)
+
+            self.csv_record_group.blockSignals(True)
+            self.csv_record_group.setChecked(False)
+            self.csv_record_group.blockSignals(False)
+
             self.demo.use_mediapipe = False
         else:
             self.vid_iphone3d_grp.blockSignals(True)
@@ -714,11 +731,37 @@ class GeneralTab(QtWidgets.QWidget):
             self.vid_iphone3d_grp.blockSignals(True)
             self.vid_iphone3d_grp.setChecked(False)
             self.vid_iphone3d_grp.blockSignals(False)
+
+            self.csv_record_group.blockSignals(True)
+            self.csv_record_group.setChecked(False)
+            self.csv_record_group.blockSignals(False)
+
             self.demo.use_mediapipe = True
         else:
             self.vid_vidfile_grp.blockSignals(True)
             self.vid_vidfile_grp.setChecked(False)
             self.vid_vidfile_grp.blockSignals(False)
+
+    def csv_grp_toggled(self, on:bool):
+        if on:
+            self.vid_webcam_grp.blockSignals(True)
+            self.vid_webcam_grp.setChecked(False)
+            self.vid_webcam_grp.blockSignals(False)
+
+            self.vid_iphone3d_grp.blockSignals(True)
+            self.vid_iphone3d_grp.setChecked(False)
+            self.vid_iphone3d_grp.blockSignals(False)
+
+            self.vid_vidfile_grp.blockSignals(True)
+            self.vid_vidfile_grp.setChecked(False)
+            self.vid_vidfile_grp.blockSignals(False)
+
+            self.demo.recording_mode=True
+            self.demo.use_mediapipe=False
+        else:
+            self.csv_record_group.blockSignals(True)
+            self.csv_record_group.setChecked(False)
+            self.csv_record_group.blockSignals(False)
 
 
 class MouseTab(QtWidgets.QWidget):
