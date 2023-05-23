@@ -453,9 +453,7 @@ ear_indices = np.array([
             [4, 51, 196, 168, 419, 281],  # nose vert
             [218, 220, 275, 438, 274, 237],  # nose hor
             [46, 53, 65, 55, 222, 225],  # left eyebrow
-
             [276, 283, 295, 285, 442, 444],  # right eyebrow
-
             [66, 108, 337, 296, 336, 107],  # between eyebrows
             # [], # right eyebrow inner
         ])
