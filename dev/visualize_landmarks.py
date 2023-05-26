@@ -8,10 +8,10 @@ import time
 show_3d = False
 
 directions = ["neutral", "links", "rechts", "oben", "unten"]
-direction = "links"
-pose = "brow_up"
+direction = "bewegung"
+pose = "neutral"
 
-csv_base = "../tests/Martin Deinhofer"
+csv_base = "../tests/Patrick Link"
 length=90
 
 frame_height = 480
@@ -48,4 +48,4 @@ else:
         black = np.zeros((frame_height, frame_width, 3)).astype(np.uint8)
         image = draw_landmarks_fast(r, black, index=list(range(478)))
         cv2.imshow("Landmarks", image)
-        cv2.waitKey(30)
+        cv2.waitKey(15)

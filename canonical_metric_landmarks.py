@@ -1,5 +1,4 @@
 import numpy as np
-import open3d as o3d
 
 canonical_metric_landmarks = np.array(
             [0.000000, -3.406404, 5.979507, 0.499977, 0.652534, 0.000000, -1.126865, 7.475604, 0.500026, 0.547487,
@@ -431,59 +430,3 @@ canonical_metric_landmarks = np.array(
 canonical_metric_landmarks = np.reshape(canonical_metric_landmarks,
                                              (canonical_metric_landmarks.shape[0] // 5, 5))
 canonical_metric_landmarks = canonical_metric_landmarks[:, :3]
-
-# Rotate face around
-rotate_mat = np.asarray([[1, 0, 0], [0, -1, 0], [0, 0, -1]], dtype=np.float64)
-canonical_metric_landmarks = np.matmul(canonical_metric_landmarks.reshape(-1, 3), rotate_mat)
-
-ear_indices = np.array([
-            [78, 81, 311, 308, 402, 178],  # mouth inner
-            [61, 39, 269, 291, 405, 181],  # mouth outer
-            [57, 39, 269, 287, 405, 181],  # mouth outer fixed
-            [17, 15, 12, 0, 40, 91],  # mouth left
-            [17, 15, 12, 0, 270, 291],  # mouth right
-            [33, 160, 158, 133, 153, 144],  # left eye
-            [362, 385, 387, 263, 373, 380],  # right eye
-            [40, 186, 216, 205, 203, 165],  # cheeck left upper
-            [91, 43, 202, 211, 194, 182],  # cheeck left lower
-            [270, 391, 423, 425, 436, 410],  # cheeck right upper
-            [321, 273, 422, 431, 418, 406],  # cheeck right lower
-            [425, 266, 329, 348, 347, 280],  # upper cheeck right
-            [205, 50, 118, 119, 100, 36],  # upper cheeck left
-            [4, 51, 196, 168, 419, 281],  # nose vert
-            [218, 220, 275, 438, 274, 237],  # nose hor
-            [46, 53, 65, 55, 222, 225],  # left eyebrow
-            [276, 283, 295, 285, 442, 444],  # right eyebrow
-            [66, 108, 337, 296, 336, 107],  # between eyebrows
-            # [], # right eyebrow inner
-        ])
-
-print("[")
-a = []
-for i, indices in enumerate(ear_indices):
-
-    subset = canonical_metric_landmarks[indices]
-    #pcd =o3d.geometry.PointCloud(o3d.utility.Vector3dVector(subset))
-    #o3d.visualization.draw(pcd)
-    p2_p6 = subset[1,:]-subset[5,:]
-    p3_p5 = subset[2,:]-subset[4,:]
-    p1_p4 = subset[0,:]-subset[3,:]
-
-    d1 = p3_p5
-    d2 = p2_p6
-    #d1 = d1/np.linalg.norm(d1)
-
-    d3 = 2*p1_p4
-    #d2 = d2/np.linalg.norm(d2)
-    print("[",end="")
-    print(*indices,sep=",",end=",")
-    print(*d1, sep=",", end=",")
-    print(*d2,sep=",", end=",")
-    print(*d3,sep=",", end="],\n")
-print("]")
-
-
-
-    #o3d.visualization.draw(mesh)
-for line in a:
- print(line[1].tolist())

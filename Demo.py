@@ -128,10 +128,10 @@ class Demo(Thread):
         self.onehot_encoder = OneHotEncoder(sparse_output=False, dtype=float)
         self.scaler = Normalizer()
         self.means = np.ones((18, 1))
-        self.linear_model = MultiOutputRegressor(SVR())
-        # self.linear_model = MLPClassifier()
+        #self.linear_model = MultiOutputRegressor(SVR())
+        self.linear_model = MLPClassifier(activation="relu")
         # elf.linear_model = MultiOutputRegressor(KNeighborsRegressor(metric="cosine"))
-        # self.linear_model = MultiOutputRegressor(GradientBoostingRegressor(max_features=6,verbose=1,loss="huber"))
+        #self.linear_model = MultiOutputRegressor(GradientBoostingRegressor(max_features=6,loss="absolute_error"))
         self.linear_signals: List[str] = []
 
         # add hotkey
@@ -317,7 +317,7 @@ class Demo(Thread):
                 blendshapes.append(value)
 
             if self.write_csv:
-                mp_row = [timestamp_ms, *np_landmarks.astype(np.float32).flatten(),
+                mp_row = [timestamp_ms, *np_landmarks.astype(np.float32).flatten(), *transformation_matrix.astype(np.float32).flatten(),
                           *ear_values.astype(np.float32).flatten(),
                           *ear_values_corrected.astype(np.float32).flatten(), *mp_blendshape]
                 ip_row = [timestamp_ms, *blendshapes]
@@ -335,6 +335,7 @@ class Demo(Thread):
     def stop(self):
         print("Stopping Demo..")
         self.is_running = False
+        self.face_mesh.close()
         if self.csv_file_fp is not None:
             self.csv_file_fp.close()
 
@@ -398,6 +399,8 @@ class Demo(Thread):
                 mediapipe_header.append(f"landmark_{i}_x")
                 mediapipe_header.append(f"landmark_{i}_y")
                 mediapipe_header.append(f"landmark_{i}_z")
+            for i in range(16):
+                mediapipe_header.append(f"transformation_matrix_{i}")
             for i in range(len(self.signal_calculator.ear_indices)):
                 mediapipe_header.append(f"ear_{i}")
             for i in range(len(self.signal_calculator.ear_indices)):
@@ -421,6 +424,8 @@ class Demo(Thread):
                     row.append(f"landmark_{i}_x")
                     row.append(f"landmark_{i}_y")
                     row.append(f"landmark_{i}_z")
+                for i in range(16):
+                    row.append(f"transformation_matrix_{i}")
                 for i in range(len(self.signal_calculator.ear_indices)):
                     row.append(f"ear_{i}")
                 for i in range(len(self.signal_calculator.ear_indices)):
@@ -706,7 +711,7 @@ class Demo(Thread):
             elif keyboard.is_pressed("s"):
                 gesture = "NoseSneer"
 
-            row = [time.time(), *np_landmarks.astype(np.float32).flatten(), *ear_values.astype(np.float32).flatten(),
+            row = [time.time(), *np_landmarks.astype(np.float32).flatten(), *transformation_matrix.astype(np.float32).flatten(),*ear_values.astype(np.float32).flatten(),
                    *ear_values_corrected.astype(np.float32).flatten(), gesture, *result.values()]
             self.csv_writer.writerow(row)
             print(gesture)

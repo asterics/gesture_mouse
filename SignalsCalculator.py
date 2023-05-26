@@ -13,10 +13,13 @@ from sklearn.linear_model import Ridge
 from sklearn.multioutput import MultiOutputClassifier, MultiOutputRegressor
 from sklearn.preprocessing import normalize
 
+from dev.gesture_capture.calculate_normal_area import canonical_metric_landmarks
+
 from dataclasses import dataclass, fields
 from typing import Tuple
 from numbers import Number
 from face_geometry import PCF, get_metric_landmarks
+from canonical_metric_landmarks import  canonical_metric_landmarks
 
 
 class FilteredFloat:
@@ -116,7 +119,7 @@ class SignalsCalculater:
         self.camera_parameters = camera_parameters
         self.camera_matrix = np.array([
             [self.camera_parameters[0],0,self.camera_parameters[2],0],
-            [self.camera_parameters[1],0,self.camera_parameters[3],0],
+            [0,self.camera_parameters[1],self.camera_parameters[3],0],
             [0,0,1,0]
         ])
         self.head_pose_calculator = PnPHeadPose()
@@ -145,6 +148,7 @@ class SignalsCalculater:
             [276,283,295,285,442,444,0.011959000000000053,-0.810826,-0.5569300000000004,0.5128370000000002,-0.6266240000000005,0.027579000000000242,8.064732000000001,0.5211660000000009,3.4857520000000006],
             [66,108,337,296,336,107,0.2238659999999999,-1.5872540000000006,0.3949259999999999,-0.2238659999999999,-1.5872540000000006,0.3949259999999999,-11.041168,0.0,0.0]
         ])
+        self.ear_reference = self.eye_aspect_ratio_batch(canonical_metric_landmarks,self.ear_indices)
 
     def process(self, landmarks, linear_model:MultiOutputRegressor, labels, facial_transformation_matrix, scaler):
         U, _, V = np.linalg.svd(facial_transformation_matrix[:3,:3])
@@ -175,27 +179,19 @@ class SignalsCalculater:
         if len(labels) > 0:
             ear_values = np.array(self.eye_aspect_ratio_batch(landmarks, self.ear_indices)).reshape(1, -1)
 
-            d1 = np.ones((18, 4))
-            d2 = np.ones((18, 4))
-            d3 = np.ones((18, 4))
-            d1[:, :3] = self.ear_indices[:, 6:9]
-            d2[:, :3] = self.ear_indices[:, 9:12]
-            d3[:, :3] = self.ear_indices[:, 12:15]
+            p_hom = np.ones((468, 4))
+            p = canonical_metric_landmarks
+            p_hom[:, :3] = p
+            camera_p = np.matmul(facial_transformation_matrix, p_hom.T).T
+            projected_p = camera_p[:, :2] / camera_p[:, [2]]
 
-            rotated_d1 = np.matmul(self.camera_matrix @ facial_transformation_matrix, d1.T).T
-            rotated_d2 = np.matmul(self.camera_matrix @ facial_transformation_matrix, d2.T).T
-            rotated_d3 = np.matmul(self.camera_matrix @ facial_transformation_matrix, d3.T).T
+            correction_factor = 1 / self.eye_aspect_ratio_batch(projected_p, self.ear_indices)
 
-            projected_d1 = rotated_d1[:, :2] / rotated_d1[:, [2]]
-            projected_d2 = rotated_d2[:, :2] / rotated_d2[:, [2]]
-            projected_d3 = rotated_d3[:, :2] / rotated_d3[:, [2]]
 
-            correction_factor = (np.linalg.norm(projected_d3, axis=1)) / (
-                        np.linalg.norm(projected_d1, axis=1) + np.linalg.norm(projected_d2, axis=1))
-            ear_values = ear_values*correction_factor
+            ear_corrected = ear_values*correction_factor
 
             #ear_values = ear_values/scaler
-            reg_result = linear_model.predict(ear_values)
+            reg_result = linear_model.predict(ear_corrected)
             for i, label in enumerate(labels):
                 if label == "neutral":
                     continue
@@ -210,26 +206,20 @@ class SignalsCalculater:
         landmarks = landmarks[:, :2]
 
 
+
         ear_values = self.eye_aspect_ratio_batch(landmarks, indices=self.ear_indices)
 
-        d1 = np.ones((18,4))
-        d2 = np.ones((18,4))
-        d3 = np.ones((18,4))
-        d1[:,:3] = self.ear_indices[:, 6:9]
-        d2[:,:3] = self.ear_indices[:, 9:12]
-        d3[:,:3] = self.ear_indices[:, 12:15]
+        p_hom = np.ones((468, 4))
+        p = canonical_metric_landmarks
+        p_hom[:, :3] = p
+        camera_p = np.matmul(facial_transformation_matrix, p_hom.T).T
+        projected_p = camera_p[:, :2] / camera_p[:, [2]]
 
-        rotated_d1 = np.matmul(self.camera_matrix @ facial_transformation_matrix, d1.T).T
-        rotated_d2 = np.matmul(self.camera_matrix @ facial_transformation_matrix, d2.T).T
-        rotated_d3 = np.matmul(self.camera_matrix @ facial_transformation_matrix, d3.T).T
+        correction_factor = 1 / self.eye_aspect_ratio_batch(projected_p, self.ear_indices)
 
-        projected_d1 = rotated_d1[:,:2]/rotated_d1[:,[2]]
-        projected_d2 = rotated_d2[:,:2]/rotated_d2[:,[2]]
-        projected_d3 = rotated_d3[:,:2]/rotated_d3[:,[2]]
+        ear_corrected = ear_values*correction_factor
 
-        correction_factor = (np.linalg.norm(projected_d3,axis=1))/(np.linalg.norm(projected_d1,axis=1)+np.linalg.norm(projected_d2,axis=1))
-
-        return ear_values, ear_values*correction_factor
+        return ear_values, ear_corrected
 
     def process_neutral(self, landmarks):
         pass
@@ -379,8 +369,8 @@ class SignalsCalculater:
         :return: ear = (P2_P6 + P3_P5) / (2.0 * P1_P4)
         """
         #assert indices.shape[1] == 10
-        p2_p6 = np.linalg.norm(landmarks[indices[:, 1].astype(int)] - landmarks[indices[:, 5].astype(int)], axis=1)
-        p3_p5 = np.linalg.norm(landmarks[indices[:, 2].astype(int)] - landmarks[indices[:, 4].astype(int)], axis=1)
-        p1_p4 = np.linalg.norm(landmarks[indices[:, 0].astype(int)] - landmarks[indices[:, 3].astype(int)], axis=1)
+        p2_p6 = np.linalg.norm(landmarks[indices[:, 1].astype(int)] - landmarks[indices[:, 5].astype(int)], axis=1,ord=1)
+        p3_p5 = np.linalg.norm(landmarks[indices[:, 2].astype(int)] - landmarks[indices[:, 4].astype(int)], axis=1,ord=1)
+        p1_p4 = np.linalg.norm(landmarks[indices[:, 0].astype(int)] - landmarks[indices[:, 3].astype(int)], axis=1,ord=1)
         return (p2_p6 + p3_p5) / (2.0 * p1_p4)
 
