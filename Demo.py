@@ -128,7 +128,8 @@ class Demo(Thread):
         self.onehot_encoder = OneHotEncoder(sparse_output=False, dtype=float)
         self.scaler = Normalizer()
         self.means = np.ones((18, 1))
-        self.linear_model = RegressorChain(SVR(kernel="rbf"))
+        self.linear_model = MultiOutputRegressor(SVR(kernel="rbf"))
+        self.linear_model = LogisticRegression()
         #self.linear_model = MLPClassifier(activation="relu")
         # elf.linear_model = MultiOutputRegressor(KNeighborsRegressor(metric="cosine"))
         #self.linear_model = MultiOutputRegressor(GradientBoostingRegressor(max_features=6,loss="absolute_error"))
@@ -604,8 +605,8 @@ class Demo(Thread):
         data_array = np.array(data_array)
         label_array = np.array(label_array).reshape(-1, 1)
 
-        self.onehot_encoder.fit(label_array)
-        y = self.onehot_encoder.transform(label_array)
+        #self.onehot_encoder.fit(label_array)
+        #y = self.onehot_encoder.transform(label_array)
 
         # self.scaler.fit(data_array)
         # data_array=self.scaler.transform(data_array)
@@ -617,9 +618,9 @@ class Demo(Thread):
         self.signals[name].set_lower_threshold(0.)
         self.signals[name].set_filter_value(0.0001)
 
-        new_linear_model.fit(data_array, y)
+        new_linear_model.fit(data_array, label_array)
         self.linear_model = new_linear_model
-        self.linear_signals = self.onehot_encoder.categories_[0]
+        self.linear_signals = unique_labels
         # print(self.linear_model.classes_)
         # print(self.onehot_encoder.inverse_transform(self.linear_model.classes_))
 
