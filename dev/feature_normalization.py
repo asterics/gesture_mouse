@@ -11,7 +11,7 @@ from dev.gesture_capture.calculate_normal_area import canonical_metric_landmarks
 
 show_3d = False
 
-directions = ["neutral","links","rechts","oben","unten","entfernt"]
+directions = ["bewegt"]
 
 pose = "neutral"
 
@@ -93,7 +93,7 @@ ear_batch = ear_batch
 fig_line, axs_line = plt.subplots(6,3, figsize=(15,15))
 
 axs_line = axs_line.flatten()
-for i in range(18):
+for i in range(17):
     #axs_line[i].plot(correction_factor[:,i],label=f"corr_{i}")
     axs_line[i].plot(ear_batch[:,i]/ear_batch[:,i].mean(),label=f"ear_{i}")
     axs_line[i].plot(ear_corrected[:,i]/ear_corrected[:,i].mean(),label=f"ear_cor_{i}")

@@ -128,8 +128,8 @@ class Demo(Thread):
         self.onehot_encoder = OneHotEncoder(sparse_output=False, dtype=float)
         self.scaler = Normalizer()
         self.means = np.ones((18, 1))
-        #self.linear_model = MultiOutputRegressor(SVR())
-        self.linear_model = MLPClassifier(activation="relu")
+        self.linear_model = RegressorChain(SVR(kernel="rbf"))
+        #self.linear_model = MLPClassifier(activation="relu")
         # elf.linear_model = MultiOutputRegressor(KNeighborsRegressor(metric="cosine"))
         #self.linear_model = MultiOutputRegressor(GradientBoostingRegressor(max_features=6,loss="absolute_error"))
         self.linear_signals: List[str] = []
