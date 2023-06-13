@@ -543,6 +543,13 @@ class Demo(Thread):
         with open(calibration_samples_location, "bw+") as fp:
             pickle.dump(self.calibration_samples, fp)
 
+    def delete_signal(self, name:str):
+        self.signals.pop(name,None)
+
+        if name in self.linear_signals:
+            self.calibration_samples.pop(name)
+            self.recalibrate()
+
     def calibrate_signal(self, calibration_sample, name):
         neutral_samples = np.array(calibration_sample[name]["neutral"])
         pose_samples = np.array(calibration_sample[name]["pose"])
@@ -584,7 +591,7 @@ class Demo(Thread):
         self.calibration_samples[name] = {"neutral": self.neutral_signals, "pose": self.pose_signals}
 
     #####
-    def recalibrate(self, name):
+    def recalibrate(self):
         print(f"=== Recalibrating === with f{len(self.calibration_samples)}")
         new_linear_model = sklearn.clone(self.linear_model)
         if len(self.calibration_samples) == 0:
@@ -613,16 +620,17 @@ class Demo(Thread):
         self.means = np.mean(data_array, axis=0)
         # data_array = data_array/self.means
 
+        new_linear_model.fit(data_array, label_array)
+        self.linear_model = new_linear_model
+        self.linear_signals = self.linear_model.classes_
+        # print(self.linear_model.classes_)
+        # print(self.onehot_encoder.inverse_transform(self.linear_model.classes_))
+
+    def add_signal(self, name):
         self.signals[name] = Signal(name)
         self.signals[name].set_higher_threshold(1.)
         self.signals[name].set_lower_threshold(0.)
         self.signals[name].set_filter_value(0.0001)
-
-        new_linear_model.fit(data_array, label_array)
-        self.linear_model = new_linear_model
-        self.linear_signals = unique_labels
-        # print(self.linear_model.classes_)
-        # print(self.onehot_encoder.inverse_transform(self.linear_model.classes_))
 
     def mp_callback(self, result: FaceLandmarkerResult, output_image: mp.Image, timestamp_ms: int):
         # print(result)

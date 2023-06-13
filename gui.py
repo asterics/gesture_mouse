@@ -64,6 +64,10 @@ class SignalVis(QtWidgets.QWidget):
         self.index = self.index + 1
         return plot_handler
 
+    def remove_line(self,name):
+        self.lines.pop(name,None)
+        self.plot_item
+
     def update_plot(self, signals):
         x = time.time()
         for name, plot in self.lines.items():
@@ -88,7 +92,7 @@ class SignalSetting(QtWidgets.QWidget):
         self.name = name
         self.name_label = QtWidgets.QLabel(name)
 
-        self.demo = demo
+        self.demo:Demo.Demo = demo
 
         self.lower_value = QtWidgets.QDoubleSpinBox()
         self.lower_value.setSingleStep(0.01)
@@ -112,6 +116,9 @@ class SignalSetting(QtWidgets.QWidget):
         self.calibrate_button = QtWidgets.QPushButton("Calibrate Thresholds")
         self.calibrate_button.clicked.connect(self.calibrate_signal)
 
+        self.delete_button= QtWidgets.QPushButton("Delete")
+        self.delete_button.clicked.connect(self.delete_signal)
+
         self.layout = QtWidgets.QHBoxLayout(self)
         self.layout.addWidget(self.name_label)
         self.layout.addWidget(self.visualization_checkbox)
@@ -121,6 +128,7 @@ class SignalSetting(QtWidgets.QWidget):
         self.layout.addWidget(QtWidgets.QLabel("Filter"))
         self.layout.addWidget(self.filter_slider)
         self.layout.addWidget(self.calibrate_button)
+        self.layout.addWidget(self.delete_button)
 
         self.filter_slider.doubleValueChanged.connect(lambda value: print(value))
 
@@ -137,6 +145,11 @@ class SignalSetting(QtWidgets.QWidget):
         max_value = self.calib_diag.max_value
         self.lower_value.setValue(min_value)
         self.higher_value.setValue(max_value)
+
+    def delete_signal(self):
+        self.demo.delete_signal(self.name)
+        self.demo.recalibrate()
+        self.deleteLater()
 
 
 class SignalTab(QtWidgets.QWidget):
@@ -201,7 +214,7 @@ class SignalTab(QtWidgets.QWidget):
             "higher_threshold": 1.,
             "filter_value": 0.0001
         }
-
+        self.demo.add_signal(signal_name)
         setting = SignalSetting(signal_name, 0., 1., demo=self.demo)
         handler = self.signals_vis.add_line(signal_name)
 
@@ -216,10 +229,11 @@ class SignalTab(QtWidgets.QWidget):
             lambda x, name=signal_name: self.demo.signals[name].set_higher_threshold(x))
 
         setting.filter_slider.setValue(0.0001)
+        setting.destroyed.connect(lambda obj: self.signals_vis.remove_line(obj.name))
 
         self.setting_widget.layout().addWidget(setting)
         self.signal_settings[signal_name] = setting
-
+        self.demo.recalibrate()
         self.signal_added.emit(new_singal)
 
     def save_signals(self):
@@ -263,7 +277,7 @@ class SignalTab(QtWidgets.QWidget):
                 lambda x, name=signal_name: self.demo.signals[name].set_higher_threshold(x))
 
             setting.filter_slider.setValue(filter_value)
-
+            setting.destroyed.connect(lambda obj: self.signals_vis.remove_line(obj.name))
             self.setting_widget.layout().addWidget(setting)
             self.signal_settings[signal_name] = setting
             #self.signal_added.emit()
@@ -459,7 +473,6 @@ class AddSignalDialog(QtWidgets.QDialog):
             msgBox.exec()
             return
         self.webcam_timer.stop()
-        self.demo.recalibrate(name)
         super().accept()
 
     def reject(self) -> None:

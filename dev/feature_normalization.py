@@ -7,11 +7,13 @@ import numpy as np
 import cv2
 import time
 
+from sklearn.metrics import pairwise_distances
+
 from dev.gesture_capture.calculate_normal_area import canonical_metric_landmarks
 
 show_3d = False
 
-directions = ["bewegt"]
+directions = ["neutral","links","rechts","oben","unten"]
 
 pose = "neutral"
 
@@ -37,6 +39,7 @@ corrected_ear_names = list(map(lambda i: f"corrected_ear_{i}", range(18)))
 landmark_names = [f"landmark_{i}_{coord}" for i in range(478) for coord in ["x","y","z"]]
 facial_transformation_names = [f"transformation_matrix_{i}" for i in range(16)]
 combined_df = pd.DataFrame()
+good_index=signal_calculator.ear_indices[:,:6].flatten().astype(int)
 
 # combine dataframes
 
@@ -55,6 +58,9 @@ landmarks = combined_df[landmark_names]
 np_landmarks = landmarks.to_numpy()
 np_landmarks = np_landmarks.reshape(-1,478,3)
 used_landmarks = np_landmarks[:,:468,:2]*np.array([frame_width,frame_height])
+index_landmarks=used_landmarks[:,good_index,:]
+tril_indices = np.tril_indices(len(good_index),k=-1)
+distances = np.array([pairwise_distances(unbatched)[tril_indices].flatten() for unbatched in index_landmarks])
 
 facial_transformation_matrix=combined_df[facial_transformation_names].to_numpy().reshape(-1,4,4)
 #debuf
@@ -82,21 +88,19 @@ projected_p = camera_p[:,:,:2]/camera_p[:,:,[2]]
 # projected_d1 = rotated_d1[:,:,:2]/(rotated_d1[:,:,[2]])
 # projected_d2 = rotated_d2[:,:,:2]/(rotated_d2[:,:,[2]])
 # projected_d3 = rotated_d3[:,:,:2]/(rotated_d3[:,:,[2]])
+projected_p=projected_p[:,good_index,:]
 
+correction_factor = 1/np.array([pairwise_distances(landmark)[tril_indices].flatten() for landmark in projected_p])
 
-correction_factor = 1/np.array([signal_calculator.eye_aspect_ratio_batch(landmark, signal_calculator.ear_indices) for landmark in projected_p])
-
-ear_corrected = ear_batch*correction_factor
-ear_batch = ear_batch
+corrected_distances = distances*correction_factor
 #plt.plot(correction_factor[:,1])
 #plt.plot(np.linalg.norm(projected_d3,axis=2)[:,1])
-fig_line, axs_line = plt.subplots(6,3, figsize=(15,15))
+fig_line, axs_line = plt.subplots(8,4, figsize=(15,15))
 
 axs_line = axs_line.flatten()
-for i in range(17):
+for i in range(32):
     #axs_line[i].plot(correction_factor[:,i],label=f"corr_{i}")
-    axs_line[i].plot(ear_batch[:,i]/ear_batch[:,i].mean(),label=f"ear_{i}")
-    axs_line[i].plot(ear_corrected[:,i]/ear_corrected[:,i].mean(),label=f"ear_cor_{i}")
+    axs_line[i].plot(corrected_distances[:,i],label=f"distances_{i}")
     axs_line[i].legend()
 plt.show()
 

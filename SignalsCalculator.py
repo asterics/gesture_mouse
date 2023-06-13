@@ -12,6 +12,7 @@ import cv2
 from sklearn.linear_model import Ridge
 from sklearn.multioutput import MultiOutputClassifier, MultiOutputRegressor
 from sklearn.preprocessing import normalize
+from sklearn.metrics import pairwise_distances
 
 from dev.gesture_capture.calculate_normal_area import canonical_metric_landmarks
 
@@ -148,6 +149,8 @@ class SignalsCalculater:
             [276,283,295,285,442,444,0.011959000000000053,-0.810826,-0.5569300000000004,0.5128370000000002,-0.6266240000000005,0.027579000000000242,8.064732000000001,0.5211660000000009,3.4857520000000006],
             [66,108,337,296,336,107,0.2238659999999999,-1.5872540000000006,0.3949259999999999,-0.2238659999999999,-1.5872540000000006,0.3949259999999999,-11.041168,0.0,0.0]
         ])
+        self.distance_indices = np.unique(self.ear_indices[:,:6].astype(int).flatten())
+        self.tril_indices = np.tril_indices(len(self.distance_indices),k=-1)
         self.ear_reference = self.eye_aspect_ratio_batch(canonical_metric_landmarks,self.ear_indices)
 
     def process(self, landmarks, linear_model:MultiOutputRegressor, labels, facial_transformation_matrix, scaler):
