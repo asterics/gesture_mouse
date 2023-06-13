@@ -194,8 +194,7 @@ class SignalsCalculater:
             ear_corrected = ear_values*correction_factor
 
             #ear_values = ear_values/scaler
-            reg_result = linear_model.predict_proba(ear_corrected)
-            labels = linear_model.classes_
+            reg_result = linear_model.predict(ear_corrected)
             for i, label in enumerate(labels):
                 if label == "neutral":
                     continue

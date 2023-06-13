@@ -128,8 +128,8 @@ class Demo(Thread):
         self.onehot_encoder = OneHotEncoder(sparse_output=False, dtype=float)
         self.scaler = Normalizer()
         self.means = np.ones((18, 1))
-        self.linear_model = MultiOutputRegressor(SVR(kernel="rbf"))
-        self.linear_model = LogisticRegression()
+        self.linear_model = MultiOutputRegressor(SVR(kernel="rbf", C=10))
+        #self.linear_model = LogisticRegression()
         #self.linear_model = MLPClassifier(activation="relu")
         # elf.linear_model = MultiOutputRegressor(KNeighborsRegressor(metric="cosine"))
         #self.linear_model = MultiOutputRegressor(GradientBoostingRegressor(max_features=6,loss="absolute_error"))
@@ -591,15 +591,18 @@ class Demo(Thread):
         self.calibration_samples[name] = {"neutral": self.neutral_signals, "pose": self.pose_signals}
 
     #####
-    def recalibrate(self):
+    def recalibrate(self) -> bool:
         print(f"=== Recalibrating === with f{len(self.calibration_samples)}")
+
         new_linear_model = sklearn.clone(self.linear_model)
         if len(self.calibration_samples) == 0:
             print("Nothing to calibrate")
-            return
+            return False
+
         data_array = []
         label_array = []
         unique_labels = ["neutral"]
+
         for pose_name in self.calibration_samples:
             unique_labels.append(pose_name)
             for label, data in self.calibration_samples[pose_name].items():
@@ -612,19 +615,19 @@ class Demo(Thread):
         data_array = np.array(data_array)
         label_array = np.array(label_array).reshape(-1, 1)
 
-        #self.onehot_encoder.fit(label_array)
-        #y = self.onehot_encoder.transform(label_array)
+        self.onehot_encoder.fit(label_array)
+        y = self.onehot_encoder.transform(label_array)
 
         # self.scaler.fit(data_array)
         # data_array=self.scaler.transform(data_array)
         self.means = np.mean(data_array, axis=0)
         # data_array = data_array/self.means
 
-        new_linear_model.fit(data_array, label_array)
+        new_linear_model.fit(data_array, y)
         self.linear_model = new_linear_model
-        self.linear_signals = self.linear_model.classes_
-        # print(self.linear_model.classes_)
-        # print(self.onehot_encoder.inverse_transform(self.linear_model.classes_))
+        self.linear_signals = self.onehot_encoder.categories_[0]
+
+        return True
 
     def add_signal(self, name):
         self.signals[name] = Signal(name)

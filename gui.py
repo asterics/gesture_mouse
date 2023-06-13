@@ -6,6 +6,7 @@ import time
 import uuid
 from typing import List, Dict
 from collections import deque
+from functools import partial
 
 from pynput import mouse
 from pynput import keyboard
@@ -40,6 +41,7 @@ class PlotLine:
         self.plot_data_item.setVisible(visibility)
 
 
+
 class SignalVis(QtWidgets.QWidget):
     def __init__(self):
         super(SignalVis, self).__init__()
@@ -64,9 +66,11 @@ class SignalVis(QtWidgets.QWidget):
         self.index = self.index + 1
         return plot_handler
 
-    def remove_line(self,name):
-        self.lines.pop(name,None)
-        self.plot_item
+    def remove_line(self, name):
+        print(name)
+        handler = self.lines.pop(name,None)
+        if handler is not None:
+            handler.plot_data_item.setData()
 
     def update_plot(self, signals):
         x = time.time()
@@ -87,9 +91,11 @@ class SignalVis(QtWidgets.QWidget):
 
 
 class SignalSetting(QtWidgets.QWidget):
+    deleted = QtCore.Signal(str)
     def __init__(self, name: str, min_value, max_value, min_filter=0.0001, max_filter=1., demo=None):
         super().__init__()
         self.name = name
+        print(name)
         self.name_label = QtWidgets.QLabel(name)
 
         self.demo:Demo.Demo = demo
@@ -99,16 +105,20 @@ class SignalSetting(QtWidgets.QWidget):
         self.lower_value.setMinimum(-100.)
         self.lower_value.setMaximum(100.)
         self.lower_value.setValue(min_value)
+        #self.lower_value.valueChanged.connect(lambda value: self.demo.signals[name].set_lower_threshold(value))
+        self.lower_value.valueChanged.connect(lambda value: self.debug_check(value, name))
 
         self.higher_value = QtWidgets.QDoubleSpinBox()
         self.higher_value.setSingleStep(0.01)
         self.higher_value.setMinimum(-100.)
         self.higher_value.setMaximum(100.)
         self.higher_value.setValue(max_value)
+        self.higher_value.valueChanged.connect(lambda value: self.demo.signals[name].set_higher_threshold(value))
 
         self.filter_slider = LogarithmicSlider(orientation=QtCore.Qt.Orientation.Horizontal)
         self.filter_slider.setMinimum(min_filter)
         self.filter_slider.setMaximum(max_filter)
+        self.filter_slider.doubleValueChanged.connect(lambda value: self.demo.set_filter_value(self.name,value))
 
         self.visualization_checkbox = QtWidgets.QCheckBox("Visualize")
         self.visualization_checkbox.setChecked(True)
@@ -150,10 +160,15 @@ class SignalSetting(QtWidgets.QWidget):
         self.demo.delete_signal(self.name)
         self.demo.recalibrate()
         self.deleteLater()
+        self.deleted.emit(self.name)
+
+    def debug_check(self,value, name):
+        print(self)
+        print(name)
 
 
 class SignalTab(QtWidgets.QWidget):
-    signal_added = QtCore.Signal(dict)
+    signals_updated = QtCore.Signal()
 
     def __init__(self, demo, json_path):
         super().__init__()
@@ -205,6 +220,11 @@ class SignalTab(QtWidgets.QWidget):
         self.sig_diag.webcam_timer.start()
         self.sig_diag.open()
 
+    def delete_signal(self, name):
+        self.signals_vis.remove_line(name)
+        self.signal_settings.pop(name,None)
+        self.signals_updated.emit()
+
     def accept_new_signal(self):
         signal_name = self.sig_diag.new_name.text()
 
@@ -214,26 +234,30 @@ class SignalTab(QtWidgets.QWidget):
             "higher_threshold": 1.,
             "filter_value": 0.0001
         }
+
+        success = self.demo.recalibrate()
+
+        if not success:
+            msgBox = QtWidgets.QMessageBox()
+            msgBox.setWindowTitle("Error")
+            msgBox.setText("Error occured")
+            msgBox.setInformativeText("Not able to add new signal")
+            msgBox.exec()
+            return
+
         self.demo.add_signal(signal_name)
+
         setting = SignalSetting(signal_name, 0., 1., demo=self.demo)
         handler = self.signals_vis.add_line(signal_name)
 
         setting.visualization_checkbox.stateChanged.connect(handler.set_visible)
         setting.visualization_checkbox.setChecked(False)
 
-        setting.filter_slider.doubleValueChanged.connect(
-            lambda x, name=signal_name: self.demo.set_filter_value(name, x))
-        setting.lower_value.valueChanged.connect(
-            lambda x, name=signal_name: self.demo.signals[name].set_lower_threshold(x))
-        setting.higher_value.valueChanged.connect(
-            lambda x, name=signal_name: self.demo.signals[name].set_higher_threshold(x))
-
         setting.filter_slider.setValue(0.0001)
-        setting.destroyed.connect(lambda obj: self.signals_vis.remove_line(obj.name))
+        setting.deleted.connect(self.delete_signal)
 
         self.setting_widget.layout().addWidget(setting)
         self.signal_settings[signal_name] = setting
-        self.demo.recalibrate()
         self.signal_added.emit(new_singal)
 
     def save_signals(self):
@@ -269,18 +293,13 @@ class SignalTab(QtWidgets.QWidget):
             setting.visualization_checkbox.stateChanged.connect(handler.set_visible)
             setting.visualization_checkbox.setChecked(False)
 
-            setting.filter_slider.doubleValueChanged.connect(
-                lambda x, name=signal_name: self.demo.set_filter_value(name, x))
-            setting.lower_value.valueChanged.connect(
-                lambda x, name=signal_name: self.demo.signals[name].set_lower_threshold(x))
-            setting.higher_value.valueChanged.connect(
-                lambda x, name=signal_name: self.demo.signals[name].set_higher_threshold(x))
-
             setting.filter_slider.setValue(filter_value)
-            setting.destroyed.connect(lambda obj: self.signals_vis.remove_line(obj.name))
+            setting.deleted.connect(self.delete_signal)
             self.setting_widget.layout().addWidget(setting)
             self.signal_settings[signal_name] = setting
             #self.signal_added.emit()
+
+        self.signals_updated.emit()
 
         # load in demo
         self.demo.setup_signals(json_path)
@@ -556,6 +575,7 @@ class DebugVisualizetion(QtWidgets.QWidget):
 
 
 class GeneralTab(QtWidgets.QWidget):
+    mode_changed = QtCore.Signal(str) # Change to enum
     def __init__(self, demo):
         super().__init__()
         self.demo: Demo.Demo = demo
@@ -710,6 +730,7 @@ class GeneralTab(QtWidgets.QWidget):
             self.vid_vidfile_grp.setChecked(False)
             self.vid_vidfile_grp.blockSignals(False)
             self.demo.use_mediapipe = True
+            self.mode_changed.emit("WEBCAM")
         else:
             self.vid_webcam_grp.blockSignals(True)
             self.vid_webcam_grp.setChecked(False)
@@ -730,6 +751,7 @@ class GeneralTab(QtWidgets.QWidget):
             self.csv_record_group.blockSignals(False)
 
             self.demo.use_mediapipe = False
+            self.mode_changed.emit("IPHONE")
         else:
             self.vid_iphone3d_grp.blockSignals(True)
             self.vid_iphone3d_grp.setChecked(False)
@@ -750,6 +772,7 @@ class GeneralTab(QtWidgets.QWidget):
             self.csv_record_group.blockSignals(False)
 
             self.demo.use_mediapipe = True
+            self.mode_changed.emit("VIDEOFILE")
         else:
             self.vid_vidfile_grp.blockSignals(True)
             self.vid_vidfile_grp.setChecked(False)
@@ -771,6 +794,7 @@ class GeneralTab(QtWidgets.QWidget):
 
             self.demo.recording_mode=True
             self.demo.use_mediapipe=False
+            self.mode_changed.emit("VIDEOFILE")
         else:
             self.csv_record_group.blockSignals(True)
             self.csv_record_group.setChecked(False)
@@ -1191,12 +1215,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self.signals_tab = QtWidgets.QStackedWidget()
         self.signals_tab.addWidget(self.signal_tab_iphone)
         self.signals_tab.addWidget(self.signal_tab_mediapipe)
-        self.signal_tab_iphone.signal_added.connect(lambda: print("not implemented yet"))
-        self.signal_tab_mediapipe.signal_added.connect(self.add_signal)
+        self.signal_tab_iphone.signals_updated.connect(self.update_signals)
+        self.signal_tab_mediapipe.signals_updated.connect(self.update_signals)
 
         self.general_tab = GeneralTab(self.demo)
         #self.general_tab.mediapipe_selector_button.clicked.connect(lambda selected: self.change_signals_tab(selected))
-        self.general_tab.vid_iphone3d_grp.toggled.connect(lambda on: self.change_signals_tab(not on))
+        self.general_tab.mode_changed.connect(self.change_mode)
+
         self.keyboard_tab = KeyboardTab(self.demo)
         self.mouse_tab = MouseTab(self.demo)
 
@@ -1212,7 +1237,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.timer.timeout.connect(self.update_plots)
         self.timer.start()
 
-        self.change_signals_tab(True)
+        self.change_mode("WEBCAM")
         ## Signals
         self.demo.start()
 
@@ -1221,17 +1246,20 @@ class MainWindow(QtWidgets.QMainWindow):
         self.selected_signals.update_plots(self.demo.signals)
         self.general_tab.update_debug_visualization()
 
-    def change_signals_tab(self, checked: bool):
-        if checked:
+    def change_mode(self, mode:str):
+        if mode == "WEBCAM":
             self.signals_tab.setCurrentIndex(1)
             self.selected_signals = self.signal_tab_mediapipe
-        else:
+        elif mode == "IPHONE":
             self.signals_tab.setCurrentIndex(0)
             self.selected_signals = self.signal_tab_iphone
-        self.mouse_tab.set_signal_selector(list(self.selected_signals.signal_settings.keys()))
-        self.keyboard_tab.set_signals(list(self.selected_signals.signal_settings.keys()))
+        else:
+            self.signals_tab.setCurrentIndex(1)
+            self.selected_signals = self.signal_tab_mediapipe
 
-    def add_signal(self, new_signal: dict):
+        self.update_signals()
+
+    def update_signals(self):
         self.mouse_tab.set_signal_selector(list(self.selected_signals.signal_settings.keys()))
         self.keyboard_tab.set_signals(list(self.selected_signals.signal_settings.keys()))
 
