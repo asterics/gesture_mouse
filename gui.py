@@ -105,20 +105,19 @@ class SignalSetting(QtWidgets.QWidget):
         self.lower_value.setMinimum(-100.)
         self.lower_value.setMaximum(100.)
         self.lower_value.setValue(min_value)
-        #self.lower_value.valueChanged.connect(lambda value: self.demo.signals[name].set_lower_threshold(value))
-        self.lower_value.valueChanged.connect(lambda value: self.debug_check(value, name))
+        self.lower_value.valueChanged.connect(self.set_lower_threshold)
 
         self.higher_value = QtWidgets.QDoubleSpinBox()
         self.higher_value.setSingleStep(0.01)
         self.higher_value.setMinimum(-100.)
         self.higher_value.setMaximum(100.)
         self.higher_value.setValue(max_value)
-        self.higher_value.valueChanged.connect(lambda value: self.demo.signals[name].set_higher_threshold(value))
+        self.higher_value.valueChanged.connect(self.set_higher_threshold)
 
         self.filter_slider = LogarithmicSlider(orientation=QtCore.Qt.Orientation.Horizontal)
         self.filter_slider.setMinimum(min_filter)
         self.filter_slider.setMaximum(max_filter)
-        self.filter_slider.doubleValueChanged.connect(lambda value: self.demo.set_filter_value(self.name,value))
+        self.filter_slider.doubleValueChanged.connect(self.set_filter_value)
 
         self.visualization_checkbox = QtWidgets.QCheckBox("Visualize")
         self.visualization_checkbox.setChecked(True)
@@ -162,9 +161,17 @@ class SignalSetting(QtWidgets.QWidget):
         self.deleteLater()
         self.deleted.emit(self.name)
 
-    def debug_check(self,value, name):
-        print(self)
-        print(name)
+    def debug_check(self):
+        print(self.name)
+
+    def set_lower_threshold(self, value):
+        self.demo.signals[self.name].set_lower_threshold(value)
+
+    def set_higher_threshold(self, value):
+        self.demo.signals[self.name].set_higher_threshold(value)
+
+    def set_filter_value(self, value):
+        self.demo.signals[self.name].set_filter_value(value)
 
 
 class SignalTab(QtWidgets.QWidget):
@@ -247,17 +254,16 @@ class SignalTab(QtWidgets.QWidget):
 
         self.demo.add_signal(signal_name)
 
-        setting = SignalSetting(signal_name, 0., 1., demo=self.demo)
+        self.signal_settings[signal_name]  = SignalSetting(signal_name, 0., 1., demo=self.demo)
         handler = self.signals_vis.add_line(signal_name)
 
-        setting.visualization_checkbox.stateChanged.connect(handler.set_visible)
-        setting.visualization_checkbox.setChecked(False)
+        self.signal_settings[signal_name].visualization_checkbox.stateChanged.connect(handler.set_visible)
+        self.signal_settings[signal_name].visualization_checkbox.setChecked(False)
 
-        setting.filter_slider.setValue(0.0001)
-        setting.deleted.connect(self.delete_signal)
+        self.signal_settings[signal_name].filter_slider.setValue(0.0001)
+        self.signal_settings[signal_name].deleted.connect(self.delete_signal)
 
-        self.setting_widget.layout().addWidget(setting)
-        self.signal_settings[signal_name] = setting
+        self.setting_widget.layout().addWidget(self.signal_settings[signal_name])
         self.signal_added.emit(new_singal)
 
     def save_signals(self):
@@ -287,16 +293,16 @@ class SignalTab(QtWidgets.QWidget):
             higher_threshold = json_signal["higher_threshold"]
             filter_value = json_signal["filter_value"]
 
-            setting = SignalSetting(signal_name, lower_threshold, higher_threshold, demo=self.demo)
+            self.signal_settings[signal_name] = SignalSetting(signal_name, lower_threshold, higher_threshold, demo=self.demo)
             handler = self.signals_vis.add_line(signal_name)
 
-            setting.visualization_checkbox.stateChanged.connect(handler.set_visible)
-            setting.visualization_checkbox.setChecked(False)
+            self.signal_settings[signal_name].visualization_checkbox.stateChanged.connect(handler.set_visible)
+            self.signal_settings[signal_name].visualization_checkbox.setChecked(False)
 
-            setting.filter_slider.setValue(filter_value)
-            setting.deleted.connect(self.delete_signal)
-            self.setting_widget.layout().addWidget(setting)
-            self.signal_settings[signal_name] = setting
+            self.signal_settings[signal_name].filter_slider.setValue(filter_value)
+            self.signal_settings[signal_name].deleted.connect(self.delete_signal)
+            self.setting_widget.layout().addWidget(self.signal_settings[signal_name])
+
             #self.signal_added.emit()
 
         self.signals_updated.emit()
@@ -1206,7 +1212,6 @@ class MainWindow(QtWidgets.QMainWindow):
         super().__init__()
 
         self.demo = Demo.Demo()
-
         self.central_widget = QtWidgets.QTabWidget()
 
         self.signal_tab_iphone = SignalTab(self.demo, "config/iphone_default.json")

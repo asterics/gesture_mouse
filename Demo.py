@@ -640,7 +640,6 @@ class Demo(Thread):
         if not result.face_landmarks:
             return
         transformation_matrix = result.facial_transformation_matrixes[0]
-        print(transformation_matrix)
         mp_landmarks = result.face_landmarks[0]
         blendshapes = result.face_blendshapes[0]
 
