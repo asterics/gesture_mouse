@@ -27,8 +27,10 @@ combined_df[corrected_ear_names] = combined_df[corrected_ear_names]/normalizatio
 #combined_df["direction"] = combined_df["direction"].astype("category", ordered=True)
 grouped = combined_df.groupby("direction")
 
+tracking_stats = grouped[ear_names].describe()
+print(tracking_stats)
+tracking_stats.to_csv("tracking_summery.csv")
 
-print(grouped[ear_names].var())
 
 fig, ax = plt.subplots(nrows=6,ncols=3, figsize=(15,15))
 
