@@ -156,6 +156,7 @@ class SignalSetting(QtWidgets.QWidget):
         self.higher_value.setValue(max_value)
 
     def delete_signal(self):
+        print(f"Delete in signal settings with name {self.name}")
         self.demo.delete_signal(self.name)
         self.demo.recalibrate()
         self.deleteLater()
@@ -228,6 +229,7 @@ class SignalTab(QtWidgets.QWidget):
         self.sig_diag.open()
 
     def delete_signal(self, name):
+        print(f"delete signal with name: {name} in SignalTab")
         self.signals_vis.remove_line(name)
         self.signal_settings.pop(name,None)
         self.signals_updated.emit()
@@ -264,7 +266,8 @@ class SignalTab(QtWidgets.QWidget):
         self.signal_settings[signal_name].deleted.connect(self.delete_signal)
 
         self.setting_widget.layout().addWidget(self.signal_settings[signal_name])
-        self.signal_added.emit(new_singal)
+
+        self.signals_updated.emit()
 
     def save_signals(self):
         file_name, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Select profile save file", "./config",
