@@ -19,7 +19,7 @@ import numpy as np
 import Demo
 import Signal
 import util
-from gui_widgets import LogarithmicSlider, ColoredDoubleSlider
+from gui_widgets import LogarithmicSlider, ColoredDoubleSlider, DoubleSlider
 import re
 
 
@@ -829,7 +829,7 @@ class MouseTab(QtWidgets.QWidget):
         action_frame = QtWidgets.QFrame()
         action_frame.setFrameShape(QtWidgets.QFrame.Box)
         action_frame.setLayout(actions_layout)
-        settings_layout = QtWidgets.QVBoxLayout()
+        settings_layout = QtWidgets.QFormLayout()
         settings_frame = QtWidgets.QFrame()
         settings_frame.setFrameShape(QtWidgets.QFrame.Box)
         settings_frame.setLayout(settings_layout)
@@ -837,14 +837,15 @@ class MouseTab(QtWidgets.QWidget):
         #outer_layout.addStretch()
         outer_layout.addWidget(debug_frame)
 
-        upper_outer_layout.addWidget(action_frame)
-        upper_outer_layout.addWidget(settings_frame)
+        upper_outer_layout.addWidget(action_frame, stretch=1)
+        upper_outer_layout.addWidget(settings_frame, stretch=1)
 
         actions_layout.addWidget(QtWidgets.QLabel("Click Settings"))
-        settings_layout.addWidget(QtWidgets.QLabel("Mouse Settings"))
+        settings_layout.addRow("Mouse Settings", None)
 
         debug_layout.addWidget(QtWidgets.QLabel("Information Screen"))
 
+        # Click settings
         self.mouse_settings = []
         self.mouse_settings.append(MouseClickSettings("Left",self.demo,lambda : self.demo.mouse.click(mouse.Button.left)))
         self.mouse_settings.append(MouseClickSettings("Right",self.demo,lambda : self.demo.mouse.click(mouse.Button.right)))
@@ -852,12 +853,36 @@ class MouseTab(QtWidgets.QWidget):
         self.mouse_settings.append(MouseClickSettings("Drag and Drop",self.demo,lambda : print("Not implemented")))
         self.mouse_settings.append(MouseClickSettings("Pause", self.demo, lambda : self.demo.mouse.toggle_active()))
         self.mouse_settings.append(MouseClickSettings("Center", self.demo, lambda : self.demo.mouse.centre_mouse()))
+        self.mouse_settings.append(MouseClickSettings("Switch Mode", self.demo, lambda : self.demo.mouse.toggle_mode()))
 
         for mouse_setting in self.mouse_settings:
             actions_layout.addWidget(mouse_setting)
-        #actions_layout.addStretch()
 
-        settings_layout.addStretch()
+
+        # Mouse Settings
+        self.x_sensitivity_slider = DoubleSlider(decimals=3)
+        self.x_sensitivity_slider.setOrientation(QtCore.Qt.Orientation.Horizontal)
+        self.y_sensitivity_slider = DoubleSlider(decimals=3)
+        self.y_sensitivity_slider.setOrientation(QtCore.Qt.Orientation.Horizontal)
+        self.x_acceleration_slider = DoubleSlider(decimals=3)
+        self.x_acceleration_slider.setOrientation(QtCore.Qt.Orientation.Horizontal)
+        self.y_acceleration_slider = DoubleSlider(decimals=3)
+        self.y_acceleration_slider.setOrientation(QtCore.Qt.Orientation.Horizontal)
+        self.mode_selector = QtWidgets.QComboBox()
+        self.mode_selector.addItems(["Absolute", "Relative", "Joystick", "Hybrid"])
+        self.smoothing_toggle = QtWidgets.QCheckBox()
+        self.smoothing_value = LogarithmicSlider()
+        self.smoothing_value.setOrientation(QtCore.Qt.Orientation.Horizontal)
+
+        settings_layout.addRow("x-Sensitivity",self.x_sensitivity_slider)
+        settings_layout.addRow("y-Sensitivity",self.y_sensitivity_slider)
+        settings_layout.addRow("x-Acceleration", self.x_acceleration_slider)
+        settings_layout.addRow("y-Acceleration", self.y_acceleration_slider)
+        settings_layout.addRow("Mouse Mode", self.mode_selector)
+        settings_layout.addRow("Filter Mouse Position", self.smoothing_toggle)
+        settings_layout.addRow("Filter Value", self.smoothing_value)
+
+        debug_layout.addWidget(QtWidgets.QLabel("Hier stehen Infos"))
         debug_layout.addStretch()
 
 
