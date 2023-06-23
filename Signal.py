@@ -154,6 +154,7 @@ class Signal:
         self.actions: Dict[uuid.UUID, Action] = {}
         self.lower_threshold: float = 0.
         self.higher_threshold: float = 1.
+        self.actions_enabled=True
 
     def set_value(self, value):
         """
@@ -166,8 +167,9 @@ class Signal:
         filtered_value = self.raw_value.get()
         self.scaled_value = max(
             min((filtered_value - self.lower_threshold) / (self.higher_threshold - self.lower_threshold), 1.), 0.)
-        for action in self.actions.values():
-            action.update(self.scaled_value)
+        if self.actions_enabled:
+            for action in self.actions.values():
+                action.update(self.scaled_value)
 
     def set_threshold(self, lower_threshold: float, higher_threshold: float):
         """
@@ -223,3 +225,6 @@ class Signal:
         :return:
         """
         self.actions.pop(uid, None)
+
+    def set_actions_active(self, enabled:bool):
+        self.actions_enabled = enabled

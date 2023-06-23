@@ -1,5 +1,6 @@
 from PySide6.QtWidgets import QSlider
-from PySide6.QtCore import Signal
+from PySide6.QtCore import Signal, Qt
+from PySide6.QtGui import QPaintEvent, QPainter, QBrush, QColorConstants
 import math
 
 
@@ -34,6 +35,55 @@ class DoubleSlider(QSlider):
 
     def setValue(self, value):
         super(DoubleSlider, self).setValue(int(value * self._multi))
+
+class ColoredDoubleSlider(QSlider):
+    # create our our signal that we can connect to if necessary
+    doubleValueChanged = Signal(float)
+
+    def __init__(self,parent=None, decimals=3, *args, **kargs):
+        super(ColoredDoubleSlider, self).__init__(parent)
+        self._multi = 10 ** decimals
+
+        self.valueChanged.connect(self.emitDoubleValueChanged)
+        self.background_value = 0.
+        self.qpainter = QPainter(self)
+
+    def emitDoubleValueChanged(self):
+        value = float(super(ColoredDoubleSlider, self).value()) / self._multi
+        self.doubleValueChanged.emit(value)
+
+    def value(self):
+        return float(super(ColoredDoubleSlider, self).value()) / self._multi
+
+    def setMinimum(self, value):
+        return super(ColoredDoubleSlider, self).setMinimum(value * self._multi)
+
+    def setMaximum(self, value):
+        return super(ColoredDoubleSlider, self).setMaximum(value * self._multi)
+
+    def setSingleStep(self, value):
+        return super(ColoredDoubleSlider, self).setSingleStep(value * self._multi)
+
+    def singleStep(self):
+        return float(super(ColoredDoubleSlider, self).singleStep()) / self._multi
+
+    def setValue(self, value):
+        super(ColoredDoubleSlider, self).setValue(int(value * self._multi))
+
+    def updateBackground(self, value):
+        assert 0 <= value <= 1
+        self.background_value = value
+
+    def paintEvent(self, ev: QPaintEvent) -> None:
+        orientation = self.orientation()
+        self.qpainter.setBrush(QBrush(QColorConstants.Red))
+        self.qpainter.begin(self)
+        if orientation == Qt.Orientation.Horizontal:
+            self.qpainter.fillRect(0,0,self.background_value*self.width(), self.height(),QColorConstants.Svg.lightblue)
+        else:
+            self.qpainter.fillRect(0, (1.-self.background_value) * self.height(), self.width(), self.background_value * self.height(), QColorConstants.Svg.lightblue)
+        self.qpainter.end()
+        super().paintEvent(ev)
 
 
 class LogarithmicSlider(QSlider):

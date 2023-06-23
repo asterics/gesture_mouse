@@ -19,7 +19,7 @@ import numpy as np
 import Demo
 import Signal
 import util
-from gui_widgets import LogarithmicSlider
+from gui_widgets import LogarithmicSlider, ColoredDoubleSlider
 import re
 
 
@@ -172,7 +172,9 @@ class SignalSetting(QtWidgets.QWidget):
         self.demo.signals[self.name].set_higher_threshold(value)
 
     def set_filter_value(self, value):
-        self.demo.signals[self.name].set_filter_value(value)
+        signal = self.demo.signals.get(self.name,None)
+        if signal is not None:
+            self.demo.signals[self.name].set_filter_value(value)
 
 
 class SignalTab(QtWidgets.QWidget):
@@ -814,95 +816,84 @@ class MouseTab(QtWidgets.QWidget):
     def __init__(self, demo):
         super().__init__()
         self.demo: Demo.Demo = demo
-        layout = QtWidgets.QVBoxLayout(self)
+        self.click_settings = ["Left", "Right", "Double", "Drag and Drop", "Pause", "Center"]
 
-        self.left_click_uid = uuid.uuid4()
-        self.left_click_settings = MouseClickSettings("Left Click", self.left_click_uid, demo)
-        self.left_click_signal = "-"
-        self.left_click_settings.signal_selector.currentTextChanged.connect(self.set_left_click)
 
-        self.right_click_uid = uuid.uuid4()
-        self.right_click_settings = MouseClickSettings("Right Click", self.right_click_uid, demo)
-        self.right_click_signal = "-"
-        self.right_click_settings.signal_selector.currentTextChanged.connect(self.set_right_click)
+        outer_layout = QtWidgets.QVBoxLayout(self)
+        debug_layout = QtWidgets.QVBoxLayout()
+        debug_frame = QtWidgets.QFrame()
+        debug_frame.setFrameShape(QtWidgets.QFrame.Box)
+        debug_frame.setLayout(debug_layout)
+        upper_outer_layout = QtWidgets.QHBoxLayout()
+        actions_layout = QtWidgets.QVBoxLayout()
+        action_frame = QtWidgets.QFrame()
+        action_frame.setFrameShape(QtWidgets.QFrame.Box)
+        action_frame.setLayout(actions_layout)
+        settings_layout = QtWidgets.QVBoxLayout()
+        settings_frame = QtWidgets.QFrame()
+        settings_frame.setFrameShape(QtWidgets.QFrame.Box)
+        settings_frame.setLayout(settings_layout)
+        outer_layout.addLayout(upper_outer_layout)
+        #outer_layout.addStretch()
+        outer_layout.addWidget(debug_frame)
 
-        self.double_click_uid = uuid.uuid4()
-        self.double_click_settings = MouseClickSettings("Double Click", self.double_click_uid, demo)
-        self.double_click_signal = "-"
-        self.double_click_settings.signal_selector.currentTextChanged.connect(self.set_double_click)
+        upper_outer_layout.addWidget(action_frame)
+        upper_outer_layout.addWidget(settings_frame)
 
-        layout.addWidget(self.left_click_settings)
-        layout.addWidget(self.right_click_settings)
-        layout.addWidget(self.double_click_settings)
-        layout.addStretch()
+        actions_layout.addWidget(QtWidgets.QLabel("Click Settings"))
+        settings_layout.addWidget(QtWidgets.QLabel("Mouse Settings"))
+
+        debug_layout.addWidget(QtWidgets.QLabel("Information Screen"))
+
+        self.mouse_settings = []
+        self.mouse_settings.append(MouseClickSettings("Left",self.demo,lambda : self.demo.mouse.click(mouse.Button.left)))
+        self.mouse_settings.append(MouseClickSettings("Right",self.demo,lambda : self.demo.mouse.click(mouse.Button.right)))
+        self.mouse_settings.append(MouseClickSettings("Double Click", self.demo,lambda : self.demo.mouse.double_click(mouse.Button.left)))
+        self.mouse_settings.append(MouseClickSettings("Drag and Drop",self.demo,lambda : print("Not implemented")))
+        self.mouse_settings.append(MouseClickSettings("Pause", self.demo, lambda : self.demo.mouse.toggle_active()))
+        self.mouse_settings.append(MouseClickSettings("Center", self.demo, lambda : self.demo.mouse.centre_mouse()))
+
+        for mouse_setting in self.mouse_settings:
+            actions_layout.addWidget(mouse_setting)
+        #actions_layout.addStretch()
+
+        settings_layout.addStretch()
+        debug_layout.addStretch()
+
+
 
     def set_signal_selector(self, signals: List[str]):
-        self.left_click_settings.signal_selector.clear()
-        self.left_click_settings.signal_selector.addItems("-")
-        self.left_click_settings.signal_selector.addItems(signals)
-        self.right_click_settings.signal_selector.clear()
-        self.right_click_settings.signal_selector.addItems("-")
-        self.right_click_settings.signal_selector.addItems(signals)
-        self.double_click_settings.signal_selector.clear()
-        self.double_click_settings.signal_selector.addItems("-")
-        self.double_click_settings.signal_selector.addItems(signals)
+        for mouse_setting in self.mouse_settings:
+            signal_combobox = mouse_setting.signal_selector
+            signal_combobox.clear()
+            signal_combobox.addItems("-")
+            signal_combobox.addItems(signals)
+            signal_combobox.adjustSize()
 
-    def set_left_click(self, selected_text: str):
-        if selected_text == "":
-            return
-        if self.left_click_signal != "-":
-            self.demo.signals[self.left_click_signal].remove_action(self.left_click_uid)
-        self.left_click_signal = selected_text
-        if selected_text == "-":
-            return
-        action = Signal.Action()
-        action.up_action = lambda: self.demo.mouse.click(mouse.Button.left)
-        action.set_threshold(self.left_click_settings.threshold.value())
-        action.set_delay(self.left_click_settings.delay.value())
-        self.demo.signals[selected_text].add_action(self.left_click_uid, action)
-
-    def set_right_click(self, selected_text: str):
-        if selected_text == "":
-            return
-        if self.right_click_signal != "-":
-            self.demo.signals[self.right_click_signal].remove_action(self.right_click_uid)
-        self.right_click_signal = selected_text
-        if selected_text == "-":
-            return
-        action = Signal.Action()
-        action.up_action = lambda: self.demo.mouse.click(mouse.Button.right)
-        action.set_threshold(self.right_click_settings.threshold.value())
-        action.set_delay(self.right_click_settings.delay.value())
-        self.demo.signals[selected_text].add_action(self.double_click_uid, action)
-
-    def set_double_click(self, selected_text: str):
-        if selected_text == "":
-            return
-        if self.double_click_signal != "-":
-            self.demo.signals[self.double_click_signal].remove_action(self.double_click_uid)
-        self.double_click_signal = selected_text
-        if selected_text == "-":
-            return
-        action = Signal.Action()
-        action.up_action = lambda: self.demo.mouse.double_click(mouse.Button.left)
-        action.set_threshold(self.double_click_settings.threshold.value())
-        action.set_delay(self.double_click_settings.delay.value())
-        self.demo.signals[selected_text].add_action(self.double_click_uid, action)
-
+    def update_signal_values(self, signals):
+        for mouse_setting in self.mouse_settings:
+            signal_name = mouse_setting.current_signal
+            signal = signals.get(signal_name, None)
+            signal_value = 0.
+            if signal is not None:
+                signal_value = signal.scaled_value
+            mouse_setting.threshold.updateBackground(signal_value)
+            mouse_setting.threshold.repaint()
 
 class MouseClickSettings(QtWidgets.QWidget):
-    def __init__(self, name, uid, demo):
+    def __init__(self, name, demo, mouse_callback):
         super().__init__()
-        layout = QtWidgets.QHBoxLayout(self)
-        self.demo = demo
-        self.uid = uid
+        layout = QtWidgets.QGridLayout(self)
+        self.demo: Demo.Demo = demo
+        self.uid = uuid.uuid4()
         self.label = QtWidgets.QLabel(name)
-        self.threshold = QtWidgets.QDoubleSpinBox(self)
+        self.threshold = ColoredDoubleSlider()
+        self.threshold.setOrientation(QtCore.Qt.Orientation.Horizontal)
         self.threshold.setMinimum(0.)
         self.threshold.setMaximum(1.)
         self.threshold.setSingleStep(0.01)
         self.threshold.setValue(0.5)
-        self.threshold.valueChanged.connect(self.threshold_changed)
+        self.threshold.doubleValueChanged.connect(self.threshold_changed)
         self.delay = QtWidgets.QDoubleSpinBox(self)
         self.delay.setMinimum(0.)
         self.delay.setMaximum(2.)
@@ -910,19 +901,40 @@ class MouseClickSettings(QtWidgets.QWidget):
         self.delay.setValue(0.5)
         self.delay.valueChanged.connect(self.delay_changed)
         self.signal_selector = QtWidgets.QComboBox()
+        self.signal_selector.currentTextChanged.connect(self.signal_changed)
 
-        layout.addWidget(self.label)
-        layout.addStretch(1)
-        layout.addWidget(QtWidgets.QLabel("Threshold"))
-        layout.addWidget(self.threshold)
-        layout.addStretch(1)
-        layout.addWidget(QtWidgets.QLabel("Delay"))
-        layout.addWidget(self.delay)
-        layout.addStretch(1)
-        layout.addWidget(self.signal_selector)
-        layout.addStretch(10)
+        self.callback = mouse_callback
+        self.current_signal = "-"
+        self.action = Signal.Action()
+        self.action.set_up_action(self.callback)
+        self.action.set_delay(self.delay.value())
+        self.action.set_threshold(self.threshold.value())
+
+        layout.addWidget(self.label,0,0,1,1)
+        layout.addWidget(self.signal_selector,0,1,1,1)
+        layout.addWidget(QtWidgets.QLabel("Delay"),0,2,1,1,alignment=QtCore.Qt.AlignmentFlag.AlignRight)
+        layout.addWidget(self.delay,0,3,1,1)
+        layout.addWidget(QtWidgets.QLabel("Threshold"),1,0,1,1)
+        layout.addWidget(self.threshold,1,1,1,3)
+
+    def signal_changed(self, current_text):
+        # remove action from old signal
+        old_signal = self.demo.signals.get(self.current_signal,None)
+        if old_signal is not None:
+            old_signal.remove_action(self.uid)
+        self.current_signal = current_text
+
+        #add action to selected signal
+        signal = self.demo.signals.get(current_text, None)
+        if signal is None:
+            # No valid signal selected
+            return
+        signal.add_action(self.uid, self.action)
+
+
 
     def threshold_changed(self, new_threshold):
+        self.action.set_threshold(new_threshold)
         signal = self.demo.signals.get(self.signal_selector.currentText(), None)
         if signal is None:
             return  # no signal detected
@@ -932,6 +944,7 @@ class MouseClickSettings(QtWidgets.QWidget):
         action.set_threshold(new_threshold)
 
     def delay_changed(self, new_delay):
+        self.action.set_delay(new_delay)
         signal = self.demo.signals.get(self.signal_selector.currentText(), None)
         if signal is None:
             return  # no signal detected
@@ -951,12 +964,13 @@ class KeyboardActionWidget(QtWidgets.QWidget):
         self.current_signal: str = ""
 
         self.layout = QtWidgets.QHBoxLayout(self)
-        self.threshold = QtWidgets.QDoubleSpinBox(self)
+        self.threshold = ColoredDoubleSlider(self, decimals=3)
+        self.threshold.setOrientation(QtCore.Qt.Orientation.Horizontal)
         self.threshold.setMinimum(0.)
         self.threshold.setMaximum(1.)
         self.threshold.setSingleStep(0.01)
         self.threshold.setValue(0.5)
-        self.threshold.valueChanged.connect(self._emit_updated)
+        self.threshold.doubleValueChanged.connect(self._emit_updated)
         self.delay = QtWidgets.QDoubleSpinBox(self)
         self.delay.setMinimum(0.)
         self.delay.setMaximum(2.)
@@ -1209,6 +1223,18 @@ class KeyboardTab(QtWidgets.QWidget):
                 action_widget.action_updated.connect(self.update_action)
                 action_widget.action_updated.emit()  # create associated action
 
+    def update_signal_values(self, signals):
+        for action_name in self.actions:
+            action_widget = self.actions[action_name]
+            signal_name = action_widget.current_signal
+            signal = signals.get(signal_name, None)
+            signal_value = 0.
+            if signal is not None:
+                signal_value = signal.scaled_value
+            action_widget.threshold.updateBackground(signal_value)
+            action_widget.threshold.repaint()
+
+
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
@@ -1246,6 +1272,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.timer.start()
 
         self.change_mode("WEBCAM")
+        self.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)
         ## Signals
         self.demo.start()
 
@@ -1253,6 +1280,8 @@ class MainWindow(QtWidgets.QMainWindow):
         # TODO: move up again
         self.selected_signals.update_plots(self.demo.signals)
         self.general_tab.update_debug_visualization()
+        self.keyboard_tab.update_signal_values(self.demo.signals)
+        self.mouse_tab.update_signal_values(self.demo.signals)
 
     def change_mode(self, mode:str):
         if mode == "WEBCAM":
@@ -1276,6 +1305,15 @@ class MainWindow(QtWidgets.QMainWindow):
         QApplication.closeAllWindows()
         event.accept()
 
+    def focusInEvent(self, event: QtGui.QFocusEvent) -> None:
+        #self.demo.disable_gesture_mouse()
+        # TODO: disable actions when window has focus
+        super().focusInEvent(event)
+
+    def focusOutEvent(self, event: QtGui.QFocusEvent) -> None:
+        #print("Lost Focus")
+        #self.demo.enable_gesture_mouse()
+        super().focusOutEvent(event)
 
 def test_gui():
     app = QtWidgets.QApplication([])

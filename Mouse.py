@@ -41,6 +41,7 @@ class Mouse:
         self.w_pixels = default_screen.width
         self.mouse_listener = None
         self.mouse_controller: mouse.Controller = mouse.Controller()
+
         self.mouse_enabled = True
 
     def move(self, pitch: float, yaw: float):
@@ -198,6 +199,9 @@ class Mouse:
 
     def disable_gesture(self):
         self.mouse_enabled = False
+
+    def toggle_active(self):
+        self.mouse_enabled = not self.mouse_enabled
 
     def toggle_mode(self):
         self.mode = self.mode.next()

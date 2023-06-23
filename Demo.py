@@ -128,7 +128,7 @@ class Demo(Thread):
         self.onehot_encoder = OneHotEncoder(sparse_output=False, dtype=float)
         self.scaler = Normalizer()
         self.means = np.ones((18, 1))
-        self.linear_model = MultiOutputRegressor(SVR(kernel="rbf", C=10))
+        self.linear_model = MultiOutputRegressor(SVR(kernel="rbf"))
         #self.linear_model = LogisticRegression()
         #self.linear_model = MLPClassifier(activation="relu")
         # elf.linear_model = MultiOutputRegressor(KNeighborsRegressor(metric="cosine"))
@@ -353,10 +353,16 @@ class Demo(Thread):
 
     def disable_gesture_mouse(self):
         # Disables gesture mouse and enables normal mouse input
+        # TODO: Better name as this now handles all actions
+        for signal in self.signals.values():
+            signal.set_actions_active(False)
         self.mouse_enabled = False
         self.mouse.disable_gesture()
 
     def enable_gesture_mouse(self):
+        # TODO: Better name as this now handles all actions
+        for signal in self.signals.values():
+            signal.set_actions_active(True)
         # Disables normal mouse and enables gesture mouse
         self.mouse_enabled = True
         self.mouse.enable_gesture()
@@ -676,7 +682,7 @@ class Demo(Thread):
             result[blendshape.category_name] = blendshape.score
 
         for signal_name in self.signals:
-            value = result.get(signal_name)
+            value = result.get(signal_name, 0.)
             if value is None:
                 print(f"Tracker doesn't measure signal {signal_name}")
                 continue
