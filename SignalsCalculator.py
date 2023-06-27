@@ -170,7 +170,7 @@ class SignalsCalculater:
         # smile = 0.5 * (l_smile + r_smile)
         # forehead_length = np.linalg.norm(landmarks[10,:]-landmarks[8,:])
         # eye_distance = np.linalg.norm(landmarks[33, :] - landmarks[263, :])
-        # TODO better check and logic
+
 
 
         signals = {
@@ -205,7 +205,7 @@ class SignalsCalculater:
 
     def process_ear(self, landmarks, facial_transformation_matrix, random_augmentation=False):
         landmarks = landmarks * np.array((self.frame_size[0], self.frame_size[1],
-                                          self.frame_size[0]))  # TODO: maybe move denormalization into methods
+                                          self.frame_size[0]))
         landmarks = landmarks[:, :2]
 
 

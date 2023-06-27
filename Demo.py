@@ -112,7 +112,7 @@ class Demo(Thread):
         self.use_mediapipe = True
         self.filter_landmarks = True
         self.landmark_kalman = [Kalman1D(R=0.0065 ** 2) for _ in range(
-            468)]  # TODO: improve values, maybe move to calculator (mediapipe landmark smoothing calculator)
+            468)]  # TODO: improve values
 
         # Calibration
         self.calibration_samples = dict()
@@ -149,7 +149,7 @@ class Demo(Thread):
         self.disable_gesture_mouse()
 
         self.write_csv = False
-        self.csv_file_name = "log.csv"  # TODO: or select
+        self.csv_file_name = "log.csv"
         self.csv_file_fp = None
         self.csv_writer = None
 
@@ -183,7 +183,6 @@ class Demo(Thread):
             time.sleep(0.5)
 
     def __run_mediapipe(self):
-        # TODO: split this up, it's getting crowded
         while self.is_running and self.is_tracking and self.cam_cap.isOpened() and self.use_mediapipe:
             success, image = self.cam_cap.read()
             if not success:
@@ -225,7 +224,6 @@ class Demo(Thread):
                         self.signals.get(label).set_value(reg_result[0][i])
 
                 if self.calibrate_neutral and success:
-                    # TODO: Ignore Head/Eye Pose?
                     # self.VideoWriter.write(image)
                     self.neutral_signals.append(blendshapes)
                     # continue
@@ -600,11 +598,13 @@ class Demo(Thread):
     def recalibrate(self) -> bool:
         print(f"=== Recalibrating === with f{len(self.calibration_samples)}")
 
+        # clone linear model so we only write to linear_model when calibration is finished (better for asynchronous)
         new_linear_model = sklearn.clone(self.linear_model)
         if len(self.calibration_samples) == 0:
             print("Nothing to calibrate")
             return False
 
+        # convert data to numpy
         data_array = []
         label_array = []
         unique_labels = ["neutral"]
@@ -612,7 +612,7 @@ class Demo(Thread):
         for pose_name in self.calibration_samples:
             unique_labels.append(pose_name)
             for label, data in self.calibration_samples[pose_name].items():
-                data = data[20:len(data) - 20]
+                data = data[20:len(data) - 20] # cut start and end put
                 data_array.extend(data)
                 if label == "neutral":
                     label_array.extend(["neutral"] * len(data))
@@ -621,14 +621,14 @@ class Demo(Thread):
         data_array = np.array(data_array)
         label_array = np.array(label_array).reshape(-1, 1)
 
+        # Onehot encoding
         self.onehot_encoder.fit(label_array)
         y = self.onehot_encoder.transform(label_array)
 
-        # self.scaler.fit(data_array)
-        # data_array=self.scaler.transform(data_array)
-        self.means = np.mean(data_array, axis=0)
-        # data_array = data_array/self.means
 
+        self.means = np.mean(data_array, axis=0)
+
+        # Fit the model
         new_linear_model.fit(data_array, y)
         self.linear_model = new_linear_model
         self.linear_signals = self.onehot_encoder.categories_[0]
@@ -642,17 +642,21 @@ class Demo(Thread):
         self.signals[name].set_filter_value(0.0001)
 
     def mp_callback(self, result: FaceLandmarkerResult, output_image: mp.Image, timestamp_ms: int):
-        # print(result)
+        # No face detected
         if not result.face_landmarks:
             return
+
+        # get landmarks, transformation(head pose) and blendshapes
         transformation_matrix = result.facial_transformation_matrixes[0]
         mp_landmarks = result.face_landmarks[0]
         blendshapes = result.face_blendshapes[0]
 
+        # convert to numpy
         np_landmarks = np.array(
             [(lm.x, lm.y, lm.z) for lm in
              mp_landmarks])
 
+        # Kalman filter landmarks (x,y coordinates)
         if self.filter_landmarks:
             for i in range(468):
                 kalman_filters_landm_complex = self.landmark_kalman[i].update(
@@ -664,23 +668,23 @@ class Demo(Thread):
                                                                               facial_transformation_matrix=transformation_matrix,
                                                                               random_augmentation=(
                                                                                       self.calibrate_pose or self.calibrate_neutral))
+        # record calibration samples
         if self.calibrate_neutral:
-            # self.VideoWriter.write(image)
             self.neutral_signals.append(ear_values_corrected)
-            # continue
 
         if self.calibrate_pose:
-            # self.VideoWriter.write(image)
             self.pose_signals.append(ear_values_corrected)
-            # continue
-        ########
 
+
+        # calculate head pose and custom blendshapes/gestures
         result = self.signal_calculator.process(np_landmarks, self.linear_model, self.linear_signals,
                                                 transformation_matrix, self.means)
 
+        #read mediapipe blendshapes
         for blendshape in blendshapes:
             result[blendshape.category_name] = blendshape.score
 
+        # Filter result, set value of signal. Signal triggers appropriate action
         for signal_name in self.signals:
             value = result.get(signal_name, 0.)
             if value is None:
@@ -689,16 +693,20 @@ class Demo(Thread):
 
             self.signals[signal_name].set_value(value)
 
+        # Move mouse and do clicks
         self.mouse.process_signal(self.signals)
 
-        # Debug
-        # black = np.zeros((self.frame_height, self.frame_height, 3)).astype(np.uint8)
+        # Debug Image
+
+        # black = np.zeros((self.frame_height, self.frame_height, 3)).astype(np.uint8) # for only keypoints
         image = output_image.numpy_view().copy()
         annotated_img = DrawingDebug.draw_landmarks_fast(np_landmarks, image)
         for i, indices in enumerate(self.signal_calculator.ear_indices):
             annotated_img = DrawingDebug.draw_landmarks_fast(np_landmarks, annotated_img, index=indices[:6].astype(int),
                                                              color=colors[i % len(colors)])
         self.annotated_landmarks = cv2.flip(annotated_img, 1)
+
+        # record csv and also gesture for data capturing
         if self.write_csv:
             gesture = "neutral"
             if self.calibrate_pose or self.calibrate_neutral:
@@ -731,8 +739,7 @@ class Demo(Thread):
             row = [time.time(), *np_landmarks.astype(np.float32).flatten(), *transformation_matrix.astype(np.float32).flatten(),*ear_values.astype(np.float32).flatten(),
                    *ear_values_corrected.astype(np.float32).flatten(), gesture, *result.values()]
             self.csv_writer.writerow(row)
-            print(gesture)
-            print(row)
+
         self.fps = self.fps_counter()
 
 

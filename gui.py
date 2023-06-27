@@ -281,13 +281,17 @@ class SignalTab(QtWidgets.QWidget):
     def save_signals(self):
         file_name, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Select profile save file", "./config",
                                                              "JSON (*.json)")
-        print(file_name) #TODO: no file selected
+        if file_name=="":
+            return # no file selected
+
         self.demo.save_signals(file_name)
 
     def load_action(self):
         file_name, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Select profile to load", "./config",
                                                              "JSON (*.json)")
-        print(file_name) #TODO: no file selected
+        if file_name == "":
+            return  # no file selected
+
         self.load_signals(file_name)
 
     def load_signals(self, json_path):
@@ -1094,7 +1098,6 @@ class KeyboardTab(QtWidgets.QWidget):
         action_widget.set_signal_selector(self.signals)
 
     def set_signals(self, signals: List[str]):
-        # Todo: remove actions, then load saved, then set combo-boxes
         self.signals = signals
         for action in self.actions.values():
             action.set_signal_selector(signals)
