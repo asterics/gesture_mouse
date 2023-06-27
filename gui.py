@@ -90,7 +90,7 @@ class SignalVis(QtWidgets.QWidget):
         self.raw_values = checked
 
 
-class SignalSetting(QtWidgets.QWidget):
+class SignalSetting(QtWidgets.QFrame):
     deleted = QtCore.Signal(str)
     def __init__(self, name: str, min_value, max_value, min_filter=0.0001, max_filter=1., demo=None):
         super().__init__()
@@ -118,6 +118,8 @@ class SignalSetting(QtWidgets.QWidget):
         self.filter_slider.setMinimum(min_filter)
         self.filter_slider.setMaximum(max_filter)
         self.filter_slider.doubleValueChanged.connect(self.set_filter_value)
+        filter_value_indicator = QtWidgets.QLabel("0")
+        self.filter_slider.doubleValueChanged.connect(lambda value:filter_value_indicator.setText(f"{value:.4f}"))
 
         self.visualization_checkbox = QtWidgets.QCheckBox("Visualize")
         self.visualization_checkbox.setChecked(True)
@@ -129,17 +131,22 @@ class SignalSetting(QtWidgets.QWidget):
         self.delete_button.clicked.connect(self.delete_signal)
 
         self.layout = QtWidgets.QHBoxLayout(self)
-        self.layout.addWidget(self.name_label)
+        self.layout.addWidget(self.name_label, stretch=1)
         self.layout.addWidget(self.visualization_checkbox)
         self.layout.addWidget(QtWidgets.QLabel("Signal range"))
         self.layout.addWidget(self.lower_value)
         self.layout.addWidget(self.higher_value)
         self.layout.addWidget(QtWidgets.QLabel("Filter"))
-        self.layout.addWidget(self.filter_slider)
+        self.layout.addWidget(self.filter_slider, stretch=1)
+        self.layout.addWidget(filter_value_indicator)
         self.layout.addWidget(self.calibrate_button)
         self.layout.addWidget(self.delete_button)
+        self.layout.addStretch(2)
+
 
         self.filter_slider.doubleValueChanged.connect(lambda value: print(value))
+
+        self.setFrameShape(QtWidgets.QFrame.Shape.Box)
 
     def calibrate_signal(self):
         print("Calibration start")
