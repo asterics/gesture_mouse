@@ -1,6 +1,6 @@
-from PySide6.QtWidgets import QSlider
-from PySide6.QtCore import Signal, Qt
-from PySide6.QtGui import QPaintEvent, QPainter, QBrush, QColorConstants
+from PySide6.QtWidgets import QSlider, QStyle
+from PySide6.QtCore import Signal, Qt, QPoint
+from PySide6.QtGui import QPaintEvent, QPainter, QBrush, QColorConstants, QPen, QFontMetrics
 import math
 
 
@@ -121,3 +121,15 @@ class LogarithmicSlider(QSlider):
 
         print(int(value*self._multi))
         super(LogarithmicSlider, self).setValue(int(math.log10(value) * self._multi))
+
+class StyledMouseSlider(DoubleSlider):
+    def __init__(self, decimals=3, *args, **kargs):
+        super().__init__(decimals, *args, **kargs)
+        self.setMinimum(0)
+        self.setMaximum(3)
+        self.setValue(1.)
+        self.setOrientation(Qt.Orientation.Horizontal)
+        self.setTracking(False)
+        self.setTickInterval(10**decimals)
+        self.setTickPosition(self.TickPosition.TicksBelow)
+

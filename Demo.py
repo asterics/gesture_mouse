@@ -141,6 +141,7 @@ class Demo(Thread):
         keyboard.add_hotkey("alt + 1", lambda: self.toggle_gesture_mouse())  # TODO: Linux alternative
         keyboard.add_hotkey("m", lambda: self.toggle_mouse_mode())
         keyboard.add_hotkey("c", lambda: self.mouse.centre_mouse())
+        keyboard.add_hotkey(".", lambda: self.mouse.switch_monitor())
         # keyboard.on_press_key("r", lambda e: self.disable_gesture_mouse())
         # keyboard.on_release_key("r", lambda e: self.enable_gesture_mouse())
         # add mouse_events
