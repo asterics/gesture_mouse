@@ -648,6 +648,7 @@ class Demo(Thread):
             return
 
         # get landmarks, transformation(head pose) and blendshapes
+
         transformation_matrix = result.facial_transformation_matrixes[0]
         mp_landmarks = result.face_landmarks[0]
         blendshapes = result.face_blendshapes[0]
@@ -665,10 +666,18 @@ class Demo(Thread):
                 np_landmarks[i, 0], np_landmarks[i, 1] = np.real(kalman_filters_landm_complex), np.imag(
                     kalman_filters_landm_complex)
 
+        if self.mouse.tracking_mode == Mouse.TrackingMode.PNP:
+            rvec, tvec = self.signal_calculator.pnp_head_pose(np_landmarks)
+            transformation_matrix = np.ones((4,4))
+            rotmat, _ = cv2.Rodrigues(rvec)
+            transformation_matrix[:3,:3] = rotmat
+            transformation_matrix[3,:3] = tvec.squeeze()
+
         ear_values, ear_values_corrected = self.signal_calculator.process_ear(np_landmarks,
                                                                               facial_transformation_matrix=transformation_matrix,
                                                                               random_augmentation=(
-                                                                                      self.calibrate_pose or self.calibrate_neutral))
+                                                                                      self.calibrate_pose or self.calibrate_neutral),
+                                                                              tracking_mode=self.mouse.tracking_mode)
         # record calibration samples
         if self.calibrate_neutral:
             self.neutral_signals.append(ear_values_corrected)
@@ -679,7 +688,7 @@ class Demo(Thread):
 
         # calculate head pose and custom blendshapes/gestures
         result = self.signal_calculator.process(np_landmarks, self.linear_model, self.linear_signals,
-                                                transformation_matrix, self.means)
+                                                transformation_matrix, self.means,tracking_mode=self.mouse.tracking_mode)
 
         #read mediapipe blendshapes
         for blendshape in blendshapes:

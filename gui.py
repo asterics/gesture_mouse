@@ -17,6 +17,7 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, Q
 import numpy as np
 
 import Demo
+import Mouse
 import Signal
 import util
 from gui_widgets import LogarithmicSlider, ColoredDoubleSlider, DoubleSlider, StyledMouseSlider
@@ -886,8 +887,19 @@ class MouseTab(QtWidgets.QWidget):
         self.y_acceleration_slider.doubleValueChanged.connect(self.demo.mouse.set_y_sensitivity)
 
         self.smoothing_toggle = QtWidgets.QCheckBox()
+        self.smoothing_toggle.toggled.connect(self.demo.mouse.set_filter_enabled)
+
         self.smoothing_value = LogarithmicSlider()
         self.smoothing_value.setOrientation(QtCore.Qt.Orientation.Horizontal)
+        self.smoothing_value.setMinimum(0.001)
+        self.smoothing_value.setMaximum(0.1)
+        self.smoothing_value.setValue(self.demo.mouse.filter_value)
+        self.smoothing_value.doubleValueChanged.connect(self.demo.mouse.set_filter_value)
+
+        self.tracking_mode_selector = QtWidgets.QComboBox()
+        self.tracking_mode_selector.addItems([mode.name for mode in Mouse.TrackingMode])
+        self.tracking_mode_selector.currentTextChanged.connect(self.demo.mouse.set_tracking_mode)
+
 
         settings_layout.addRow("x-Sensitivity",self.x_sensitivity_slider)
         settings_layout.addRow("y-Sensitivity",self.y_sensitivity_slider)
@@ -895,6 +907,8 @@ class MouseTab(QtWidgets.QWidget):
         settings_layout.addRow("y-Acceleration", self.y_acceleration_slider)
         settings_layout.addRow("Filter Mouse Position", self.smoothing_toggle)
         settings_layout.addRow("Filter Value", self.smoothing_value)
+        settings_layout.addRow("Tracking Mode", self.tracking_mode_selector)
+
 
         debug_layout.addWidget(QtWidgets.QLabel("Hier stehen Infos"))
         debug_layout.addStretch()

@@ -3,15 +3,14 @@ from pynput import mouse
 import math
 # import pygame
 import screeninfo
+
+import numpy as np
+
 from util import clamp
+from KalmanFilter1D import Kalman1D
 
 
-class MouseMode(Enum):
-    ABSOLUTE = 1
-    RELATIVE = 2
-    JOYSTICK = 3
-    HYBRID = 4
-
+class IteratorEnum(Enum):
     def next(self):
         cls = self.__class__
         members = list(cls)
@@ -23,6 +22,20 @@ class MouseMode(Enum):
         members = list(cls)
         index = (members.index(self) - 1) % len(members)
         return members[index]
+
+
+class MouseMode(IteratorEnum):
+    ABSOLUTE = 0
+    RELATIVE = 1
+    JOYSTICK = 2
+    HYBRID = 3
+    # DPAD = 5
+
+
+class TrackingMode(IteratorEnum):
+    MEDIAPIPE = 0
+    PNP = 1
+    NOSE = 2
 
 
 class Mouse:
@@ -41,7 +54,6 @@ class Mouse:
         self.x_acceleration = 1.25
         self.y_acceleration = 1.25
 
-
         # Multiscreen support
         # TODO: multiscreen?
         self.monitor_index = 0
@@ -58,22 +70,29 @@ class Mouse:
         self.mouse_listener = None
         self.mouse_controller: mouse.Controller = mouse.Controller()
 
+        # Tracking Mode
+        self.tracking_mode = TrackingMode.MEDIAPIPE
         # To disable mouse
         self.mouse_enabled = True
         self.is_dragging = False
         self.precision_mode = False
 
+        # Filtering
+        self.filter_value = 0.01
+        self.kalman_filter = Kalman1D(sz=100, R=self.filter_value ** 2)
+        self.filter_mouse_position = True
+
     def move(self, pitch: float, yaw: float):
         if self.mode == MouseMode.ABSOLUTE:
-            self.x =self.w_pixels * 2*(yaw-0.25) + self.monitor_x_offset
-            self.y =self.h_pixels * 2*(pitch-0.25) + self.monitor_y_offset
-            self.mouse_controller.position = (self.x, self.y)
+            x_new = self.w_pixels * 2 * (yaw - 0.25) + self.monitor_x_offset
+            y_new = self.h_pixels * 2 * (pitch - 0.25) + self.monitor_y_offset
+            self.move_mouse(x_new - self.x, y_new - self.y)
         elif self.mode == MouseMode.RELATIVE:
             self.move_relative(pitch, yaw)
         elif self.mode == MouseMode.JOYSTICK:
             self.joystick_mouse(pitch, yaw)
         elif self.mode == MouseMode.HYBRID:
-            self.hybrid_mouse_joystick(pitch,yaw)
+            self.hybrid_mouse_joystick(pitch, yaw)
 
     def move_relative(self, pitch, yaw):
 
@@ -83,94 +102,47 @@ class Mouse:
 
         self.dx = dx
         self.dy = dy
-        print(dx,dy)
-
-        mouse_speed_x = mouse_speed_y = 0
-        if dx < -0.00:
-            mouse_speed_x = -self.x_sensitivity*math.pow(abs(dx), self.x_acceleration)
-        elif dx > 0.00:
-            mouse_speed_x = self.x_sensitivity*math.pow(abs(dx), self.x_acceleration)
-        if dy < -0.00:
-            mouse_speed_y = -self.y_sensitivity*math.pow(abs(dy), self.y_acceleration)
-        elif dy > 0.00:
-            mouse_speed_y = self.y_sensitivity*math.pow(abs(dy), self.y_acceleration)
 
         # Maybe scale by monitor size
-        mouse_speed_x = 0.01/math.pow(0.01,self.x_acceleration) * mouse_speed_x
-        mouse_speed_y = 0.01/math.pow(0.01,self.y_acceleration) * mouse_speed_y
+        mouse_speed_x, mouse_speed_y = self.calculate_mouse_speed(dx, dy)
 
-        self.x += self.w_pixels*mouse_speed_x
-        self.y += self.h_pixels*mouse_speed_y
-
-        self.mouse_controller.move(self.w_pixels*mouse_speed_x, self.h_pixels*mouse_speed_y)
+        self.move_mouse(self.w_pixels * mouse_speed_x, self.h_pixels * mouse_speed_y)
 
     def joystick_mouse(self, pitch, yaw):
         pitch = (pitch - 0.5)
         yaw = (yaw - 0.5)
 
-        threshold = (0., 0., 0., 0.)
+        dead_zone = 0
 
-        mouse_speed_x = 0
-        mouse_speed_y = 0
+        mouse_speed_x, mouse_speed_y = self.calculate_mouse_speed(yaw, pitch,
+                                                                  (dead_zone, dead_zone, dead_zone, dead_zone))
 
-        # See where the user's head tilting
-        if yaw < 0.00:
-            mouse_speed_x = -self.x_sensitivity*math.pow(abs(yaw), self.x_acceleration)
-        elif yaw > 0.00:
-            mouse_speed_x = self.x_sensitivity*math.pow(abs(yaw), self.x_acceleration)
-        if pitch < 0.00:
-            mouse_speed_y = -self.y_sensitivity*math.pow(abs(pitch), self.y_acceleration)
-        elif pitch > 0.00:
-            mouse_speed_y = self.y_sensitivity*math.pow(abs(pitch), self.y_acceleration)
+        mouse_speed_x = mouse_speed_x * self.w_pixels / 12
+        mouse_speed_y = mouse_speed_y * self.h_pixels / 12
 
-        mouse_speed_x = 0.01/math.pow(0.01,self.x_acceleration) * mouse_speed_x
-        mouse_speed_y = 0.01/math.pow(0.01,self.y_acceleration) * mouse_speed_y
+        self.move_mouse(mouse_speed_x, mouse_speed_y)
 
-        mouse_speed_x = mouse_speed_x*self.w_pixels/8
-        mouse_speed_y = mouse_speed_y*self.h_pixels/8
+    def hybrid_mouse_joystick(self, pitch: float, yaw: float) -> None:
+        dead_zone = 0.04
+        fine_zone = 0.2
 
-
-        self.mouse_controller.move(mouse_speed_x, mouse_speed_y)
-
-    def hybrid_mouse_joystick(self, pitch:float, yaw:float) -> None:
-        dead_zone = 2.5
-        fine_zone = 9.
-        mouse_speed_co = 1.1
-        mouse_speed_max = 25
-        acceleration = 2
-
-        pitch = -50 * (pitch - 0.5)
-        yaw = 50 * (yaw - 0.5)
+        pitch = (pitch - 0.5)
+        yaw = (yaw - 0.5)
 
         if abs(yaw) < dead_zone and abs(pitch) < dead_zone:
             return
         if abs(yaw) < fine_zone and abs(pitch) < fine_zone:
-            self.x = self.x + 0.25*yaw
-            self.y = self.y - 0.25*pitch
-            self.mouse_controller.position = (self.x,self.y)
+            # TODO:offset
+            self.move_mouse(20 * yaw, 20 * pitch)
             return
 
-        print(abs(yaw),abs(pitch))
-        mouse_speed_x = mouse_speed_y = 0
-        if yaw < 0:
-            text = "Looking Left"
-            mouse_speed_x = -1 * min(math.pow(mouse_speed_co, abs(yaw * acceleration)), mouse_speed_max) + 1
-        if yaw > 0:
-            text = "Looking Right"
-            mouse_speed_x = min(math.pow(mouse_speed_co, abs(yaw * acceleration)), mouse_speed_max) - 1
-        if pitch < 0:
-            text = "Looking Down"
-            mouse_speed_y = min(math.pow(mouse_speed_co, abs(pitch * acceleration)), mouse_speed_max) + 1
-        if pitch > 0:
-            text = "Looking Up"
-            mouse_speed_y = -1 * min(math.pow(mouse_speed_co, abs(pitch * acceleration)), mouse_speed_max) - 1
-        self.x, self.y = self.mouse_controller.position
-        self.x = self.x + mouse_speed_x
-        self.y = self.y + mouse_speed_y
+        mouse_speed_x, mouse_speed_y = self.calculate_mouse_speed(yaw, pitch,
+                                                                  (dead_zone, dead_zone, dead_zone, dead_zone))
 
-        self.mouse_controller.move(mouse_speed_x, mouse_speed_y)
+        mouse_speed_x = mouse_speed_x * self.w_pixels / 12
+        mouse_speed_y = mouse_speed_y * self.h_pixels / 12
 
-
+        self.move_mouse(mouse_speed_x, mouse_speed_y)
 
     def update(self, x, y):
         self.x = x
@@ -179,9 +151,8 @@ class Mouse:
 
     def process_signal(self, signals):
         # TODO: move this around, possibilities: MosueAction / select signals in demo / select signals in mouse
-        updown = "HeadPitch"
-        leftright = "HeadYaw"
-
+        updown = "UpDown"
+        leftright = "LeftRight"
 
         pitch = (1 - signals[updown].scaled_value)
         yaw = (1 - signals[leftright].scaled_value)
@@ -192,7 +163,6 @@ class Mouse:
             self.dy = 0
         self.pitch = pitch
         self.yaw = yaw
-
 
     def enable_gesture(self):
         self.mouse_enabled = True
@@ -232,12 +202,16 @@ class Mouse:
         self.mode = self.mode.next()
 
     def centre_mouse(self):
-        self.x = self.monitor_x_offset + self.w_pixels//2
-        self.y = self.monitor_y_offset + self.h_pixels//2
-        self.mouse_controller.position = (self.x, self.y)
+        # TODO: also center pitch / yaw zero point, or different position
+        self.kalman_filter = Kalman1D(R=self.filter_value ** 2)
+        x_new = self.monitor_x_offset + self.w_pixels // 2
+        y_new = self.monitor_y_offset + self.h_pixels // 2
+        x_speed = x_new - self.x
+        y_speed = y_new - self.y
+        self.move_mouse(x_speed,y_speed)
 
     def switch_monitor(self):
-        self.monitor_index = (self.monitor_index+1)%len(self.monitors_list)
+        self.monitor_index = (self.monitor_index + 1) % len(self.monitors_list)
         screen = self.monitors_list[self.monitor_index]
         self.h_pixels = screen.height
         self.w_pixels = screen.width
@@ -258,10 +232,61 @@ class Mouse:
 
     def toggle_precision_mode(self):
         self.precision_mode = not self.precision_mode
+        print(f"Precision mode enabled: {self.precision_mode}")
         if self.precision_mode:
-            self.x_sensitivity = self.x_sensitivity/5.
-            self.y_sensitivity = self.y_sensitivity/5.
+            self.x_sensitivity = self.x_sensitivity / 5.
+            self.y_sensitivity = self.y_sensitivity / 5.
         else:
-            self.x_sensitivity = self.x_sensitivity*5.
-            self.y_sensitivity = self.y_sensitivity*5.
+            self.x_sensitivity = self.x_sensitivity * 5.
+            self.y_sensitivity = self.y_sensitivity * 5.
+
+    def calculate_mouse_speed(self, x_value, y_value, dead_zone=None):
+        # default value
+        if dead_zone is None:
+            dead_zone = (0, 0, 0, 0)
+
+        mouse_speed_x = mouse_speed_y = 0
+        if x_value < dead_zone[0]:
+            text = "Looking Left"
+            mouse_speed_x = -self.x_sensitivity * math.pow(abs(x_value), self.x_acceleration)
+        if x_value > dead_zone[1]:
+            text = "Looking Right"
+            mouse_speed_x = self.x_sensitivity * math.pow(abs(x_value), self.x_acceleration)
+        if y_value < dead_zone[2]:
+            text = "Looking Down"
+            mouse_speed_y = -self.y_sensitivity * math.pow(abs(y_value), self.y_acceleration)
+        if y_value > dead_zone[3]:
+            text = "Looking Up"
+            mouse_speed_y = self.y_sensitivity * math.pow(abs(y_value), self.y_acceleration)
+
+        mouse_speed_x = 0.01 / math.pow(0.01, self.x_acceleration) * mouse_speed_x
+        mouse_speed_y = 0.01 / math.pow(0.01, self.y_acceleration) * mouse_speed_y
+
+        return mouse_speed_x, mouse_speed_y
+
+    def move_mouse(self, x_speed, y_speed):
+        self.x, self.y = self.mouse_controller.position
+
+        if self.filter_mouse_position:
+            output_tracked = self.kalman_filter.update(self.x + x_speed + 1j * (self.y + y_speed))
+            x_new_filtered, y_new_filtered = np.real(output_tracked), np.imag(output_tracked)
+
+            x_speed = x_new_filtered - self.x
+            y_speed = y_new_filtered - self.y
+
+        self.mouse_controller.move(x_speed, y_speed)
+        self.x, self.y = self.mouse_controller.position
+
+    def set_filter_value(self, value):
+        self.filter_value = value
+        self.kalman_filter = Kalman1D(R=self.filter_value**2)
+
+    def set_filter_enabled(self, enabled):
+        self.filter_mouse_position = enabled
+
+    def set_tracking_mode(self, tracking_mode:str):
+        try:
+            self.tracking_mode = TrackingMode[tracking_mode]
+        except KeyError:
+            print(f"Tracking mode {tracking_mode} is not a valid mode")
 

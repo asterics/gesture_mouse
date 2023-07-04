@@ -379,7 +379,28 @@
       "actions": []
     },
     {
+      "name": "HeadYaw",
+      "lower_threshold": -60.0,
+      "higher_threshold": 60.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
       "name": "HeadRoll",
+      "lower_threshold": -90.0,
+      "higher_threshold": 90.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "UpDown",
+      "lower_threshold": -40.0,
+      "higher_threshold": 40.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "LeftRight",
       "lower_threshold": -60.0,
       "higher_threshold": 60.0,
       "filter_value": 0.0001,

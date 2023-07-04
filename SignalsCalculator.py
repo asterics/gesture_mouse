@@ -1,6 +1,7 @@
 import sklearn.linear_model._base
 
 import DrawingDebug
+import Mouse
 from PnPHeadPose import PnPHeadPose
 from face_geometry import PCF, get_metric_landmarks
 import monitor
@@ -153,11 +154,10 @@ class SignalsCalculater:
         self.tril_indices = np.tril_indices(len(self.distance_indices),k=-1)
         self.ear_reference = self.eye_aspect_ratio_batch(canonical_metric_landmarks,self.ear_indices)
 
-    def process(self, landmarks, linear_model:MultiOutputRegressor, labels, facial_transformation_matrix, scaler):
+    def process(self, landmarks, linear_model:MultiOutputRegressor, labels, facial_transformation_matrix, scaler, tracking_mode: Mouse.TrackingMode=Mouse.TrackingMode.MEDIAPIPE):
         U, _, V = np.linalg.svd(facial_transformation_matrix[:3,:3])
         R = U@V
-        r = Rotation.from_matrix(R)
-        angles = r.as_euler("xyz", degrees=True)
+
 
         # normalized_landmarks = rotationmat.T@(landmarks-tvec.T)
         # jaw_open = self.get_jaw_open(landmarks)
@@ -170,13 +170,18 @@ class SignalsCalculater:
         # smile = 0.5 * (l_smile + r_smile)
         # forehead_length = np.linalg.norm(landmarks[10,:]-landmarks[8,:])
         # eye_distance = np.linalg.norm(landmarks[33, :] - landmarks[263, :])
+        if tracking_mode == Mouse.TrackingMode.PNP:
+            R=facial_transformation_matrix[:3,:3]
 
-
+        r = Rotation.from_matrix(R)
+        angles = r.as_euler("xyz", degrees=True)
 
         signals = {
             "HeadPitch": -angles[0],
             "HeadYaw": angles[1],
             "HeadRoll": angles[2],
+            "UpDown": -angles[0],
+            "LeftRight": angles[1]
         }
 
         if len(labels) > 0:
@@ -203,7 +208,7 @@ class SignalsCalculater:
 
         return signals
 
-    def process_ear(self, landmarks, facial_transformation_matrix, random_augmentation=False):
+    def process_ear(self, landmarks, facial_transformation_matrix, random_augmentation=False, tracking_mode: Mouse.TrackingMode=Mouse.TrackingMode.MEDIAPIPE):
         landmarks = landmarks * np.array((self.frame_size[0], self.frame_size[1],
                                           self.frame_size[0]))
         landmarks = landmarks[:, :2]

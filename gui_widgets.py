@@ -92,7 +92,7 @@ class LogarithmicSlider(QSlider):
 
     def __init__(self, *args, **kargs):
         super(LogarithmicSlider, self).__init__(*args, **kargs)
-        decimals = 3
+        decimals = 5
         self._multi = 10 ** decimals
         self.valueChanged.connect(self.emitDoubleValueChanged)
 
