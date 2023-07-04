@@ -875,18 +875,23 @@ class MouseTab(QtWidgets.QWidget):
 
         # Mouse Settings
         self.x_sensitivity_slider = StyledMouseSlider(decimals=3)
+        self.x_sensitivity_slider.setValue(self.demo.mouse.x_sensitivity)
         self.x_sensitivity_slider.doubleValueChanged.connect(self.demo.mouse.set_x_sensitivity)
 
         self.y_sensitivity_slider = StyledMouseSlider(decimals=3)
+        self.y_sensitivity_slider.setValue(self.demo.mouse.y_sensitivity)
         self.y_sensitivity_slider.doubleValueChanged.connect(self.demo.mouse.set_y_sensitivity)
 
         self.x_acceleration_slider = StyledMouseSlider(decimals=3)
+        self.x_acceleration_slider.setValue(self.demo.mouse.x_acceleration)
         self.x_acceleration_slider.doubleValueChanged.connect(self.demo.mouse.set_x_acceleration)
 
         self.y_acceleration_slider = StyledMouseSlider(decimals=3)
-        self.y_acceleration_slider.doubleValueChanged.connect(self.demo.mouse.set_y_sensitivity)
+        self.y_acceleration_slider.setValue(self.demo.mouse.y_acceleration)
+        self.y_acceleration_slider.doubleValueChanged.connect(self.demo.mouse.set_y_acceleration)
 
         self.smoothing_toggle = QtWidgets.QCheckBox()
+        self.smoothing_toggle.setChecked(self.demo.mouse.filter_mouse_position)
         self.smoothing_toggle.toggled.connect(self.demo.mouse.set_filter_enabled)
 
         self.smoothing_value = LogarithmicSlider()

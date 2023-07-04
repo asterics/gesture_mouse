@@ -106,7 +106,7 @@ class Mouse:
         # Maybe scale by monitor size
         mouse_speed_x, mouse_speed_y = self.calculate_mouse_speed(dx, dy)
 
-        self.move_mouse(self.w_pixels * mouse_speed_x, self.h_pixels * mouse_speed_y)
+        self.move_mouse(4. * self.w_pixels * mouse_speed_x, 4. * self.h_pixels * mouse_speed_y) #TODO filtering makes incremental updates less impactful?
 
     def joystick_mouse(self, pitch, yaw):
         pitch = (pitch - 0.5)
