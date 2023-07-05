@@ -150,6 +150,7 @@ class SignalsCalculater:
             [276,283,295,285,442,444,0.011959000000000053,-0.810826,-0.5569300000000004,0.5128370000000002,-0.6266240000000005,0.027579000000000242,8.064732000000001,0.5211660000000009,3.4857520000000006],
             [66,108,337,296,336,107,0.2238659999999999,-1.5872540000000006,0.3949259999999999,-0.2238659999999999,-1.5872540000000006,0.3949259999999999,-11.041168,0.0,0.0]
         ])
+        self.nose_index = 8
         self.distance_indices = np.unique(self.ear_indices[:,:6].astype(int).flatten())
         self.tril_indices = np.tril_indices(len(self.distance_indices),k=-1)
         self.ear_reference = self.eye_aspect_ratio_batch(canonical_metric_landmarks,self.ear_indices)
@@ -157,7 +158,15 @@ class SignalsCalculater:
     def process(self, landmarks, linear_model:MultiOutputRegressor, labels, facial_transformation_matrix, scaler, tracking_mode: Mouse.TrackingMode=Mouse.TrackingMode.MEDIAPIPE):
         U, _, V = np.linalg.svd(facial_transformation_matrix[:3,:3])
         R = U@V
-
+        r = Rotation.from_matrix(R)
+        angles = r.as_euler("xyz", degrees=True)
+        signals = {
+            "HeadPitch": -angles[0],
+            "HeadYaw": angles[1],
+            "HeadRoll": angles[2],
+            "UpDown": -angles[0],
+            "LeftRight": angles[1]
+        }
 
         # normalized_landmarks = rotationmat.T@(landmarks-tvec.T)
         # jaw_open = self.get_jaw_open(landmarks)
@@ -172,17 +181,23 @@ class SignalsCalculater:
         # eye_distance = np.linalg.norm(landmarks[33, :] - landmarks[263, :])
         if tracking_mode == Mouse.TrackingMode.PNP:
             R=facial_transformation_matrix[:3,:3]
+            r = Rotation.from_matrix(R)
+            angles = r.as_euler("xyz", degrees=True)
+            angles[1]=-angles[1]
+            signals = {
+                "HeadPitch": -angles[0],
+                "HeadYaw": angles[1],
+                "HeadRoll": angles[2],
+                "UpDown": -angles[0],
+                "LeftRight": angles[1]
+            }
 
-        r = Rotation.from_matrix(R)
-        angles = r.as_euler("xyz", degrees=True)
+        if tracking_mode == Mouse.TrackingMode.NOSE:
+            signals["UpDown"]=landmarks[self.nose_index,1]
+            signals["LeftRight"]=landmarks[self.nose_index,0]
 
-        signals = {
-            "HeadPitch": -angles[0],
-            "HeadYaw": angles[1],
-            "HeadRoll": angles[2],
-            "UpDown": -angles[0],
-            "LeftRight": angles[1]
-        }
+
+
 
         if len(labels) > 0:
             ear_values = np.array(self.eye_aspect_ratio_batch(landmarks, self.ear_indices)).reshape(1, -1)
