@@ -161,11 +161,11 @@ class SignalsCalculater:
         r = Rotation.from_matrix(R)
         angles = r.as_euler("xyz", degrees=True)
         signals = {
-            "HeadPitch": -angles[0],
-            "HeadYaw": angles[1],
+            "HeadPitch": angles[0],
+            "HeadYaw": -angles[1],
             "HeadRoll": angles[2],
-            "UpDown": -angles[0],
-            "LeftRight": angles[1]
+            "UpDown": angles[0],
+            "LeftRight": -angles[1]
         }
 
         # normalized_landmarks = rotationmat.T@(landmarks-tvec.T)
@@ -183,18 +183,17 @@ class SignalsCalculater:
             R=facial_transformation_matrix[:3,:3]
             r = Rotation.from_matrix(R)
             angles = r.as_euler("xyz", degrees=True)
-            angles[1]=-angles[1]
             signals = {
-                "HeadPitch": -angles[0],
+                "HeadPitch": angles[0],
                 "HeadYaw": angles[1],
                 "HeadRoll": angles[2],
-                "UpDown": -angles[0],
+                "UpDown": angles[0],
                 "LeftRight": angles[1]
             }
-
+        print(tracking_mode)
         if tracking_mode == Mouse.TrackingMode.NOSE:
-            signals["UpDown"]=landmarks[self.nose_index,1]
-            signals["LeftRight"]=landmarks[self.nose_index,0]
+            signals["UpDown"]=landmarks[self.nose_index,1]*40
+            signals["LeftRight"]=-landmarks[self.nose_index,0]*60
 
 
 

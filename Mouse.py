@@ -100,11 +100,20 @@ class Mouse:
         dy = (pitch - self.pitch)
         dx = (yaw - self.yaw)
 
+        if self.tracking_mode == TrackingMode.NOSE:
+            dx = 2*dx
+            dy = 2*dy
+
+
         self.dx = dx
         self.dy = dy
 
         # Maybe scale by monitor size
         mouse_speed_x, mouse_speed_y = self.calculate_mouse_speed(dx, dy)
+
+        if self.tracking_mode == TrackingMode.NOSE:
+            mouse_speed_x=10*mouse_speed_x
+            mouse_speed_y=10*mouse_speed_y
 
         self.move_mouse(4. * self.w_pixels * mouse_speed_x, 4. * self.h_pixels * mouse_speed_y) #TODO filtering makes incremental updates less impactful?
 
@@ -154,8 +163,8 @@ class Mouse:
         updown = "UpDown"
         leftright = "LeftRight"
 
-        pitch = (1 - signals[updown].scaled_value)
-        yaw = (1 - signals[leftright].scaled_value)
+        pitch = signals[updown].scaled_value
+        yaw = signals[leftright].scaled_value
         if self.mouse_enabled:
             self.move(pitch, yaw)
         else:
