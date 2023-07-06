@@ -108,7 +108,7 @@ class SignalSetting(QtWidgets.QFrame):
         self.lower_value.setMaximum(100.)
         self.lower_value.setValue(min_value)
         self.lower_value.valueChanged.connect(self.set_lower_threshold)
-        self.lower_value.valueChanged.connect(self.save_triggered.emit)
+        self.lower_value.valueChanged.connect(lambda : self.save_triggered.emit())
 
         self.higher_value = QtWidgets.QDoubleSpinBox()
         self.higher_value.setSingleStep(0.01)
@@ -116,7 +116,7 @@ class SignalSetting(QtWidgets.QFrame):
         self.higher_value.setMaximum(100.)
         self.higher_value.setValue(max_value)
         self.higher_value.valueChanged.connect(self.set_higher_threshold)
-        self.higher_value.valueChanged.connect(self.save_triggered.emit)
+        self.higher_value.valueChanged.connect(lambda: self.save_triggered.emit())
 
         self.filter_slider = LogarithmicSlider(orientation=QtCore.Qt.Orientation.Horizontal)
         self.filter_slider.setMinimum(min_filter)
@@ -124,7 +124,7 @@ class SignalSetting(QtWidgets.QFrame):
         self.filter_slider.doubleValueChanged.connect(self.set_filter_value)
         filter_value_indicator = QtWidgets.QLabel("0")
         self.filter_slider.doubleValueChanged.connect(lambda value:filter_value_indicator.setText(f"{value:.4f}"))
-        self.filter_slider.doubleValueChanged.connect(self.save_triggered.emit)
+        self.filter_slider.doubleValueChanged.connect(lambda: self.save_triggered.emit())
 
         self.visualization_checkbox = QtWidgets.QCheckBox("Visualize")
         self.visualization_checkbox.setChecked(True)

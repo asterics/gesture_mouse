@@ -36,24 +36,24 @@
       "delay": 0.5
     },
     "switch_monitor": {
-      "threshold": 0.5,
-      "signal": "-",
+      "threshold": 0.144,
+      "signal": "JawForward",
       "delay": 0.5
     },
     "precision_mode": {
       "threshold": 0.5,
-      "signal": "-",
-      "delay": 0.0
+      "signal": "EyeBlinkLeft",
+      "delay": 0.1
     }
   },
   "cursor_setting": {
-    "x_sensitivity": 3.0,
-    "y_sensitivity": 3.0,
+    "x_sensitivity": 1.962,
+    "y_sensitivity": 2.0,
     "x_acceleration": 1.25,
     "y_acceleration": 1.25,
     "filter_enabled": true,
-    "filter_value": 0.01,
+    "filter_value": 0.009391825180105692,
     "tracking_mode": "MEDIAPIPE",
-    "mouse_mode": "ABSOLUTE"
+    "mouse_mode": "RELATIVE"
   }
 }

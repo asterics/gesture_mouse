@@ -214,6 +214,10 @@ class Demo(Thread):
                     blendshapes.append(value)
                     row.append(value)
                     self.signals[blendshape.name].set_value(value)
+
+                # Pose for Mouse
+                self.signals["UpDown"].set_value(-live_link_face.get_blendshape(FaceBlendShape.HeadPitch))
+                self.signals["LeftRight"].set_value(-live_link_face.get_blendshape(FaceBlendShape.HeadYaw))
                 # Calibration
                 blendshapes = np.array(blendshapes)
 

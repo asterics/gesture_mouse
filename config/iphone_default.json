@@ -426,6 +426,20 @@
       "higher_threshold": 1.0,
       "filter_value": 0.0001,
       "actions": []
+    },
+        {
+      "name": "UpDown",
+      "lower_threshold": -1.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
+    },
+    {
+      "name": "LeftRight",
+      "lower_threshold": -1.0,
+      "higher_threshold": 1.0,
+      "filter_value": 0.0001,
+      "actions": []
     }
   ]
 }
