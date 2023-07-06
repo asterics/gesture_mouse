@@ -93,6 +93,7 @@ class SignalVis(QtWidgets.QWidget):
 
 class SignalSetting(QtWidgets.QFrame):
     deleted = QtCore.Signal(str)
+    save_triggered = QtCore.Signal()
     def __init__(self, name: str, min_value, max_value, min_filter=0.0001, max_filter=1., demo=None):
         super().__init__()
         self.name = name
@@ -107,6 +108,7 @@ class SignalSetting(QtWidgets.QFrame):
         self.lower_value.setMaximum(100.)
         self.lower_value.setValue(min_value)
         self.lower_value.valueChanged.connect(self.set_lower_threshold)
+        self.lower_value.valueChanged.connect(self.save_triggered.emit)
 
         self.higher_value = QtWidgets.QDoubleSpinBox()
         self.higher_value.setSingleStep(0.01)
@@ -114,6 +116,7 @@ class SignalSetting(QtWidgets.QFrame):
         self.higher_value.setMaximum(100.)
         self.higher_value.setValue(max_value)
         self.higher_value.valueChanged.connect(self.set_higher_threshold)
+        self.higher_value.valueChanged.connect(self.save_triggered.emit)
 
         self.filter_slider = LogarithmicSlider(orientation=QtCore.Qt.Orientation.Horizontal)
         self.filter_slider.setMinimum(min_filter)
@@ -121,6 +124,7 @@ class SignalSetting(QtWidgets.QFrame):
         self.filter_slider.doubleValueChanged.connect(self.set_filter_value)
         filter_value_indicator = QtWidgets.QLabel("0")
         self.filter_slider.doubleValueChanged.connect(lambda value:filter_value_indicator.setText(f"{value:.4f}"))
+        self.filter_slider.doubleValueChanged.connect(self.save_triggered.emit)
 
         self.visualization_checkbox = QtWidgets.QCheckBox("Visualize")
         self.visualization_checkbox.setChecked(True)
@@ -162,6 +166,7 @@ class SignalSetting(QtWidgets.QFrame):
         max_value = self.calib_diag.max_value
         self.lower_value.setValue(min_value)
         self.higher_value.setValue(max_value)
+        self.save_triggered.emit()
 
     def delete_signal(self):
         print(f"Delete in signal settings with name {self.name}")
@@ -169,6 +174,7 @@ class SignalSetting(QtWidgets.QFrame):
         self.demo.recalibrate()
         self.deleteLater()
         self.deleted.emit(self.name)
+        self.save_triggered.emit()
 
     def debug_check(self):
         print(self.name)
@@ -204,7 +210,7 @@ class SignalTab(QtWidgets.QWidget):
         self.save_signals_button = QtWidgets.QPushButton("Save Profile")
         self.load_signals_button = QtWidgets.QPushButton("Load Profile")
         self.save_signals_button.clicked.connect(self.save_signals)
-        self.load_signals_button.clicked.connect(self.load_action)
+        self.load_signals_button.clicked.connect(self.load_signals_dialog)
 
         self.layout = QtWidgets.QVBoxLayout(self)
 
@@ -274,20 +280,25 @@ class SignalTab(QtWidgets.QWidget):
 
         self.signal_settings[signal_name].filter_slider.setValue(0.0001)
         self.signal_settings[signal_name].deleted.connect(self.delete_signal)
+        self.signal_settings[signal_name].save_triggered.connect(
+            lambda: self.save_signals("config/profiles/signal_latest.json"))
 
         self.setting_widget.layout().addWidget(self.signal_settings[signal_name])
 
         self.signals_updated.emit()
 
-    def save_signals(self):
+    def save_signal_dialog(self):
         file_name, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Select profile save file", "./config",
                                                              "JSON (*.json)")
+        self.save_signals(file_name)
+    def save_signals(self, file_name):
+
         if file_name=="":
             return # no file selected
 
         self.demo.save_signals(file_name)
 
-    def load_action(self):
+    def load_signals_dialog(self):
         file_name, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Select profile to load", "./config",
                                                              "JSON (*.json)")
         if file_name == "":
@@ -318,6 +329,7 @@ class SignalTab(QtWidgets.QWidget):
 
             self.signal_settings[signal_name].filter_slider.setValue(filter_value)
             self.signal_settings[signal_name].deleted.connect(self.delete_signal)
+            self.signal_settings[signal_name].save_triggered.connect(lambda : self.save_signals("config/profiles/signal_lates.json"))
             self.setting_widget.layout().addWidget(self.signal_settings[signal_name])
 
             #self.signal_added.emit()
@@ -858,41 +870,47 @@ class MouseTab(QtWidgets.QWidget):
         debug_layout.addWidget(QtWidgets.QLabel("Information Screen"))
 
         # Click settings
-        self.mouse_settings = []
-        self.mouse_settings.append(MouseClickSettings("Left",self.demo,lambda : self.demo.mouse.click(mouse.Button.left)))
-        self.mouse_settings.append(MouseClickSettings("Right",self.demo,lambda : self.demo.mouse.click(mouse.Button.right)))
-        self.mouse_settings.append(MouseClickSettings("Double Click", self.demo,lambda : self.demo.mouse.double_click(mouse.Button.left)))
-        self.mouse_settings.append(MouseClickSettings("Drag and Drop",self.demo,lambda : self.demo.mouse.drag_drop()))
-        self.mouse_settings.append(MouseClickSettings("Pause", self.demo, lambda : self.demo.mouse.toggle_active()))
-        self.mouse_settings.append(MouseClickSettings("Center", self.demo, lambda : self.demo.mouse.centre_mouse()))
-        self.mouse_settings.append(MouseClickSettings("Switch Mode", self.demo, lambda : self.demo.mouse.toggle_mode()))
-        self.mouse_settings.append(MouseClickSettings("Switch Monitor", self.demo, lambda : self.demo.mouse.switch_monitor()))
-        self.mouse_settings.append(MouseClickSettings("Toggle Precision Mode", self.demo, lambda : self.demo.mouse.toggle_precision_mode()))
+        self.mouse_settings = {}
+        self.mouse_settings["left_click"] = MouseClickSettings("Left",self.demo,lambda : self.demo.mouse.click(mouse.Button.left))
+        self.mouse_settings["right_click"] = MouseClickSettings("Right",self.demo,lambda : self.demo.mouse.click(mouse.Button.right))
+        self.mouse_settings["double_click"] = MouseClickSettings("Double Click", self.demo,lambda : self.demo.mouse.double_click(mouse.Button.left))
+        self.mouse_settings["drag_drop"] = MouseClickSettings("Drag and Drop",self.demo,lambda : self.demo.mouse.drag_drop())
+        self.mouse_settings["pause"] = MouseClickSettings("Pause", self.demo, lambda : self.demo.mouse.toggle_active())
+        self.mouse_settings["center"] = MouseClickSettings("Center", self.demo, lambda : self.demo.mouse.centre_mouse())
+        self.mouse_settings["switch_mode"] = MouseClickSettings("Switch Mode", self.demo, lambda : self.demo.mouse.toggle_mode())
+        self.mouse_settings["switch_monitor"] = MouseClickSettings("Switch Monitor", self.demo, lambda : self.demo.mouse.switch_monitor())
+        self.mouse_settings["precision_mode"] = MouseClickSettings("Toggle Precision Mode", self.demo, lambda : self.demo.mouse.toggle_precision_mode())
 
-        for mouse_setting in self.mouse_settings:
+        for mouse_setting in self.mouse_settings.values():
             actions_layout.addWidget(mouse_setting)
+            mouse_setting.trigger_save.connect(self.save_lates)
 
 
         # Mouse Settings
         self.x_sensitivity_slider = StyledMouseSlider(decimals=3)
         self.x_sensitivity_slider.setValue(self.demo.mouse.x_sensitivity)
         self.x_sensitivity_slider.doubleValueChanged.connect(self.demo.mouse.set_x_sensitivity)
+        self.x_sensitivity_slider.doubleValueChanged.connect(self.save_lates)
 
         self.y_sensitivity_slider = StyledMouseSlider(decimals=3)
         self.y_sensitivity_slider.setValue(self.demo.mouse.y_sensitivity)
         self.y_sensitivity_slider.doubleValueChanged.connect(self.demo.mouse.set_y_sensitivity)
+        self.y_sensitivity_slider.doubleValueChanged.connect(self.save_lates)
 
         self.x_acceleration_slider = StyledMouseSlider(decimals=3)
         self.x_acceleration_slider.setValue(self.demo.mouse.x_acceleration)
         self.x_acceleration_slider.doubleValueChanged.connect(self.demo.mouse.set_x_acceleration)
+        self.x_acceleration_slider.doubleValueChanged.connect(self.save_lates)
 
         self.y_acceleration_slider = StyledMouseSlider(decimals=3)
         self.y_acceleration_slider.setValue(self.demo.mouse.y_acceleration)
         self.y_acceleration_slider.doubleValueChanged.connect(self.demo.mouse.set_y_acceleration)
+        self.y_acceleration_slider.doubleValueChanged.connect(self.save_lates)
 
         self.smoothing_toggle = QtWidgets.QCheckBox()
         self.smoothing_toggle.setChecked(self.demo.mouse.filter_mouse_position)
         self.smoothing_toggle.toggled.connect(self.demo.mouse.set_filter_enabled)
+        self.smoothing_toggle.toggled.connect(self.save_lates)
 
         self.smoothing_value = LogarithmicSlider()
         self.smoothing_value.setOrientation(QtCore.Qt.Orientation.Horizontal)
@@ -900,10 +918,22 @@ class MouseTab(QtWidgets.QWidget):
         self.smoothing_value.setMaximum(0.1)
         self.smoothing_value.setValue(self.demo.mouse.filter_value)
         self.smoothing_value.doubleValueChanged.connect(self.demo.mouse.set_filter_value)
+        self.smoothing_value.doubleValueChanged.connect(self.save_lates)
 
         self.tracking_mode_selector = QtWidgets.QComboBox()
         self.tracking_mode_selector.addItems([mode.name for mode in Mouse.TrackingMode])
         self.tracking_mode_selector.currentTextChanged.connect(self.demo.mouse.set_tracking_mode)
+        self.tracking_mode_selector.currentTextChanged.connect(self.save_lates)
+
+        self.mouse_mode_selector = QtWidgets.QComboBox()
+        self.mouse_mode_selector.addItems([mode.name for mode in Mouse.MouseMode])
+        self.mouse_mode_selector.currentTextChanged.connect(self.demo.mouse.set_mouse_mode)
+        self.mouse_mode_selector.currentTextChanged.connect(self.save_lates)
+
+        self.save_button = QtWidgets.QPushButton("Save Profile")
+        self.save_button.clicked.connect(self.save_profile_dialog)
+        self.load_button = QtWidgets.QPushButton("Load Profile")
+        self.load_button.clicked.connect(self.load_profile_dialog)
 
 
         settings_layout.addRow("x-Sensitivity",self.x_sensitivity_slider)
@@ -913,15 +943,19 @@ class MouseTab(QtWidgets.QWidget):
         settings_layout.addRow("Filter Mouse Position", self.smoothing_toggle)
         settings_layout.addRow("Filter Value", self.smoothing_value)
         settings_layout.addRow("Tracking Mode", self.tracking_mode_selector)
-
+        settings_layout.addRow("Mouse Mode", self.mouse_mode_selector)
 
         debug_layout.addWidget(QtWidgets.QLabel("Hier stehen Infos"))
+        button_layout = QtWidgets.QHBoxLayout()
+        button_layout.addWidget(self.save_button)
+        button_layout.addWidget(self.load_button)
+        debug_layout.addLayout(button_layout)
         debug_layout.addStretch()
 
 
 
     def set_signal_selector(self, signals: List[str]):
-        for mouse_setting in self.mouse_settings:
+        for mouse_setting in self.mouse_settings.values():
             signal_combobox = mouse_setting.signal_selector
             signal_combobox.clear()
             signal_combobox.addItems("-")
@@ -929,7 +963,7 @@ class MouseTab(QtWidgets.QWidget):
             signal_combobox.adjustSize()
 
     def update_signal_values(self, signals):
-        for mouse_setting in self.mouse_settings:
+        for mouse_setting in self.mouse_settings.values():
             signal_name = mouse_setting.current_signal
             signal = signals.get(signal_name, None)
             signal_value = 0.
@@ -938,7 +972,87 @@ class MouseTab(QtWidgets.QWidget):
             mouse_setting.threshold.updateBackground(signal_value)
             mouse_setting.threshold.repaint()
 
+    def save_profile_dialog(self):
+        file_name, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Select profile save file", "./config/profiles",
+                                                             "JSON (*.json)")
+        self.save_profile(file_name)
+
+    def save_profile(self, file_name):
+        print(file_name)
+        mouse_settings = {}
+        for mouse_setting_name, mouse_setting_widget in self.mouse_settings.items():
+            mouse_settings[mouse_setting_name]=mouse_setting_widget.as_dict()
+
+
+        cursor_settings = {
+            "x_sensitivity": self.x_sensitivity_slider.value(),
+            "y_sensitivity": self.y_sensitivity_slider.value(),
+            "x_acceleration": self.x_acceleration_slider.value(),
+            "y_acceleration": self.y_acceleration_slider.value(),
+            "filter_enabled": self.smoothing_toggle.isChecked(),
+            "filter_value": self.smoothing_value.value(),
+            "tracking_mode": self.tracking_mode_selector.currentText(),
+            "mouse_mode": self.mouse_mode_selector.currentText()
+        }
+
+        with open(file_name, "w") as f:
+            json.dump({
+                "mouse_setting": mouse_settings,
+                "cursor_setting": cursor_settings
+            }, f, indent=2)
+
+    def load_profile_dialog(self):
+        file_name, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Select profile to load", "./config/profiles",
+                                                             "JSON (*.json)")
+        self.load_profile(file_name)
+
+    def load_profile(self, file_name):
+        if not os.path.isfile(file_name):
+            raise FileNotFoundError(f"No such file or directory: {file_name}")
+        # TODO: maybe clear stuff, but will prbably do while loading
+        with open(file_name, "r") as f:
+            json_profile = json.load(f)
+            mouse_settings = json_profile.get("mouse_setting", {})
+            cursor_settings = json_profile.get("cursor_setting", {})
+
+            for mouse_setting_name, mouse_setting_values in mouse_settings.items():
+                setting = self.mouse_settings.get(mouse_setting_name, None)
+                if setting is not None:
+                    setting.from_dict(mouse_setting_values)
+
+            x_sensitivity =  cursor_settings.get("x_sensitivity", 1.)
+            self.x_sensitivity_slider.setValue(x_sensitivity)
+            self.x_sensitivity_slider.emitDoubleValueChanged()
+            y_sensitivity =  cursor_settings.get("y_sensitivity", 1.)
+            self.y_sensitivity_slider.setValue(y_sensitivity)
+            self.y_sensitivity_slider.emitDoubleValueChanged()
+            x_acceleration =  cursor_settings.get("x_acceleration", 1.25)
+            self.x_acceleration_slider.setValue(x_acceleration)
+            self.x_acceleration_slider.emitDoubleValueChanged()
+            y_acceleration =  cursor_settings.get("y_acceleration", 1.25)
+            self.y_acceleration_slider.setValue(y_acceleration)
+            self.y_acceleration_slider.emitDoubleValueChanged()
+            filter_enabled =  cursor_settings.get("filter_enabled", True)
+            self.smoothing_toggle.setChecked(filter_enabled)
+            self.smoothing_toggle.toggled.emit(filter_enabled)
+            filter_value =  cursor_settings.get("filter_value", 0.01)
+            self.smoothing_value.setValue(filter_value)
+            self.smoothing_value.emitDoubleValueChanged()
+            tracking_mode =  cursor_settings.get("tracking_mode", "MEDIAPIPE")
+            self.tracking_mode_selector.setCurrentText(tracking_mode)
+            self.tracking_mode_selector.currentTextChanged.emit(tracking_mode)
+            mouse_mode =  cursor_settings.get("mouse_mode", "ABSOLUTE")
+            self.mouse_mode_selector.setCurrentText(mouse_mode)
+            self.mouse_mode_selector.currentTextChanged.emit(mouse_mode)
+
+    def save_lates(self):
+        file_name="config/profiles/mouse_latest.json"
+        self.save_profile(file_name)
+
+
+
 class MouseClickSettings(QtWidgets.QWidget):
+    trigger_save = QtCore.Signal()
     def __init__(self, name, demo, mouse_callback):
         super().__init__()
         layout = QtWidgets.QGridLayout(self)
@@ -977,6 +1091,7 @@ class MouseClickSettings(QtWidgets.QWidget):
 
     def signal_changed(self, current_text):
         # remove action from old signal
+        self.trigger_save.emit()
         old_signal = self.demo.signals.get(self.current_signal,None)
         if old_signal is not None:
             old_signal.remove_action(self.uid)
@@ -992,6 +1107,7 @@ class MouseClickSettings(QtWidgets.QWidget):
 
 
     def threshold_changed(self, new_threshold):
+        self.trigger_save.emit()
         self.action.set_threshold(new_threshold)
         signal = self.demo.signals.get(self.signal_selector.currentText(), None)
         if signal is None:
@@ -1002,6 +1118,7 @@ class MouseClickSettings(QtWidgets.QWidget):
         action.set_threshold(new_threshold)
 
     def delay_changed(self, new_delay):
+        self.trigger_save.emit()
         self.action.set_delay(new_delay)
         signal = self.demo.signals.get(self.signal_selector.currentText(), None)
         if signal is None:
@@ -1010,6 +1127,25 @@ class MouseClickSettings(QtWidgets.QWidget):
         if action is None:
             return  # action not defined
         action.set_delay(new_delay)
+
+    def as_dict(self):
+        settings = {
+            "threshold": self.threshold.value(),
+            "signal": self.signal_selector.currentText(),
+            "delay": self.delay.value()
+        }
+        return settings
+
+    def from_dict(self, setting:Dict):
+        new_threshold = setting.get("threshold",0.5)
+        self.threshold.setValue(new_threshold)
+        self.threshold_changed(new_threshold)
+        new_signal = setting.get("signal", "-")
+        self.signal_selector.setCurrentText(new_signal)
+        self.signal_changed(new_signal)
+        new_delay = setting.get("delay", 0.5)
+        self.delay.setValue(new_delay)
+        self.delay_changed(new_delay)
 
 
 class KeyboardActionWidget(QtWidgets.QWidget):
@@ -1093,9 +1229,9 @@ class KeyboardTab(QtWidgets.QWidget):
 
         button_layout = QtWidgets.QHBoxLayout()
         self.save_actions_button = QtWidgets.QPushButton("Save profile")
-        self.save_actions_button.clicked.connect(self.save_action)
+        self.save_actions_button.clicked.connect(self.save_profile_dialog)
         self.load_actions_button = QtWidgets.QPushButton("Load profile")
-        self.load_actions_button.clicked.connect(self.load_profile)
+        self.load_actions_button.clicked.connect(self.load_profile_dialog)
         # self.layout.addStretch()
 
         button_layout.addStretch()
@@ -1116,8 +1252,9 @@ class KeyboardTab(QtWidgets.QWidget):
         # self.layout.insertWidget(self.layout.count() - 2, action_widget)
         self.actions[name] = action_widget
         action_widget.remove_clicked.connect(self.remove_action)
-        action_widget.action_updated.connect(self.update_action)
+        action_widget.action_updated.connect(self.update_and_save)
         action_widget.set_signal_selector(self.signals)
+        self.save_profile("config/profiles/keyboard_latest.json")
 
     def set_signals(self, signals: List[str]):
         self.signals = signals
@@ -1136,6 +1273,11 @@ class KeyboardTab(QtWidgets.QWidget):
             signal.remove_action(action_widget.name)
 
         action_widget.close()
+        self.save_profile("config/profiles/keyboard_latest.json")
+
+    def update_and_save(self):
+        self.update_action()
+        self.save_profile("config/profiles/keyboard_latest.json")
 
     def update_action(self):
         action_widget: KeyboardActionWidget = self.sender()
@@ -1213,10 +1355,12 @@ class KeyboardTab(QtWidgets.QWidget):
         new_action.set_delay(delay)
         signal.add_action(uid, new_action)
 
-    def save_action(self, filename):
+    def save_profile_dialog(self):
         file_name, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Select profile save file", "./config/profiles",
                                                              "JSON (*.json)")
-        print(file_name)
+        self.save_profile(file_name)
+
+    def save_profile(self, file_name):
         serial_actions = []
         for action in self.actions.values():
             threshold = action.threshold.value()
@@ -1238,14 +1382,18 @@ class KeyboardTab(QtWidgets.QWidget):
         with open(file_name, "w") as f:
             json.dump(serial_actions, f, indent=2)
 
-    def load_profile(self):
+    def load_profile_dialog(self):
         file_name, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Select profile to load", "./config/profiles",
                                                              "JSON (*.json)")
+        self.load_profile(file_name)
+
+    def load_profile(self, file_name):
         if not os.path.isfile(file_name):
             raise FileNotFoundError(f"No such file or directory: {file_name}")
         for action in self.actions.values():
             signal_name = action.current_signal
             signal = self.demo.signals.get(signal_name, None)
+
             if signal is not None:
                 signal.remove_action(action.name)
             self.actions_widget.layout().removeWidget(action)
@@ -1277,7 +1425,7 @@ class KeyboardTab(QtWidgets.QWidget):
                 self.actions[action_widget.name] = action_widget
                 self.actions_widget.layout().insertWidget(self.actions_widget.layout().count() - 1, action_widget)
                 action_widget.remove_clicked.connect(self.remove_action)
-                action_widget.action_updated.connect(self.update_action)
+                action_widget.action_updated.connect(self.update_and_save)
                 action_widget.action_updated.emit()  # create associated action
 
     def update_signal_values(self, signals):
@@ -1338,6 +1486,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.selected_signals.update_plots(self.demo.signals)
         self.general_tab.update_debug_visualization()
         self.keyboard_tab.update_signal_values(self.demo.signals)
+        self.mouse_tab.mouse_mode_selector.setCurrentText(self.demo.mouse.mode.name)
         self.mouse_tab.update_signal_values(self.demo.signals)
 
     def change_mode(self, mode:str):

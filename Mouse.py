@@ -210,6 +210,13 @@ class Mouse:
     def toggle_mode(self):
         self.mode = self.mode.next()
 
+    def set_mouse_mode(self, mode:str):
+        print("lota updates")
+        try:
+            self.mode = MouseMode[mode]
+        except KeyError:
+            print(f"Mouse mode {mode} is not a valid mode")
+
     def centre_mouse(self):
         # TODO: also center pitch / yaw zero point, or different position
         self.kalman_filter = Kalman1D(R=self.filter_value ** 2)
