@@ -243,6 +243,8 @@ class Demo(Thread):
             self.cam_cap = cv2.VideoCapture(self.vid_source_file)
         else:
             self.cam_cap = cv2.VideoCapture(self.webcam_dev_nr)
+        #success=self.cam_cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+        #print(f"prop mode {success}")
         # self.cam_cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.frame_width)
         # self.cam_cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.frame_height)
         # self.cam_cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P',

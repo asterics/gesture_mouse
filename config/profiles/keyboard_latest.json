@@ -1,0 +1,11 @@
+[
+  {
+    "action": "keyboard_key",
+    "signal": "-",
+    "threshold": 0.5,
+    "delay": 0.5,
+    "trigger": "down",
+    "action_type": "press",
+    "key": ""
+  }
+]
