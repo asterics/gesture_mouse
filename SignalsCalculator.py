@@ -190,12 +190,10 @@ class SignalsCalculater:
                 "UpDown": angles[0],
                 "LeftRight": angles[1]
             }
-        print(tracking_mode)
+
         if tracking_mode == Mouse.TrackingMode.NOSE:
             signals["UpDown"]=landmarks[self.nose_index,1]*40
             signals["LeftRight"]=-landmarks[self.nose_index,0]*60
-
-
 
 
         if len(labels) > 0:

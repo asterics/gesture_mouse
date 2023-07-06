@@ -132,6 +132,7 @@ class Mouse:
         self.move_mouse(mouse_speed_x, mouse_speed_y)
 
     def hybrid_mouse_joystick(self, pitch: float, yaw: float) -> None:
+        #TODO: Absolut/relativ in der Mitte, Dead, Zone abziehen
         dead_zone = 0.04
         fine_zone = 0.2
 
@@ -211,7 +212,6 @@ class Mouse:
         self.mode = self.mode.next()
 
     def set_mouse_mode(self, mode:str):
-        print("lota updates")
         try:
             self.mode = MouseMode[mode]
         except KeyError:
