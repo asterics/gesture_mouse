@@ -194,9 +194,10 @@ class SignalSetting(QtWidgets.QFrame):
 class SignalTab(QtWidgets.QWidget):
     signals_updated = QtCore.Signal()
 
-    def __init__(self, demo, json_path):
+    def __init__(self, demo, json_path, tracker_name):
         super().__init__()
         self.demo: Demo.Demo = demo
+        self.tracker_name = tracker_name
         self.setWindowTitle("Signals Visualization")
         self.signals_vis = SignalVis()
         self.signals_vis.setMaximumHeight(250)
@@ -280,8 +281,8 @@ class SignalTab(QtWidgets.QWidget):
 
         self.signal_settings[signal_name].filter_slider.setValue(0.0001)
         self.signal_settings[signal_name].deleted.connect(self.delete_signal)
-        self.signal_settings[signal_name].save_triggered.connect(
-            lambda: self.save_signals("config/profiles/signal_latest.json"))
+        #self.signal_settings[signal_name].save_triggered.connect(
+        #    lambda: self.save_signals(f"config/{self.tracker_name}_signal_latest.json"))
 
         self.setting_widget.layout().addWidget(self.signal_settings[signal_name])
 
@@ -313,7 +314,11 @@ class SignalTab(QtWidgets.QWidget):
         self.signal_settings = dict()
 
         #Load json
-        self.signal_config: dict = json.load(open(json_path, "r"))
+        try:
+            self.signal_config: dict = json.load(open(json_path, "r"))
+        except FileNotFoundError:
+            print("File not found")
+            return
 
         for json_signal in self.signal_config["signals"]:
             signal_name = json_signal["name"]
@@ -329,13 +334,13 @@ class SignalTab(QtWidgets.QWidget):
 
             self.signal_settings[signal_name].filter_slider.setValue(filter_value)
             self.signal_settings[signal_name].deleted.connect(self.delete_signal)
-            self.signal_settings[signal_name].save_triggered.connect(lambda : self.save_signals("config/profiles/signal_lates.json"))
+            #self.signal_settings[signal_name].save_triggered.connect(lambda : self.save_signals(f"config/{self.tracker_name}_signal_latest.json"))
             self.setting_widget.layout().addWidget(self.signal_settings[signal_name])
 
             #self.signal_added.emit()
 
         self.signals_updated.emit()
-
+        #self.save_signals(f"config/{self.tracker_name}_signal_latest.json")
         # load in demo
         self.demo.setup_signals(json_path)
         self.scroll_area.setWidget(self.setting_widget)
@@ -1448,8 +1453,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.demo = Demo.Demo()
         self.central_widget = QtWidgets.QTabWidget()
 
-        self.signal_tab_iphone = SignalTab(self.demo, "config/iphone_default.json")
-        self.signal_tab_mediapipe = SignalTab(self.demo, "config/mediapipe_blendshape.json")
+        self.signal_tab_iphone = SignalTab(self.demo, "config/iphone_default.json", "iphone")
+        self.signal_tab_mediapipe = SignalTab(self.demo, "config/mediapipe_blendshape.json", "mediapipe")
 
         self.signals_tab = QtWidgets.QStackedWidget()
         self.signals_tab.addWidget(self.signal_tab_iphone)
@@ -1462,7 +1467,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.general_tab.mode_changed.connect(self.change_mode)
 
         self.keyboard_tab = KeyboardTab(self.demo)
+        self.keyboard_tab.load_profile("config/profiles/keyboard_latest.json")
         self.mouse_tab = MouseTab(self.demo)
+        self.mouse_tab.load_profile("config/profiles/mouse_latest.json")
 
         self.central_widget.addTab(self.general_tab, "General")
         self.central_widget.addTab(self.keyboard_tab, "Keyboard")
