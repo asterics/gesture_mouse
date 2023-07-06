@@ -3,7 +3,7 @@
     "left_click": {
       "threshold": 0.5,
       "signal": "-",
-      "delay": 0.5
+      "delay": 0.0
     },
     "right_click": {
       "threshold": 0.5,
@@ -18,7 +18,7 @@
     "drag_drop": {
       "threshold": 0.5,
       "signal": "-",
-      "delay": 0.5
+      "delay": 0.0
     },
     "pause": {
       "threshold": 0.5,
@@ -37,23 +37,23 @@
     },
     "switch_monitor": {
       "threshold": 0.144,
-      "signal": "JawForward",
+      "signal": "-",
       "delay": 0.5
     },
     "precision_mode": {
-      "threshold": 0.5,
-      "signal": "EyeBlinkLeft",
+      "threshold": 0.49,
+      "signal": "cheekSquintLeft",
       "delay": 0.1
     }
   },
   "cursor_setting": {
-    "x_sensitivity": 1.962,
-    "y_sensitivity": 2.0,
-    "x_acceleration": 1.25,
-    "y_acceleration": 1.25,
+    "x_sensitivity": 2.006,
+    "y_sensitivity": 2.013,
+    "x_acceleration": 0.996,
+    "y_acceleration": 0.996,
     "filter_enabled": true,
-    "filter_value": 0.009391825180105692,
+    "filter_value": 0.0030351488874840716,
     "tracking_mode": "MEDIAPIPE",
-    "mouse_mode": "RELATIVE"
+    "mouse_mode": "ABSOLUTE"
   }
 }

@@ -46,6 +46,8 @@ class Mouse:
 
         self.pitch = 0
         self.yaw = 0
+        self.pitch0 = 0.5
+        self.yaw0 = 0.5
 
         # Sensitivity and Acceleration
         self.x_sensitivity = 1.
@@ -84,9 +86,10 @@ class Mouse:
 
     def move(self, pitch: float, yaw: float):
         if self.mode == MouseMode.ABSOLUTE:
-            x_new = self.w_pixels * 2 * (yaw - 0.25) + self.monitor_x_offset
-            y_new = self.h_pixels * 2 * (pitch - 0.25) + self.monitor_y_offset
-            self.move_mouse(x_new - self.x, y_new - self.y)
+            # x_new = self.w_pixels * 2 * (yaw - 0.25) + self.monitor_x_offset
+            # y_new = self.h_pixels * 2 * (pitch - 0.25) + self.monitor_y_offset
+            # self.move_mouse(x_new - self.x, y_new - self.y)
+            self.move_absolute(pitch, yaw)
         elif self.mode == MouseMode.RELATIVE:
             self.move_relative(pitch, yaw)
         elif self.mode == MouseMode.JOYSTICK:
@@ -94,15 +97,22 @@ class Mouse:
         elif self.mode == MouseMode.HYBRID:
             self.hybrid_mouse_joystick(pitch, yaw)
 
+    def move_absolute(self, pitch, yaw):
+        w = self.monitors_list[self.monitor_index].width
+        h = self.monitors_list[self.monitor_index].height
+        x = self.monitor_x_offset + w/2 + w*self.x_sensitivity*(yaw-self.yaw0)
+        y = self.monitor_y_offset + h/2 + h*self.y_sensitivity*(pitch-self.pitch0)
+        self.move_mouse(x-self.x, y-self.y)
+
     def move_relative(self, pitch, yaw):
 
         # Todo: use time to make it framerate independent
         dy = (pitch - self.pitch)
         dx = (yaw - self.yaw)
 
-        if self.tracking_mode == TrackingMode.NOSE:
-            dx = 2*dx
-            dy = 2*dy
+
+        dx = 2*dx
+        dy = 2*dy
 
 
         self.dx = dx
@@ -112,14 +122,14 @@ class Mouse:
         mouse_speed_x, mouse_speed_y = self.calculate_mouse_speed(dx, dy)
 
         if self.tracking_mode == TrackingMode.NOSE:
-            mouse_speed_x=10*mouse_speed_x
-            mouse_speed_y=10*mouse_speed_y
+            mouse_speed_x=8*mouse_speed_x
+            mouse_speed_y=8*mouse_speed_y
 
-        self.move_mouse(4. * self.w_pixels * mouse_speed_x, 4. * self.h_pixels * mouse_speed_y) #TODO filtering makes incremental updates less impactful?
+        self.move_mouse(self.w_pixels * mouse_speed_x, self.h_pixels * mouse_speed_y) #TODO filtering makes incremental updates less impactful?
 
     def joystick_mouse(self, pitch, yaw):
-        pitch = (pitch - 0.5)
-        yaw = (yaw - 0.5)
+        pitch = (pitch - self.pitch0)
+        yaw = (yaw - self.yaw0)
 
         dead_zone = 0
 
@@ -136,8 +146,8 @@ class Mouse:
         dead_zone = 0.04
         fine_zone = 0.2
 
-        pitch = (pitch - 0.5)
-        yaw = (yaw - 0.5)
+        pitch = (pitch - self.pitch0)
+        yaw = (yaw - self.yaw0)
 
         if abs(yaw) < dead_zone and abs(pitch) < dead_zone:
             return
@@ -222,9 +232,11 @@ class Mouse:
         self.kalman_filter = Kalman1D(R=self.filter_value ** 2)
         x_new = self.monitor_x_offset + self.w_pixels // 2
         y_new = self.monitor_y_offset + self.h_pixels // 2
-        x_speed = x_new - self.x
-        y_speed = y_new - self.y
-        self.move_mouse(x_speed,y_speed)
+        self.x = x_new
+        self.y = y_new
+        self.pitch0=self.pitch
+        self.yaw0=self.yaw
+        self.mouse_controller.position = (x_new,y_new)
 
     def switch_monitor(self):
         self.monitor_index = (self.monitor_index + 1) % len(self.monitors_list)
@@ -281,17 +293,21 @@ class Mouse:
         return mouse_speed_x, mouse_speed_y
 
     def move_mouse(self, x_speed, y_speed):
-        self.x, self.y = self.mouse_controller.position
+        x_speed_filtered = y_speed_filtered = 0
+        x, y = self.mouse_controller.position
+        self.x = self.x + x_speed
+        self.y = self.y + y_speed
 
         if self.filter_mouse_position:
-            output_tracked = self.kalman_filter.update(self.x + x_speed + 1j * (self.y + y_speed))
+            output_tracked = self.kalman_filter.update(self.x + 1j * self.y)
             x_new_filtered, y_new_filtered = np.real(output_tracked), np.imag(output_tracked)
+            x_speed_filtered = x_new_filtered-x
+            y_speed_filtered = y_new_filtered-y
+        else:
+            x_speed_filtered=x_speed
+            y_speed_filtered=y_speed
 
-            x_speed = x_new_filtered - self.x
-            y_speed = y_new_filtered - self.y
-
-        self.mouse_controller.move(x_speed, y_speed)
-        self.x, self.y = self.mouse_controller.position
+        self.mouse_controller.move(x_speed_filtered, y_speed_filtered)
 
     def set_filter_value(self, value):
         self.filter_value = value
