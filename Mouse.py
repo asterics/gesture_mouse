@@ -1,3 +1,4 @@
+import time
 from enum import Enum
 from pynput import mouse
 import math
@@ -72,6 +73,11 @@ class Mouse:
         self.mouse_listener = None
         self.mouse_controller: mouse.Controller = mouse.Controller()
 
+        # Hybrid Mode
+        self.in_finezone=True
+        self.fine_zone_center=np.array([0,0])
+        self.fine_zone_pixel_radius = 0.
+
         # Tracking Mode
         self.tracking_mode = TrackingMode.MEDIAPIPE
         # To disable mouse
@@ -98,21 +104,27 @@ class Mouse:
             self.hybrid_mouse_joystick(pitch, yaw)
 
     def move_absolute(self, pitch, yaw):
+        pitch = (pitch - self.pitch0)
+        yaw = (yaw - self.yaw0)
+
+        if self.tracking_mode == TrackingMode.NOSE:
+            pitch *= 6
+            yaw *= 6
+
         w = self.monitors_list[self.monitor_index].width
         h = self.monitors_list[self.monitor_index].height
-        x = self.monitor_x_offset + w/2 + w*self.x_sensitivity*(yaw-self.yaw0)
-        y = self.monitor_y_offset + h/2 + h*self.y_sensitivity*(pitch-self.pitch0)
-        self.move_mouse(x-self.x, y-self.y)
+        x = self.monitor_x_offset + w / 2 + w * self.x_sensitivity * yaw
+        y = self.monitor_y_offset + h / 2 + h * self.y_sensitivity * pitch
+        self.move_mouse(x - self.x, y - self.y)
 
     def move_relative(self, pitch, yaw):
 
         # Todo: use time to make it framerate independent
         dy = (pitch - self.pitch)
         dx = (yaw - self.yaw)
-
-
-        dx = 2*dx
-        dy = 2*dy
+        if self.tracking_mode==TrackingMode.NOSE:
+            dy*=6
+            dx*=6
 
 
         self.dx = dx
@@ -121,15 +133,16 @@ class Mouse:
         # Maybe scale by monitor size
         mouse_speed_x, mouse_speed_y = self.calculate_mouse_speed(dx, dy)
 
-        if self.tracking_mode == TrackingMode.NOSE:
-            mouse_speed_x=8*mouse_speed_x
-            mouse_speed_y=8*mouse_speed_y
-
-        self.move_mouse(self.w_pixels * mouse_speed_x, self.h_pixels * mouse_speed_y) #TODO filtering makes incremental updates less impactful?
+        self.move_mouse(self.w_pixels * mouse_speed_x,
+                        self.h_pixels * mouse_speed_y)  # TODO filtering makes incremental updates less impactful?
 
     def joystick_mouse(self, pitch, yaw):
         pitch = (pitch - self.pitch0)
         yaw = (yaw - self.yaw0)
+
+        if self.tracking_mode==TrackingMode.NOSE:
+            pitch*=6
+            yaw*=6
 
         dead_zone = 0
 
@@ -142,25 +155,43 @@ class Mouse:
         self.move_mouse(mouse_speed_x, mouse_speed_y)
 
     def hybrid_mouse_joystick(self, pitch: float, yaw: float) -> None:
-        #TODO: Absolut/relativ in der Mitte, Dead, Zone abziehen
-        dead_zone = 0.04
-        fine_zone = 0.2
+        # TODO: Absolut/relativ in der Mitte, Dead, Zone abziehen
+        fine_zone = 0.12
 
         pitch = (pitch - self.pitch0)
         yaw = (yaw - self.yaw0)
+        if self.tracking_mode==TrackingMode.NOSE:
+            pitch*=6
+            yaw*=6
 
-        if abs(yaw) < dead_zone and abs(pitch) < dead_zone:
+        yaw_pitch = np.array([yaw, pitch])
+        yaw_pitch_squared_norm = np.dot(yaw_pitch,yaw_pitch)
+        yaw_pitch_norm = np.sqrt(yaw_pitch_squared_norm)
+        w = self.monitors_list[self.monitor_index].width
+        h = self.monitors_list[self.monitor_index].height
+
+        if yaw_pitch_norm<fine_zone:
+            if not self.in_finezone:
+                self.in_finezone = True
+                self.x,self.y = x,y = self.mouse_controller.position
+                incoming_position = np.array([x,y])
+                #calculate center of fine zone
+                self.fine_zone_center=incoming_position-np.array([2.5*self.x_sensitivity,2.5*self.y_sensitivity])*yaw_pitch*np.array([w,w])*fine_zone
+
+            new_pos = self.fine_zone_center + np.array([2.5*self.x_sensitivity,2.5*self.y_sensitivity])*yaw_pitch*np.array([w,w])*fine_zone
+            x, y = new_pos
+            self.move_mouse(x - self.x, y - self.y)
             return
-        if abs(yaw) < fine_zone and abs(pitch) < fine_zone:
-            # TODO:offset
-            self.move_mouse(20 * yaw, 20 * pitch)
-            return
 
-        mouse_speed_x, mouse_speed_y = self.calculate_mouse_speed(yaw, pitch,
-                                                                  (dead_zone, dead_zone, dead_zone, dead_zone))
+        self.in_finezone=False
 
-        mouse_speed_x = mouse_speed_x * self.w_pixels / 12
-        mouse_speed_y = mouse_speed_y * self.h_pixels / 12
+        yaw_pitch_norm = yaw_pitch_norm
+        new_yaw_pitch = yaw_pitch*((1.02*yaw_pitch_norm-fine_zone)/yaw_pitch_norm)
+
+        mouse_speed_x, mouse_speed_y = self.calculate_mouse_speed(new_yaw_pitch[0], new_yaw_pitch[1])
+
+        mouse_speed_x = mouse_speed_x * self.w_pixels / 6
+        mouse_speed_y = mouse_speed_y * self.h_pixels / 6
 
         self.move_mouse(mouse_speed_x, mouse_speed_y)
 
@@ -221,7 +252,7 @@ class Mouse:
     def toggle_mode(self):
         self.mode = self.mode.next()
 
-    def set_mouse_mode(self, mode:str):
+    def set_mouse_mode(self, mode: str):
         try:
             self.mode = MouseMode[mode]
         except KeyError:
@@ -234,9 +265,10 @@ class Mouse:
         y_new = self.monitor_y_offset + self.h_pixels // 2
         self.x = x_new
         self.y = y_new
-        self.pitch0=self.pitch
-        self.yaw0=self.yaw
-        self.mouse_controller.position = (x_new,y_new)
+        self.pitch0 = self.pitch
+        self.yaw0 = self.yaw
+        self.mouse_controller.position = (x_new, y_new)
+        self.in_finezone = False
 
     def switch_monitor(self):
         self.monitor_index = (self.monitor_index + 1) % len(self.monitors_list)
@@ -245,6 +277,7 @@ class Mouse:
         self.w_pixels = screen.width
         self.monitor_x_offset = screen.x
         self.monitor_y_offset = screen.y
+
 
     def set_x_sensitivity(self, value: float):
         self.x_sensitivity = value
@@ -294,6 +327,11 @@ class Mouse:
 
     def move_mouse(self, x_speed, y_speed):
         x_speed_filtered = y_speed_filtered = 0
+        # Somehow floating point errors have a bias which accumulate, this is a hacky solution for it
+        if abs(x_speed) <= 1:
+            x_speed = 0
+        if abs(y_speed) <= 1:
+            y_speed = 0
         x, y = self.mouse_controller.position
         self.x = self.x + x_speed
         self.y = self.y + y_speed
@@ -301,24 +339,38 @@ class Mouse:
         if self.filter_mouse_position:
             output_tracked = self.kalman_filter.update(self.x + 1j * self.y)
             x_new_filtered, y_new_filtered = np.real(output_tracked), np.imag(output_tracked)
-            x_speed_filtered = x_new_filtered-x
-            y_speed_filtered = y_new_filtered-y
+            x_speed_filtered = x_new_filtered - x
+            y_speed_filtered = y_new_filtered - y
         else:
-            x_speed_filtered=x_speed
-            y_speed_filtered=y_speed
+            x_speed_filtered = x_speed
+            y_speed_filtered = y_speed
 
         self.mouse_controller.move(x_speed_filtered, y_speed_filtered)
 
     def set_filter_value(self, value):
         self.filter_value = value
-        self.kalman_filter = Kalman1D(R=self.filter_value**2)
+        self.kalman_filter = Kalman1D(R=self.filter_value ** 2)
 
     def set_filter_enabled(self, enabled):
         self.filter_mouse_position = enabled
 
-    def set_tracking_mode(self, tracking_mode:str):
+    def set_tracking_mode(self, tracking_mode: str):
         try:
             self.tracking_mode = TrackingMode[tracking_mode]
         except KeyError:
             print(f"Tracking mode {tracking_mode} is not a valid mode")
 
+
+if __name__ == '__main__':
+    mouse = Mouse()
+    mouse.centre_mouse()
+    mouse.set_filter_enabled(False)
+    mouse.set_mouse_mode(MouseMode.ABSOLUTE.name)
+    mouse.set_tracking_mode(TrackingMode.NOSE.name)
+    mouse.enable_gesture()
+
+    for i in range(1000):
+        time.sleep(0.01)
+        mouse.move_mouse(0, 0)
+
+    print("finished")

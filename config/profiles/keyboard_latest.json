@@ -5,7 +5,7 @@
     "threshold": 0.5,
     "delay": 0.5,
     "trigger": "down",
-    "action_type": "press",
+    "action_type": "press and release",
     "key": ""
   }
 ]
