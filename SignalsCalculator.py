@@ -15,8 +15,6 @@ from sklearn.multioutput import MultiOutputClassifier, MultiOutputRegressor
 from sklearn.preprocessing import normalize
 from sklearn.metrics import pairwise_distances
 
-from dev.gesture_capture.calculate_normal_area import canonical_metric_landmarks
-
 from dataclasses import dataclass, fields
 from typing import Tuple
 from numbers import Number

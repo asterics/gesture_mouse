@@ -10,4 +10,3 @@ screeninfo
 timecode
 pynput
 scikit-learn
-open3d
