@@ -49,8 +49,8 @@
   "cursor_setting": {
     "x_sensitivity": 1.006,
     "y_sensitivity": 1.025,
-    "x_acceleration": 1.239,
-    "y_acceleration": 1.258,
+    "x_acceleration": 1.057,
+    "y_acceleration": 1.031,
     "filter_enabled": true,
     "filter_value": 0.003383841403548346,
     "tracking_mode": "NOSE",
