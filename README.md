@@ -24,4 +24,6 @@ Instructions:
 1. Activate virtual environment `venv/Scripts/activate` on windows and `source venv/bin/activate` on linux
 2. Install PyInstaller `pip install pyinstaller`
 3. Execute build process with  
-`pyinstaller gui.py -D --add-data config;config --add-data data;data --collect-all mediapipe`
+`pyinstaller gui.py -D --add-data config;config --add-data data;data --collect-all mediapipe` on windows \
+`pyinstaller gui.py -D --add-data config:config --add-data data:data --collect-all mediapipe` on linux \
+
