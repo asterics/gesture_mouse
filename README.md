@@ -20,7 +20,7 @@ Tested with Python 3.10 and PySide6.4.3.
 ```sudo ./venv/bin/python3.10 gui.py```
 
 ## Creating an exe distribution
-To create a distribution folder wich includes all necessery .dll and an executable one can use PyInstaller([https://nuitka.net/](https://pyinstaller.org)). 
+To create a distribution folder wich includes all necessery .dll and an executable one can use PyInstaller([https://pyinstaller.org](https://pyinstaller.org)). 
 Instructions:
 1. Follow the installation instructions
 2. Activate virtual environment `venv/Scripts/activate` on windows and `source venv/bin/activate` on linux
