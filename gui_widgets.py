@@ -46,7 +46,6 @@ class ColoredDoubleSlider(QSlider):
 
         self.valueChanged.connect(self.emitDoubleValueChanged)
         self.background_value = 0.
-        self.qpainter = QPainter(self)
 
     def emitDoubleValueChanged(self):
         value = float(super(ColoredDoubleSlider, self).value()) / self._multi
@@ -76,13 +75,14 @@ class ColoredDoubleSlider(QSlider):
 
     def paintEvent(self, ev: QPaintEvent) -> None:
         orientation = self.orientation()
-        self.qpainter.setBrush(QBrush(QColorConstants.Red))
-        self.qpainter.begin(self)
+        qpainter = QPainter(self)
+        qpainter.setBrush(QBrush(QColorConstants.Red))
+        qpainter.begin(self)
         if orientation == Qt.Orientation.Horizontal:
-            self.qpainter.fillRect(0,0,self.background_value*self.width(), self.height(),QColorConstants.Svg.lightblue)
+            qpainter.fillRect(0,0,self.background_value*self.width(), self.height(),QColorConstants.Svg.lightblue)
         else:
-            self.qpainter.fillRect(0, (1.-self.background_value) * self.height(), self.width(), self.background_value * self.height(), QColorConstants.Svg.lightblue)
-        self.qpainter.end()
+            qpainter.fillRect(0, (1.-self.background_value) * self.height(), self.width(), self.background_value * self.height(), QColorConstants.Svg.lightblue)
+        qpainter.end()
         super().paintEvent(ev)
 
 

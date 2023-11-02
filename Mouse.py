@@ -176,9 +176,9 @@ class Mouse:
                 self.x,self.y = x,y = self.mouse_controller.position
                 incoming_position = np.array([x,y])
                 #calculate center of fine zone
-                self.fine_zone_center=incoming_position-np.array([2.5*self.x_sensitivity,2.5*self.y_sensitivity])*yaw_pitch*np.array([w,w])*fine_zone
+                self.fine_zone_center=incoming_position-np.array([5*self.x_sensitivity,5*self.y_sensitivity])*yaw_pitch*np.array([w,w])*fine_zone
 
-            new_pos = self.fine_zone_center + np.array([2.5*self.x_sensitivity,2.5*self.y_sensitivity])*yaw_pitch*np.array([w,w])*fine_zone
+            new_pos = self.fine_zone_center + np.array([5*self.x_sensitivity,5*self.y_sensitivity])*yaw_pitch*np.array([w,w])*fine_zone
             x, y = new_pos
             self.move_mouse(x - self.x, y - self.y)
             return
@@ -186,7 +186,7 @@ class Mouse:
         self.in_finezone=False
 
         yaw_pitch_norm = yaw_pitch_norm
-        new_yaw_pitch = yaw_pitch*((1.02*yaw_pitch_norm-fine_zone)/yaw_pitch_norm)
+        new_yaw_pitch = yaw_pitch*((yaw_pitch_norm-fine_zone)/yaw_pitch_norm)
 
         mouse_speed_x, mouse_speed_y = self.calculate_mouse_speed(new_yaw_pitch[0], new_yaw_pitch[1])
 
@@ -251,6 +251,7 @@ class Mouse:
 
     def toggle_mode(self):
         self.mode = self.mode.next()
+        print(f"Mouse mode is {self.tracking_mode.name}")
 
     def set_mouse_mode(self, mode: str):
         try:
@@ -360,6 +361,9 @@ class Mouse:
         except KeyError:
             print(f"Tracking mode {tracking_mode} is not a valid mode")
 
+    def toggle_tracking_mode(self):
+        self.tracking_mode = self.tracking_mode.next()
+        print(f"Tracking mode is {self.tracking_mode.name}")
 
 if __name__ == '__main__':
     mouse = Mouse()

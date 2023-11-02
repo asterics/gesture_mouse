@@ -1,4 +1,5 @@
 import dataclasses
+import queue
 import random
 import time
 import uuid
@@ -11,37 +12,24 @@ from typing import List
 from pathlib import Path
 import pickle
 import csv
+from queue import Queue
 
-import PIL.Image
 import mediapipe as mp
 import cv2
 import numpy as np
 import sklearn
-from PySide6.QtCore import QThread
 import keyboard
-import pynput
+
 
 from sklearn.preprocessing import OneHotEncoder, StandardScaler, Normalizer, MinMaxScaler
-from sklearn.linear_model import Ridge, Lasso, MultiTaskLassoCV, LassoLarsIC, LogisticRegression, RidgeClassifier, \
-    LassoLarsCV
 from sklearn.svm import SVR, SVC, LinearSVR
-from sklearn.ensemble import GradientBoostingRegressor, GradientBoostingClassifier, HistGradientBoostingRegressor
-from sklearn.multioutput import MultiOutputRegressor, MultiOutputClassifier, RegressorChain
-from sklearn.kernel_ridge import KernelRidge
-from sklearn.neural_network import MLPRegressor, MLPClassifier
-from sklearn.neighbors import KNeighborsRegressor
-from sklearn.preprocessing import normalize
-import sklearn.preprocessing as preprocessing
-from sklearn.metrics.pairwise import cosine_similarity, chi2_kernel, cosine_distances
-from sklearn.pipeline import Pipeline
 
-from scipy.spatial.transform import Rotation
+from sklearn.multioutput import MultiOutputRegressor, MultiOutputClassifier, RegressorChain
+
 
 import Mouse
 import DrawingDebug
 import SignalsCalculator
-import monitor
-import pyLiveLinkFace
 from Signal import Signal
 from KalmanFilter1D import Kalman1D
 import FPSCounter
@@ -95,7 +83,7 @@ class Demo(Thread):
             running_mode=VisionRunningMode.VIDEO,
             output_facial_transformation_matrixes=True,
             output_face_blendshapes=True,
-            # result_callback = self.mp_callback
+            #result_callback = self.mp_callback
         )
 
         # self.face_mesh = mp_face_mesh.FaceMesh(static_image_mode=False,
@@ -142,6 +130,7 @@ class Demo(Thread):
         keyboard.add_hotkey("m", lambda: self.toggle_mouse_mode())
         keyboard.add_hotkey("c", lambda: self.mouse.centre_mouse())
         keyboard.add_hotkey(".", lambda: self.mouse.switch_monitor())
+        keyboard.add_hotkey("t", lambda: self.mouse.toggle_tracking_mode())
         # keyboard.on_press_key("r", lambda e: self.disable_gesture_mouse())
         # keyboard.on_release_key("r", lambda e: self.enable_gesture_mouse())
         # add mouse_events
@@ -159,6 +148,8 @@ class Demo(Thread):
         self.iphone_csv_writer = None
         self.mediapipe_csv_fp = None
         self.mediapipe_csv_writer = None
+
+        self.image_q = Queue(3)
 
     def run(self):
         self.is_running = True
@@ -181,7 +172,7 @@ class Demo(Thread):
                     self.__start_socket()
                     self.__run_livelinkface()
                     self.__stop_socket()
-            time.sleep(0.5)
+            time.sleep(0.01)
 
     def __run_mediapipe(self):
         while self.is_running and self.is_tracking and self.cam_cap.isOpened() and self.use_mediapipe:
@@ -246,7 +237,9 @@ class Demo(Thread):
         if self.vid_source_file:
             self.cam_cap = cv2.VideoCapture(self.vid_source_file)
         else:
-            self.cam_cap = cv2.VideoCapture(self.webcam_dev_nr)
+            start=int(1000*time.time())
+            self.cam_cap = cv2.VideoCapture(self.webcam_dev_nr, cv2.CAP_DSHOW)
+            print(f"Starting camera took {int(1000*time.time())-start}")
         #success=self.cam_cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
         #print(f"prop mode {success}")
         # self.cam_cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.frame_width)
@@ -651,6 +644,7 @@ class Demo(Thread):
     def mp_callback(self, result: FaceLandmarkerResult, output_image: mp.Image, timestamp_ms: int):
         # No face detected
         if not result.face_landmarks:
+            print("Face not detected")
             return
 
         # get landmarks, transformation(head pose) and blendshapes
@@ -721,7 +715,9 @@ class Demo(Thread):
             annotated_img = DrawingDebug.draw_landmarks_fast(np_landmarks, annotated_img, index=indices[:6].astype(int),
                                                              color=colors[i % len(colors)])
         self.annotated_landmarks = cv2.flip(annotated_img, 1)
-
+        if self.image_q.full():
+            self.image_q.get()
+        self.image_q.put(cv2.flip(annotated_img, 1))
         # record csv and also gesture for data capturing
         if self.write_csv:
             gesture = "neutral"
@@ -755,11 +751,32 @@ class Demo(Thread):
             row = [time.time(), *np_landmarks.astype(np.float32).flatten(), *transformation_matrix.astype(np.float32).flatten(),*ear_values.astype(np.float32).flatten(),
                    *ear_values_corrected.astype(np.float32).flatten(), gesture, *result.values()]
             self.csv_writer.writerow(row)
-
+        print(f"Time since frame read in ms {int(time.time()*1000) - timestamp_ms}, processing done")
         self.fps = self.fps_counter()
 
 
 if __name__ == '__main__':
     demo = Demo()
-    demo.run()
-    bla = input("Press any key to stop")
+    demo.start()
+    demo.start_tracking()
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    # fontScale
+    fontScale = 1
+
+    # Blue color in BGR
+    color = (255, 0, 0)
+
+    # Line thickness of 2 px
+    thickness = 2
+
+    while True:
+        try:
+            img = demo.image_q.get(block=False)
+            img = cv2.putText(img, demo.mouse.tracking_mode.name, (20, 40), font,
+                                fontScale, color, thickness, cv2.LINE_AA)
+            img = cv2.putText(img, demo.mouse.mode.name, (400, 40), font,
+                                fontScale, color, thickness, cv2.LINE_AA)
+            cv2.imshow("Image", img)
+            cv2.waitKey(1)
+        except queue.Empty:
+            time.sleep(0.01)
