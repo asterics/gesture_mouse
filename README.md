@@ -11,9 +11,12 @@ Tested with Python 3.10 and PySide6.4.3.
 4. Install packages `pip install -r requirements.txt`
 
 ## Running Gesture Mouse
+### Starting the application
 - `python gui.py` to start gui (Linux: `sudo ./venv/bin/python3.10 gui.py`) 
 - `Alt+1` to toggle mouse controlled by python or system.
 - `Esc` to turn off program. (Used if you lose control over mouse)
+
+Alternatively you can just run "gui.exe"
 
 ## Creating an exe distribution
 To create a distribution folder wich includes all necessery .dll and an executable one can use PyInstaller([https://pyinstaller.org](https://pyinstaller.org)). 
