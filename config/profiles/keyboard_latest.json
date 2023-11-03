@@ -1,7 +1,7 @@
 [
   {
     "action": "keyboard_key",
-    "signal": "mouthSmileLeft",
+    "signal": "-",
     "threshold": 0.419,
     "delay": 0.5,
     "trigger": "hold high",
@@ -10,7 +10,7 @@
   },
   {
     "action": "keyboard_key",
-    "signal": "jawOpen",
+    "signal": "-",
     "threshold": 0.5,
     "delay": 0.5,
     "trigger": "up",
@@ -19,7 +19,7 @@
   },
   {
     "action": "keyboard_key",
-    "signal": "noseSneerLeft",
+    "signal": "-",
     "threshold": 0.5,
     "delay": 0.5,
     "trigger": "up",

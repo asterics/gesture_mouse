@@ -239,60 +239,24 @@ class SignalsCalculater:
 
         return ear_values, ear_corrected
 
-    def process_neutral(self, landmarks):
-        pass
 
     def pnp_head_pose(self, landmarks):
+        """
+
+        :param landmarks:
+        :return:
+        """
         screen_landmarks = landmarks[:, :2] * np.array(self.frame_size)
         rvec, tvec = self.head_pose_calculator.fit_func(screen_landmarks, self.camera_parameters)
         return rvec, tvec
 
-    def pnp_reference_free(self, landmarks):
-        idx = [33, 263, 1, 61, 291, 199]
-        screen_landmarks = landmarks[idx, :2] * np.array(self.frame_size)
-        landmarks_3d = landmarks[idx, :] * np.array([self.frame_size[0], self.frame_size[1], 1])
-        fx, fy, cx, cy = self.camera_parameters
-
-        # Initial fit
-        camera_matrix = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]], dtype=np.float64)
-        success, rvec, tvec, inliers = cv2.solvePnPRansac(landmarks_3d, screen_landmarks,
-                                                          camera_matrix, None, flags=cv2.SOLVEPNP_EPNP, reprojectionError=1)
-        # Second fit for higher accuracy
-        success, rvec, tvec = cv2.solvePnP(landmarks_3d, screen_landmarks, camera_matrix, None,
-                                           rvec=rvec, tvec=tvec, useExtrinsicGuess=True, flags=cv2.SOLVEPNP_ITERATIVE)
-
-        return rvec, tvec
-
-    def geometric_head_pose(self, landmarks):
-        nose = [8, 9, 10, 151]
-        eyes = [33, 133, 362, 263]
-        nose_points = landmarks[nose, :]
-        eye_points = landmarks[eyes, :]
-        nose_mean = np.mean(nose_points, 0)
-        eye_mean = np.mean(eye_points, 0)
-        nose_centered = nose_points - nose_mean
-        eye_centered = eye_points - eye_mean
-        uu_nose, dd_nose, vv_nose = np.linalg.svd(nose_centered)
-        up = vv_nose[0]
-        uu_eye, dd_eye, vv_eye = np.linalg.svd(eye_centered)
-        left = vv_eye[0]
-        left = left - np.dot(left, up) * up
-        left = left / np.linalg.norm(left)
-        front = np.cross(up, left)
-        R = [up, left, front]
-        r = Rotation.from_matrix(R)
-        return r.as_rotvec(), np.zeros((3, 1))
-
-    def procrustes_head_pose(self, landmarks):
-        landmarks = landmarks.T
-        landmarks = landmarks[:, :468]
-        metric_lm, pose_matrix = get_metric_landmarks(landmarks, self.pcf)
-        rotatiom_matirx = pose_matrix[:3, :3]
-        translation = pose_matrix[3, :3]
-        rvec = Rotation.from_matrix(rotatiom_matirx)
-        return rvec.as_rotvec(), translation
 
     def get_jaw_open(self, landmarks):
+        """
+        Analytical calculation of jaw open pose
+        :param landmarks: Nx2 numpy array containing landmarks
+        :return: Jaw open pose strength
+        """
         mouth_distance = np.linalg.norm(landmarks[14, :] - landmarks[13, :])
         nose_tip = landmarks[1, :]
         chin_moving_landmark = landmarks[18, :]
@@ -302,6 +266,11 @@ class SignalsCalculater:
         return normalized_distance
 
     def get_mouth_puck(self, landmarks):
+        """
+        Analytical calculation of mouth puck pose
+        :param landmarks: Nx2 numpy array containing landmarks
+        :return: mouth puck strength
+        """
         left_distance = np.linalg.norm(landmarks[302] - landmarks[72])
         d = np.linalg.norm(landmarks[151, :] - landmarks[10, :])
         normalized_distance = left_distance / d

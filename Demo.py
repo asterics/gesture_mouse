@@ -86,11 +86,6 @@ class Demo(Thread):
             #result_callback = self.mp_callback
         )
 
-        # self.face_mesh = mp_face_mesh.FaceMesh(static_image_mode=False,
-        #        max_num_faces=1,
-        #        refine_landmarks=True,
-        #        min_detection_confidence=0.5,
-        #        min_tracking_confidence=0.5)
         self.face_mesh = FaceLandmarker.create_from_options(options)
 
         self.camera_parameters = (480, 480, 640 / 2, 480 / 2)
@@ -105,8 +100,6 @@ class Demo(Thread):
         # Calibration
         self.calibration_samples = dict()
 
-        self.fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-        # self.VideoWriter: cv2.VideoWriter = cv2.VideoWriter("dummy.mp4", self.fourcc, 30, (self.frame_height, self.frame_width))
         self.calibrate_neutral: bool = False
         self.neutral_signals = []
         self.pose_signals = []
@@ -117,10 +110,6 @@ class Demo(Thread):
         self.scaler = Normalizer()
         self.means = np.ones((18, 1))
         self.linear_model = MultiOutputRegressor(SVR(kernel="rbf"))
-        #self.linear_model = LogisticRegression()
-        #self.linear_model = MLPClassifier(activation="relu")
-        # elf.linear_model = MultiOutputRegressor(KNeighborsRegressor(metric="cosine"))
-        #self.linear_model = MultiOutputRegressor(GradientBoostingRegressor(max_features=6,loss="absolute_error"))
         self.linear_signals: List[str] = []
 
         # add hotkey
@@ -240,12 +229,6 @@ class Demo(Thread):
             start=int(1000*time.time())
             self.cam_cap = cv2.VideoCapture(self.webcam_dev_nr, cv2.CAP_DSHOW)
             print(f"Starting camera took {int(1000*time.time())-start}")
-        #success=self.cam_cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
-        #print(f"prop mode {success}")
-        # self.cam_cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.frame_width)
-        # self.cam_cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.frame_height)
-        # self.cam_cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P',
-        #                                                             'G'))  # From https://forum.opencv.org/t/videoio-v4l2-dev-video0-select-timeout/8822/4 for linux
 
     def __stop_camera(self):
         if self.cam_cap is not None:
@@ -351,17 +334,16 @@ class Demo(Thread):
 
     def disable_gesture_mouse(self):
         # Disables gesture mouse and enables normal mouse input
-        # TODO: Better name as this now handles all actions
         for signal in self.signals.values():
             signal.set_actions_active(False)
         self.mouse_enabled = False
         self.mouse.disable_gesture()
 
     def enable_gesture_mouse(self):
-        # TODO: Better name as this now handles all actions
+        # Enables gesture mouse and enables normal mouse input
+
         for signal in self.signals.values():
             signal.set_actions_active(True)
-        # Disables normal mouse and enables gesture mouse
         self.mouse_enabled = True
         self.mouse.enable_gesture()
 
@@ -371,11 +353,6 @@ class Demo(Thread):
             self.disable_gesture_mouse()
         else:
             self.enable_gesture_mouse()
-
-    def set_filter_value(self, name: str, filter_value: float):
-        signal = self.signals.get(name, None)
-        if signal is not None:
-            signal.set_filter_value(filter_value)
 
     def set_use_mediapipe(self, selected: bool):
         self.use_mediapipe = selected
