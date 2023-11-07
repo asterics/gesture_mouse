@@ -54,7 +54,7 @@ is limited to simple buttons. Therefore, this interface is at a very low price (
 
 
 # Support us
-Please support the development of FLipMouse by donating to the AsTeRICS Foundation:
+Please support the development by donating to the AsTeRICS Foundation:
 
 <div>
 <a title="Donate with PayPal" href="https://www.paypal.com/donate/?hosted_button_id=38AJJNS427MJ2" target="_blank" style="margin-right:3em">
