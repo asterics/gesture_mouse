@@ -29,9 +29,15 @@ Instructions:
 `pyinstaller gui.py -D --add-data config;config --add-data data;data --collect-all mediapipe` on windows  
 `pyinstaller gui.py -D --add-data config:config --add-data data:data --collect-all mediapipe` on linux 
 
+## Algorithms
 
+The gesture calculation (e.g. eye-blink) uses the mediapipe facial landmark detection in combination with a modified eye aspect ratio (EAR) algorithm. The EAR algorithm helps to make the gesture invariant to head movements or rotations.
+ * see [function SignalsCalculator.eye_aspect_ratio](https://github.com/asterics/gesture_mouse/blob/d59c84c273acace350a404e3fe110aad15be1885/SignalsCalculator.py#L330).
+ * The idea is based on the article about [eye aspect algorithm for driver drowsiness detection](https://learnopencv.com/driver-drowsiness-detection-using-mediapipe-in-python/).
 
-# Links and Credits
+![Calculation of eye aspect algorithm](https://learnopencv.com/wp-content/uploads/2022/09/03-driver-drowsiness-detection-EAR-points-768x297.png)
+
+## Links and Credits
 
 The work for GestureMouse has been accomplished at the UAS Technikum Wien in course of the R&D-projects [WBT (MA23 project 26-02)](https://wbt.wien) and [Inclusion International (MA23 project 33-02)](https://www.technikum-wien.at/en/research-projects/inclusion-international/), which has been supported by the [City of Vienna](https://www.wien.gv.at/kontakte/ma23/index.html).
 
