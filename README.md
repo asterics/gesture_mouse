@@ -33,9 +33,7 @@ Instructions:
 
 # Links and Credits
 
-The work for GestureMouse has been accomplished at the UAS Technikum Wien in course of the R&D-project *WBT* (MA23 project 26-02), which has been supported by the [City of Vienna](https://www.wien.gv.at/kontakte/ma23/index.html),
-see: [Webpage WBT project](https://wbt.wien).
-
+The work for GestureMouse has been accomplished at the UAS Technikum Wien in course of the R&D-projects [WBT (MA23 project 26-02)](https://wbt.wien) and [Inclusion International (MA23 project 33-02)](https://www.technikum-wien.at/en/research-projects/inclusion-international/), which has been supported by the [City of Vienna](https://www.wien.gv.at/kontakte/ma23/index.html).
 
 Have a look at the [AsTeRICS Foundation homepage](https://www.asterics-foundation.org) and our other Open Source AT projects:
 
