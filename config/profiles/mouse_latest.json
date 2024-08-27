@@ -47,13 +47,13 @@
     }
   },
   "cursor_setting": {
-    "x_sensitivity": 0.575,
-    "y_sensitivity": 0.57,
+    "x_sensitivity": 1.359,
+    "y_sensitivity": 1.706,
     "x_acceleration": 1.42,
-    "y_acceleration": 1.44,
-    "filter_enabled": true,
+    "y_acceleration": 1.418,
+    "filter_enabled": false,
     "filter_value": 0.0018371727707755903,
-    "tracking_mode": "MEDIAPIPE",
+    "tracking_mode": "NOSE",
     "mouse_mode": "RELATIVE"
   }
 }
