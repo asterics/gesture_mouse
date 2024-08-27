@@ -2,10 +2,28 @@
   {
     "action": "keyboard_key",
     "signal": "-",
+    "threshold": 0.419,
+    "delay": 0.5,
+    "trigger": "hold high",
+    "action_type": "press and release",
+    "key": "N"
+  },
+  {
+    "action": "keyboard_key",
+    "signal": "-",
     "threshold": 0.5,
     "delay": 0.5,
-    "trigger": "down",
+    "trigger": "up",
     "action_type": "press and release",
-    "key": ""
+    "key": "Ctrl+C"
+  },
+  {
+    "action": "keyboard_key",
+    "signal": "-",
+    "threshold": 0.5,
+    "delay": 0.5,
+    "trigger": "up",
+    "action_type": "press and release",
+    "key": "Ctrl+V"
   }
 ]
