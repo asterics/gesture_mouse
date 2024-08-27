@@ -76,8 +76,9 @@ class ColoredDoubleSlider(QSlider):
 
     def paintEvent(self, ev: QPaintEvent) -> None:
         orientation = self.orientation()
-        self.qpainter.setBrush(QBrush(QColorConstants.Red))
         self.qpainter.begin(self)
+        self.qpainter.setBrush(QBrush(QColorConstants.Red))
+
         if orientation == Qt.Orientation.Horizontal:
             self.qpainter.fillRect(0,0,self.background_value*self.width(), self.height(),QColorConstants.Svg.lightblue)
         else:
