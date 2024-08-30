@@ -1,0 +1,59 @@
+{
+  "mouse_setting": {
+    "left_click": {
+      "threshold": 0.216,
+      "signal": "mouthPucker",
+      "delay": 0.1
+    },
+    "right_click": {
+      "threshold": 0.363,
+      "signal": "browInnerUp",
+      "delay": 0.1
+    },
+    "double_click": {
+      "threshold": 0.49,
+      "signal": "-",
+      "delay": 0.5
+    },
+    "drag_drop": {
+      "threshold": 0.5,
+      "signal": "-",
+      "delay": 0.0
+    },
+    "pause": {
+      "threshold": 0.5,
+      "signal": "-",
+      "delay": 0.0
+    },
+    "center": {
+      "threshold": 0.363,
+      "signal": "-",
+      "delay": 0.5
+    },
+    "switch_mode": {
+      "threshold": 0.5,
+      "signal": "-",
+      "delay": 0.5
+    },
+    "switch_monitor": {
+      "threshold": 0.651,
+      "signal": "-",
+      "delay": 0.1
+    },
+    "precision_mode": {
+      "threshold": 0.49,
+      "signal": "-",
+      "delay": 0.1
+    }
+  },
+  "cursor_setting": {
+    "x_sensitivity": 1.359,
+    "y_sensitivity": 1.706,
+    "x_acceleration": 1.42,
+    "y_acceleration": 1.418,
+    "filter_enabled": false,
+    "filter_value": 0.0018371727707755903,
+    "tracking_mode": "NOSE",
+    "mouse_mode": "HYBRID"
+  }
+}
