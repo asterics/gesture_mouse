@@ -1,33 +1,50 @@
 # Gesture Mouse
 
 A library that allows to control the mouse and keyboard with head movement and face gestures. This project is based on the 
-google mediapipe library (https://google.github.io/mediapipe/).
+google mediapipe library (https://ai.google.dev/edge/mediapipe/solutions/guide).
 
 ## Installation instructions
 Tested with Python 3.10 and PySide6.4.3. 
 1. Clone repository
 2. Create a sufolder `mkdir venv`
 3. Create virtual environment  `python -m venv venv`
-4. Activate virtual environment `venv\Scripts\activate.bat` (Linux: `. venv/bin/activate`)
+4. Activate virtual environment `venv\Scripts\activate.bat` (Linux: `. ./venv/bin/activate`)
 5. Install packages `pip install -r requirements.txt`
 
 ## Running Gesture Mouse
-### Starting the application
-- `python gui.py` to start gui (Linux: `sudo ./venv/bin/python3.10 gui.py`) 
-- `Alt+1` to toggle mouse controlled by python or system.
-- `Esc` to turn off program. (Used if you lose control over mouse)
 
-Alternatively you can create an executable distribution and run `dist\gui.exe` (Windows) or `dist/gui` (Linux)
+### Release
+
+1. Extract zip file
+2. Run `gesture_mouse.exe` (Windows) or `./guesture_mouse` (Linux)
+
+### Development
+
+- `python gui.py` to start gui (Linux: `sudo ./venv/bin/python3.10 gui.py`)
+
+## Hotkeys
+
+- <kbd>Alt</kbd>+<kbd>1</kbd>` to toggle mouse movement and gestures.
+- <kbd>Alt</kbd>+<kbd>m</kbd>` to toggle mouse movement.
+- <kbd>Alt</kbd>+<kbd>g</kbd>` to toggle gestures.
+- <kbd>Alt</kbd>+<kbd>t</kbd>` to toggle tracking (start or stop camera).
+
+### Hotkeys Mouse Movement
+
+- <kbd>m</kbd> iterate through mouse (ABSOLUTE, RELATIVE, JOYSTICK, HYBRID) modes
+- <kbd>t</kbd> iterate through tracking mode (PNP, MEDIAPIPE, NOSE)
+- <kbd>c</kbd> Center mouse position
+- <kbd>.</kbd> Switch monitor in case there are several monitors applied. Ignored for RELATIVE mouse mode.
 
 ## Creating an exe distribution
-To create a distribution folder wich includes all necessery .dll and an executable one can use PyInstaller([https://pyinstaller.org](https://pyinstaller.org)). 
+To create a distribution folder which includes all necessery .dll and an executable one can use PyInstaller([https://pyinstaller.org](https://pyinstaller.org)). 
 Instructions:
 1. Follow the installation instructions
-2. Activate virtual environment `venv/Scripts/activate` on windows and `source venv/bin/activate` on linux
+2. Activate virtual environment
 3. Install PyInstaller `pip install pyinstaller`
 4. Execute build process with  
-`pyinstaller gui.py -D --add-data config;config --add-data data;data --collect-all mediapipe` on windows  
-`pyinstaller gui.py -D --add-data config:config --add-data data:data --collect-all mediapipe` on linux 
+`pyinstaller gui.py -D --add-data config;config --add-data data;data --collect-all mediapipe -n gesture-mouse --contents-directory .` on linux  
+`pyinstaller gui.py -D --add-data config:config --add-data data:data --collect-all mediapipe -n gesture-mouse --contents-directory .` on windows 
 
 ## Algorithms
 
