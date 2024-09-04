@@ -19,7 +19,7 @@ import cv2
 import numpy as np
 import sklearn
 import keyboard
-
+from case_insensitive_dict import CaseInsensitiveDict
 
 from sklearn.preprocessing import OneHotEncoder, StandardScaler, Normalizer, MinMaxScaler
 from sklearn.svm import SVR, SVC, LinearSVR
@@ -123,7 +123,7 @@ class Demo(Thread):
         # keyboard.on_press_key("r", lambda e: self.disable_gesture_mouse())
         # keyboard.on_release_key("r", lambda e: self.enable_gesture_mouse())
         # add mouse_events
-        self.signals: Dict[str, Signal] = {}
+        self.signals: CaseInsensitiveDict[str, Signal] = {}
 
         self.disable_gesture_mouse()
 
@@ -196,8 +196,8 @@ class Demo(Thread):
                     self.signals[blendshape.name].set_value(value)
 
                 # Pose for Mouse
-                self.signals["UpDown"].set_value(-live_link_face.get_blendshape(FaceBlendShape.HeadPitch))
-                self.signals["LeftRight"].set_value(-live_link_face.get_blendshape(FaceBlendShape.HeadYaw))
+                self.signals["upDown"].set_value(-live_link_face.get_blendshape(FaceBlendShape.headPitch))
+                self.signals["leftRight"].set_value(-live_link_face.get_blendshape(FaceBlendShape.headYaw))
                 # Calibration
                 blendshapes = np.array(blendshapes)
 
@@ -450,7 +450,7 @@ class Demo(Thread):
         parsed_settings = json.load(open(json_path, "r"))
 
         # only reset self.signals if it is None, otherwise there could be configured actions that we don't want to override.
-        if self.signals is None: self.signals = dict()
+        if self.signals is None: self.signals = CaseInsensitiveDict()
 
         parsed_signals = parsed_settings.get("signals")
         for json_signal in parsed_signals:
@@ -709,34 +709,34 @@ class Demo(Thread):
             if self.calibrate_pose or self.calibrate_neutral:
                 gesture = self.calibration_name
             elif keyboard.is_pressed("q"):
-                gesture = "JawOpen"
+                gesture = "jawOpen"
             elif keyboard.is_pressed("w"):
-                gesture = "Smile"
+                gesture = "smile"
             elif keyboard.is_pressed("e"):
-                gesture = "Frown"
+                gesture = "frown"
             elif keyboard.is_pressed("r"):
-                gesture = "CheekPuff"
+                gesture = "cheekPuff"
             elif keyboard.is_pressed("t"):
-                gesture = "MouthPuck"
+                gesture = "mouthPucker"
             elif keyboard.is_pressed("z"):
-                gesture = "BlinkLeft"
+                gesture = "blinkLeft"
             elif keyboard.is_pressed("u"):
-                gesture = "BlinkRight"
+                gesture = "blinkRight"
             elif keyboard.is_pressed("i"):
-                gesture = "BrowUp"
+                gesture = "browUp"
             elif keyboard.is_pressed("o"):
-                gesture = "BrowDown"
+                gesture = "browDown"
             elif keyboard.is_pressed("p"):
-                gesture = "BrowUpLeft"
+                gesture = "browUpLeft"
             elif keyboard.is_pressed("a"):
-                gesture = "BrowUpRight"
+                gesture = "browUpRight"
             elif keyboard.is_pressed("s"):
-                gesture = "NoseSneer"
+                gesture = "noseSneer"
 
             row = [time.time(), *np_landmarks.astype(np.float32).flatten(), *transformation_matrix.astype(np.float32).flatten(),*ear_values.astype(np.float32).flatten(),
                    *ear_values_corrected.astype(np.float32).flatten(), gesture, *result.values()]
             self.csv_writer.writerow(row)
-        print(f"Time since frame read in ms {int(time.time()*1000) - timestamp_ms}, processing done")
+        #print(f"Time since frame read in ms {int(time.time()*1000) - timestamp_ms}, processing done")
         self.fps = self.fps_counter()
 
 

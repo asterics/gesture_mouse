@@ -202,11 +202,11 @@ class Mouse:
 
     def process_signal(self, signals):
         # TODO: move this around, possibilities: MosueAction / select signals in demo / select signals in mouse
-        updown = "UpDown"
-        leftright = "LeftRight"
+        upDown = "upDown"
+        leftRight = "leftRight"
 
-        pitch = signals[updown].scaled_value
-        yaw = signals[leftright].scaled_value
+        pitch = signals[upDown].scaled_value
+        yaw = signals[leftRight].scaled_value
         if self.mouse_enabled:
             self.move(pitch, yaw)
         else:

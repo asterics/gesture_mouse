@@ -10,3 +10,4 @@ screeninfo
 timecode
 pynput
 scikit-learn
+case_insensitive_dict
