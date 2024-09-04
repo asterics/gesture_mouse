@@ -448,7 +448,10 @@ class Demo(Thread):
         :param json_path: Path to json
         """
         parsed_settings = json.load(open(json_path, "r"))
-        self.signals = dict()
+
+        # only reset self.signals if it is None, otherwise there could be configured actions that we don't want to override.
+        if self.signals is None: self.signals = dict()
+
         parsed_signals = parsed_settings.get("signals")
         for json_signal in parsed_signals:
             # read values
@@ -461,6 +464,11 @@ class Demo(Thread):
             signal = Signal(name)
             signal.set_filter_value(filter_value)
             signal.set_threshold(lower_threshold, higher_threshold)
+
+            # if there are already configured actions, reassign them to the signal[name].actions property
+            if name in self.signals:
+                signal.actions=self.signals[name].actions
+
             self.signals[name] = signal
         gesture_model = parsed_settings.get("gesture_model")
         if gesture_model is not None:
