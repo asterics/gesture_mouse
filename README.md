@@ -16,7 +16,7 @@ Tested with Python 3.10 and PySide6.4.3.
 ### Release
 
 1. Extract zip file
-2. Run `gesture_mouse.exe` (Windows) or `sudo ./guesture_mouse` (Linux)
+2. Run `gesture_mouse.exe` (Windows) or `sudo ./gesture_mouse` (Linux)
 
 ### Development
 
