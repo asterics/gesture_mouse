@@ -62,7 +62,6 @@ class Demo(Thread):
         super().__init__()
         self.is_running = False
         self.is_tracking = False
-        self.mouse_enabled = False
         self.mouse_absolute = True
         self.mouse: Mouse.Mouse = Mouse.Mouse()
 
@@ -115,7 +114,13 @@ class Demo(Thread):
         # add hotkey
         # TODO: how to handle activate mouse / toggle mouse etc. by global hotkey
         # keyboard.add_hotkey("esc", lambda: self.stop())
+        # alt + 1: toggle gestures + mouse movement
+        # alt + g: toggle gestures (keyboard and mouse)
+        # alt + m: toggle mouse movement
         keyboard.add_hotkey("alt + 1", lambda: self.toggle_gesture_mouse())  # TODO: Linux alternative
+        keyboard.add_hotkey("alt + g", lambda: self.toggle_gestures())
+        keyboard.add_hotkey("alt + m", lambda: self.toggle_mouse_movement())
+        keyboard.add_hotkey("alt + t", lambda: self.toggle_tracking())
         keyboard.add_hotkey("m", lambda: self.toggle_mouse_mode())
         keyboard.add_hotkey("c", lambda: self.mouse.centre_mouse())
         keyboard.add_hotkey(".", lambda: self.mouse.switch_monitor())
@@ -219,7 +224,7 @@ class Demo(Thread):
 
                 if self.write_csv:
                     self.csv_writer.writerow(row)
-                if self.mouse_enabled:
+                if self.mouse.mouse_movement_enabled:
                     self.mouse.process_signal(self.signals)
 
     def __start_camera(self):
@@ -306,6 +311,12 @@ class Demo(Thread):
                 self.mediapipe_csv_writer.writerow(mp_row)
                 self.iphone_csv_writer.writerow(ip_row)
 
+    def toggle_tracking(self):
+        print("toggle tracking..")
+        if self.is_tracking:
+            self.stop_tracking()
+        else:
+            self.start_tracking()
     def stop_tracking(self):
         print("Stopping tracking..")
         self.is_tracking = False
@@ -332,24 +343,59 @@ class Demo(Thread):
         print(f"Setting camera with video file {vid_source_file}")
         self.vid_source_file = vid_source_file
 
-    def disable_gesture_mouse(self):
+    def toggle_gestures(self):
+        if self.mouse.mouse_gesture_enabled:
+            self.disable_gestures()
+        else:
+            self.enable_gestures()
+
+    """
+    Disables alls configured gestures (mouse and keyboard).
+    """
+    def disable_gestures(self):
+        print("disabling gestures")
         # Disables gesture mouse and enables normal mouse input
         for signal in self.signals.values():
             signal.set_actions_active(False)
-        self.mouse_enabled = False
-        self.mouse.disable_gesture()
+        self.mouse.disable_gestures()
 
-    def enable_gesture_mouse(self):
-        # Enables gesture mouse and enables normal mouse input
+    """
+    Disables all gestures and mouse movement.
+    """
+    def disable_gesture_mouse(self):
+        self.disable_mouse_movement()
+        self.disable_gestures()
 
+    """
+    Enables all gestures (mouse and keyboard)
+    """
+    def enable_gestures(self):
+        print("enabling gestures")
         for signal in self.signals.values():
             signal.set_actions_active(True)
-        self.mouse_enabled = True
-        self.mouse.enable_gesture()
+
+        self.mouse.enable_gestures()
+
+    """
+    Enables all gestures and the mouse.
+    """
+    def enable_gesture_mouse(self):
+        # Enables gesture mouse and enables normal mouse input
+        self.enable_mouse_movement()
+        self.enable_gestures()
+
+    def enable_mouse_movement(self):
+        self.mouse.enable_mouse_movement()
+    def disable_mouse_movement(self):
+        self.mouse.disable_mouse_movement()
+
+    def toggle_mouse_movement(self):
+        self.mouse.toggle_mouse_movement()
 
     def toggle_gesture_mouse(self):
+        print("toggling mouse and gestures")
         # Toggles between gesture and normal mouse
-        if self.mouse_enabled:
+        if self.mouse.mouse_movement_enabled:
             self.disable_gesture_mouse()
         else:
             self.enable_gesture_mouse()

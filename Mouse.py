@@ -80,8 +80,8 @@ class Mouse:
 
         # Tracking Mode
         self.tracking_mode = TrackingMode.MEDIAPIPE
-        # To disable mouse
-        self.mouse_enabled = True
+        # To toggle mouse movement
+        self.mouse_movement_enabled = True
         self.is_dragging = False
         self.precision_mode = False
 
@@ -89,6 +89,10 @@ class Mouse:
         self.filter_value = 0.01
         self.kalman_filter = Kalman1D(sz=100, R=self.filter_value ** 2)
         self.filter_mouse_position = True
+
+        # Gestures
+        # To toggle mouse gestures
+        self.mouse_gesture_enabled = True
 
     def move(self, pitch: float, yaw: float):
         if self.mode == MouseMode.ABSOLUTE:
@@ -207,7 +211,7 @@ class Mouse:
 
         pitch = signals[upDown].scaled_value
         yaw = signals[leftRight].scaled_value
-        if self.mouse_enabled:
+        if self.mouse_movement_enabled:
             self.move(pitch, yaw)
         else:
             self.dx = 0
@@ -215,8 +219,14 @@ class Mouse:
         self.pitch = pitch
         self.yaw = yaw
 
-    def enable_gesture(self):
-        self.mouse_enabled = True
+    def enable_gestures(self):
+        self.mouse_gesture_enabled = True
+
+    def disable_gestures(self):
+        self.mouse_gesture_enabled = False
+
+    def toggle_gestures(self):
+        self.mouse_gesture_enabled = not self.mouse_gesture_enabled
 
     def click(self, button):
         """
@@ -224,7 +234,8 @@ class Mouse:
         :param button: str, one of the buttons to click
         :return:
         """
-        self.mouse_controller.click(button)
+        if self.mouse_gesture_enabled:
+            self.mouse_controller.click(button)
 
     def double_click(self, button):
         """
@@ -232,26 +243,35 @@ class Mouse:
         :param button: str, one of the buttons to click
         :return:
         """
-        self.mouse_controller.click(button, 2)
+        if self.mouse_gesture_enabled:
+            self.mouse_controller.click(button, 2)
 
     def drag_drop(self):
-        if self.is_dragging:
-            self.mouse_controller.release(mouse.Button.left)
-            self.is_dragging = False
+        if self.mouse_gesture_enabled:
+            if self.is_dragging:
+                self.mouse_controller.release(mouse.Button.left)
+                self.is_dragging = False
+            else:
+                self.mouse_controller.press(mouse.Button.left)
+                self.is_dragging = True
+            print(self.is_dragging)
+
+    def toggle_mouse_movement(self):
+        if self.mouse_movement_enabled:
+            self.disable_mouse_movement()
         else:
-            self.mouse_controller.press(mouse.Button.left)
-            self.is_dragging = True
-        print(self.is_dragging)
+            self.enable_mouse_movement()
+    def enable_mouse_movement(self):
+        print("enable mouse movement")
+        self.mouse_movement_enabled = True
 
-    def disable_gesture(self):
-        self.mouse_enabled = False
-
-    def toggle_active(self):
-        self.mouse_enabled = not self.mouse_enabled
+    def disable_mouse_movement(self):
+        print("disable mouse movement")
+        self.mouse_movement_enabled = False
 
     def toggle_mode(self):
         self.mode = self.mode.next()
-        print(f"Mouse mode is {self.tracking_mode.name}")
+        print(f"Mouse mode is {self.mode.name}")
 
     def set_mouse_mode(self, mode: str):
         try:
@@ -272,12 +292,14 @@ class Mouse:
         self.in_finezone = False
 
     def switch_monitor(self):
+        print("switch monitor")
         self.monitor_index = (self.monitor_index + 1) % len(self.monitors_list)
         screen = self.monitors_list[self.monitor_index]
         self.h_pixels = screen.height
         self.w_pixels = screen.width
         self.monitor_x_offset = screen.x
         self.monitor_y_offset = screen.y
+        print(f"screen {screen}, h_pixels{self.h_pixels}, x_offset {self.monitor_x_offset}")
 
 
     def set_x_sensitivity(self, value: float):
@@ -371,7 +393,7 @@ if __name__ == '__main__':
     mouse.set_filter_enabled(False)
     mouse.set_mouse_mode(MouseMode.ABSOLUTE.name)
     mouse.set_tracking_mode(TrackingMode.NOSE.name)
-    mouse.enable_gesture()
+    mouse.enable_gestures()
 
     for i in range(1000):
         time.sleep(0.01)
