@@ -5,7 +5,7 @@ jobs:
 
   build:
     # Windows is currently the only platform this action supports
-    runs-on: windows-latest
+    runs-on: windows-2019
 
     steps:
 
@@ -25,7 +25,7 @@ jobs:
       - name: Install Dependencies
         run: |
           pip install -r requirements.txt
-          pip install pyinstaller
+          pip install pyinstaller==6.10.0
 
       # Build zip folder with executable using pyinstaller
       - name: Build zip file
@@ -36,4 +36,5 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
         with:
+          name: gesture-mouse
           path: dist/gesture-mouse
