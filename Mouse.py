@@ -271,7 +271,7 @@ class Mouse:
 
     def toggle_mode(self):
         self.mode = self.mode.next()
-        print(f"Mouse mode is {self.tracking_mode.name}")
+        print(f"Mouse mode is {self.mode.name}")
 
     def set_mouse_mode(self, mode: str):
         try:
@@ -292,12 +292,14 @@ class Mouse:
         self.in_finezone = False
 
     def switch_monitor(self):
+        print("switch monitor")
         self.monitor_index = (self.monitor_index + 1) % len(self.monitors_list)
         screen = self.monitors_list[self.monitor_index]
         self.h_pixels = screen.height
         self.w_pixels = screen.width
         self.monitor_x_offset = screen.x
         self.monitor_y_offset = screen.y
+        print(f"screen {screen}, h_pixels{self.h_pixels}, x_offset {self.monitor_x_offset}")
 
 
     def set_x_sensitivity(self, value: float):
