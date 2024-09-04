@@ -1,0 +1,39 @@
+on:
+  workflow_dispatch
+
+jobs:
+
+  build:
+    # Windows is currently the only platform this action supports
+    runs-on: windows-latest
+
+    steps:
+
+      # Check-out repository
+      - uses: actions/checkout@v3
+
+      # Setup Python
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10' # Version range or exact version of a Python version to use, using SemVer's version range syntax
+          architecture: 'x64' # optional x64 or x86. Defaults to x64 if not specified
+          cache: 'pip'
+          cache-dependency-path: |
+            **/requirements*.txt
+            
+      # Install dependencies
+      - name: Install Dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      # Build zip folder with executable using pyinstaller
+      - name: Build zip file
+        run: |
+          pyinstaller gui.py -D --add-data config:config --add-data data:data --collect-all mediapipe -n gesture-mouse --contents-directory .
+
+      # Uploads artifact
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          path: dist/gesture-mouse
