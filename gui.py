@@ -880,7 +880,7 @@ class MouseTab(QtWidgets.QWidget):
         self.mouse_settings["right_click"] = MouseClickSettings("Right",self.demo,lambda : self.demo.mouse.click(mouse.Button.right))
         self.mouse_settings["double_click"] = MouseClickSettings("Double Click", self.demo,lambda : self.demo.mouse.double_click(mouse.Button.left))
         self.mouse_settings["drag_drop"] = MouseClickSettings("Drag and Drop",self.demo,lambda : self.demo.mouse.drag_drop())
-        self.mouse_settings["pause"] = MouseClickSettings("Pause", self.demo, lambda : self.demo.mouse.toggle_active())
+        self.mouse_settings["pause"] = MouseClickSettings("Pause", self.demo, lambda : self.demo.mouse.toggle_mouse_movement())
         self.mouse_settings["center"] = MouseClickSettings("Center", self.demo, lambda : self.demo.mouse.centre_mouse())
         self.mouse_settings["switch_mode"] = MouseClickSettings("Switch Mode", self.demo, lambda : self.demo.mouse.toggle_mode())
         self.mouse_settings["switch_monitor"] = MouseClickSettings("Switch Monitor", self.demo, lambda : self.demo.mouse.switch_monitor())
@@ -1321,7 +1321,7 @@ class KeyboardTab(QtWidgets.QWidget):
         print("Parsed hotkey ", parsed_hotkeys)
 
         # create new action
-        new_action = Signal.GestureAction()
+        new_action = Gesture.GestureAction()
         new_action.threshold = threshold
         action_function = None
         if action_type == "press":
