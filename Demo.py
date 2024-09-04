@@ -30,7 +30,7 @@ from sklearn.multioutput import MultiOutputRegressor, MultiOutputClassifier, Reg
 import Mouse
 import DrawingDebug
 import SignalsCalculator
-from Signal import Signal
+from Gesture import GestureSignal
 from KalmanFilter1D import Kalman1D
 import FPSCounter
 import util
@@ -123,7 +123,7 @@ class Demo(Thread):
         # keyboard.on_press_key("r", lambda e: self.disable_gesture_mouse())
         # keyboard.on_release_key("r", lambda e: self.enable_gesture_mouse())
         # add mouse_events
-        self.signals: CaseInsensitiveDict[str, Signal] = {}
+        self.signals: CaseInsensitiveDict[str, GestureSignal] = {}
 
         self.disable_gesture_mouse()
 
@@ -461,7 +461,7 @@ class Demo(Thread):
             filter_value = json_signal["filter_value"]
 
             # construct signal
-            signal = Signal(name)
+            signal = GestureSignal(name)
             signal.set_filter_value(filter_value)
             signal.set_threshold(lower_threshold, higher_threshold)
 
@@ -621,7 +621,7 @@ class Demo(Thread):
         return True
 
     def add_signal(self, name):
-        self.signals[name] = Signal(name)
+        self.signals[name] = GestureSignal(name)
         self.signals[name].set_higher_threshold(1.)
         self.signals[name].set_lower_threshold(0.)
         self.signals[name].set_filter_value(0.0001)
@@ -679,7 +679,7 @@ class Demo(Thread):
         for blendshape in blendshapes:
             result[blendshape.category_name] = blendshape.score
 
-        # Filter result, set value of signal. Signal triggers appropriate action
+        # Filter result, set value of signal. GestureSignal triggers appropriate action
         for signal_name in self.signals:
             value = result.get(signal_name, 0.)
             if value is None:

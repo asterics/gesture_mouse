@@ -12,7 +12,7 @@ def null_f():
     pass
 
 
-class Action:
+class GestureAction:
     def __init__(self):
         self.old_value: float = 0.
 
@@ -146,12 +146,12 @@ class Action:
         self.delay = value
 
 
-class Signal:
+class GestureSignal:
     def __init__(self, name: str):
         self.name = name
         self.raw_value: FilteredFloat = FilteredFloat(0, 0.0001)
         self.scaled_value: float = 0.
-        self.actions: Dict[uuid.UUID, Action] = {}
+        self.actions: Dict[uuid.UUID, GestureAction] = {}
         self.lower_threshold: float = 0.
         self.higher_threshold: float = 1.
         self.actions_enabled=True
@@ -209,7 +209,7 @@ class Signal:
         print(self.name, filter_value)
         self.raw_value.set_filter_value(filter_value)
 
-    def add_action(self, uid: uuid.UUID, action: Action):
+    def add_action(self, uid: uuid.UUID, action: GestureAction):
         """
         Adds action to a signal
         :param uid: uuid of action

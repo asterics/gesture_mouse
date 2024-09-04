@@ -18,7 +18,7 @@ import numpy as np
 
 import Demo
 import Mouse
-import Signal
+import Gesture
 import util
 from gui_widgets import LogarithmicSlider, ColoredDoubleSlider, DoubleSlider, StyledMouseSlider
 import re
@@ -138,7 +138,7 @@ class SignalSetting(QtWidgets.QFrame):
         self.layout = QtWidgets.QHBoxLayout(self)
         self.layout.addWidget(self.name_label, stretch=1)
         self.layout.addWidget(self.visualization_checkbox)
-        self.layout.addWidget(QtWidgets.QLabel("Signal range"))
+        self.layout.addWidget(QtWidgets.QLabel("GestureSignal range"))
         self.layout.addWidget(self.lower_value)
         self.layout.addWidget(self.higher_value)
         self.layout.addWidget(QtWidgets.QLabel("Filter"))
@@ -206,7 +206,7 @@ class SignalTab(QtWidgets.QWidget):
         size_policy.setVerticalPolicy(QtWidgets.QSizePolicy.Policy.Maximum)
         size_policy.setHorizontalPolicy(QtWidgets.QSizePolicy.Policy.Expanding)
         self.signals_vis.setSizePolicy(size_policy)
-        self.add_signal_button = QtWidgets.QPushButton("Record new Signal")
+        self.add_signal_button = QtWidgets.QPushButton("Record new GestureSignal")
         self.add_signal_button.clicked.connect(self.add_new_signal)
         self.save_signals_button = QtWidgets.QPushButton("Save Profile")
         self.load_signals_button = QtWidgets.QPushButton("Load Profile")
@@ -1082,7 +1082,7 @@ class MouseClickSettings(QtWidgets.QWidget):
 
         self.callback = mouse_callback
         self.current_signal = "-"
-        self.action = Signal.Action()
+        self.action = Gesture.GestureAction()
         self.action.set_up_action(self.callback)
         self.action.set_delay(self.delay.value())
         self.action.set_threshold(self.threshold.value())
@@ -1215,7 +1215,7 @@ class KeyboardTab(QtWidgets.QWidget):
     def __init__(self, demo):
         super().__init__()
         self.demo: Demo.Demo = demo
-        self.add_action_button = QtWidgets.QPushButton("Add Action")
+        self.add_action_button = QtWidgets.QPushButton("Add Gesture Action")
         self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.add_action_button, alignment=QtCore.Qt.AlignmentFlag.AlignTop)
         self.add_action_button.clicked.connect(self.add_action)
@@ -1321,7 +1321,7 @@ class KeyboardTab(QtWidgets.QWidget):
         print("Parsed hotkey ", parsed_hotkeys)
 
         # create new action
-        new_action = Signal.Action()
+        new_action = Signal.GestureAction()
         new_action.threshold = threshold
         action_function = None
         if action_type == "press":
@@ -1474,7 +1474,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.central_widget.addTab(self.general_tab, "General")
         self.central_widget.addTab(self.keyboard_tab, "Keyboard")
         self.central_widget.addTab(self.mouse_tab, "Mouse")
-        self.central_widget.addTab(self.signals_tab, "Signal")
+        self.central_widget.addTab(self.signals_tab, "GestureSignal")
 
         self.setCentralWidget(self.central_widget)
 
