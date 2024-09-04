@@ -1,11 +1,1 @@
-[
-  {
-    "action": "keyboard_key",
-    "signal": "jawOpen",
-    "threshold": 0.318,
-    "delay": 0.1,
-    "trigger": "up",
-    "action_type": "press and release",
-    "key": "Backspace"
-  }
-]
+[]
