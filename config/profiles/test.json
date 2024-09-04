@@ -1,7 +1,7 @@
 [
   {
     "action": "keyboard_key",
-    "signal": "JawOpen",
+    "signal": "jawOpen",
     "threshold": 0.5,
     "delay": 0.5,
     "trigger": "hold high",
@@ -10,7 +10,7 @@
   },
   {
     "action": "keyboard_key",
-    "signal": "CheekSquintRight",
+    "signal": "cheekSquintRight",
     "threshold": 0.5,
     "delay": 0.5,
     "trigger": "hold high",

@@ -1,7 +1,7 @@
 [
   {
     "action": "keyboard_key",
-    "signal": "MouthPuck",
+    "signal": "mouthPucker",
     "threshold": 0.5,
     "trigger": "up",
     "action_type": "press",
@@ -9,7 +9,7 @@
   },
   {
     "action": "keyboard_key",
-    "signal": "JawOpen",
+    "signal": "jawOpen",
     "threshold": 0.5,
     "trigger": "hold",
     "action_type": "hold",

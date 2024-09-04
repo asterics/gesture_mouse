@@ -38,7 +38,7 @@
   {
     "action": "keyboard_key",
     "signal": "mouthPucker",
-    "threshold": 0.5,
+    "threshold": 0.347,
     "delay": 0.0,
     "trigger": "up",
     "action_type": "press",
@@ -47,7 +47,7 @@
   {
     "action": "keyboard_key",
     "signal": "mouthPucker",
-    "threshold": 0.5,
+    "threshold": 0.355,
     "delay": 0.0,
     "trigger": "down",
     "action_type": "release",
@@ -56,7 +56,7 @@
   {
     "action": "keyboard_key",
     "signal": "mouthSmileLeft",
-    "threshold": 0.5,
+    "threshold": 0.355,
     "delay": 0.0,
     "trigger": "up",
     "action_type": "press",
@@ -65,7 +65,7 @@
   {
     "action": "keyboard_key",
     "signal": "mouthSmileLeft",
-    "threshold": 0.5,
+    "threshold": 0.362,
     "delay": 0.0,
     "trigger": "down",
     "action_type": "release",

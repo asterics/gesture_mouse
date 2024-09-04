@@ -1,7 +1,7 @@
 [
   {
     "action": "keyboard_key",
-    "signal": "JawOpen",
+    "signal": "jawOpen",
     "threshold": 0.5,
     "trigger": "hold high",
     "action_type": "press",
@@ -9,7 +9,7 @@
   },
   {
     "action": "keyboard_key",
-    "signal": "MouthPuck",
+    "signal": "mouthPucker",
     "threshold": 0.5,
     "trigger": "hold high",
     "action_type": "press",
@@ -17,7 +17,7 @@
   },
   {
     "action": "keyboard_key",
-    "signal": "HeadRoll",
+    "signal": "headRoll",
     "threshold": 0.69,
     "trigger": "hold high",
     "action_type": "press",
@@ -25,7 +25,7 @@
   },
   {
     "action": "keyboard_key",
-    "signal": "HeadRoll",
+    "signal": "headRoll",
     "threshold": 0.31,
     "trigger": "hold low",
     "action_type": "press",
@@ -33,7 +33,7 @@
   },
   {
     "action": "keyboard_key",
-    "signal": "JawOpen",
+    "signal": "jawOpen",
     "threshold": 0.5,
     "trigger": "down",
     "action_type": "release",
@@ -41,7 +41,7 @@
   },
   {
     "action": "keyboard_key",
-    "signal": "MouthPuck",
+    "signal": "mouthPucker",
     "threshold": 0.5,
     "trigger": "down",
     "action_type": "release",
@@ -49,7 +49,7 @@
   },
   {
     "action": "keyboard_key",
-    "signal": "HeadRoll",
+    "signal": "headRoll",
     "threshold": 0.31,
     "trigger": "up",
     "action_type": "release",
@@ -57,7 +57,7 @@
   },
   {
     "action": "keyboard_key",
-    "signal": "HeadRoll",
+    "signal": "headRoll",
     "threshold": 0.69,
     "trigger": "down",
     "action_type": "release",
@@ -65,15 +65,7 @@
   },
   {
     "action": "keyboard_key",
-    "signal": "BrowInnerDown",
-    "threshold": 0.5,
-    "trigger": "up",
-    "action_type": "press and release",
-    "key": "Esc"
-  },
-  {
-    "action": "keyboard_key",
-    "signal": "BrowInnerUp",
+    "signal": "browInnerUp",
     "threshold": 0.5,
     "trigger": "up",
     "action_type": "press and release",

@@ -1,7 +1,7 @@
 {
   "mouse_setting": {
     "left_click": {
-      "threshold": 0.351,
+      "threshold": 0.176,
       "signal": "-",
       "delay": 0.0
     },
@@ -54,6 +54,6 @@
     "filter_enabled": false,
     "filter_value": 0.0018371727707755903,
     "tracking_mode": "NOSE",
-    "mouse_mode": "RELATIVE"
+    "mouse_mode": "JOYSTICK"
   }
 }

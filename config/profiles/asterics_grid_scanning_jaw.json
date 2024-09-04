@@ -1,7 +1,7 @@
 [
   {
     "action": "keyboard_key",
-    "signal": "JawOpen",
+    "signal": "jawOpen",
     "threshold": 0.5,
     "delay": 0.01,
     "trigger": "up",
@@ -10,7 +10,7 @@
   },
   {
     "action": "keyboard_key",
-    "signal": "JawOpen",
+    "signal": "jawOpen",
     "threshold": 0.5,
     "delay": 0.009999999999999997,
     "trigger": "down",

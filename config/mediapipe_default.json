@@ -1,70 +1,70 @@
 {
   "signals": [
     {
-      "name": "HeadPitch",
+      "name": "headPitch",
       "lower_threshold": 25.0,
       "higher_threshold": -25.0,
       "filter_value": 0.01,
       "actions": []
     },
     {
-      "name": "HeadRoll",
+      "name": "headRoll",
       "lower_threshold": -25.0,
       "higher_threshold": 25.0,
       "filter_value": 0.0001,
       "actions": []
     },
     {
-      "name": "HeadYaw",
+      "name": "headYaw",
       "lower_threshold": 25.0,
       "higher_threshold": -25.0,
       "filter_value": 0.01,
       "actions": []
     },
     {
-      "name": "JawOpen",
+      "name": "jawOpen",
       "lower_threshold": 3.7,
       "higher_threshold": 4.8,
       "filter_value": 0.0001,
       "actions": []
     },
     {
-      "name": "MouthPuck",
+      "name": "mouthPucker",
       "lower_threshold": 0.8,
       "higher_threshold": 0.65,
       "filter_value": 0.0001,
       "actions": []
     },
     {
-      "name": "BrowOuterUpLeft",
+      "name": "browOuterUpLeft",
       "lower_threshold": 1.25,
       "higher_threshold": 1.2,
       "filter_value": 0.0001,
       "actions": []
     },
     {
-      "name": "BrowOuterUpRight",
+      "name": "browOuterUpRight",
       "lower_threshold": 1.25,
       "higher_threshold": 1.2,
       "filter_value": 0.0001,
       "actions": []
     },
     {
-      "name": "BrowInnerUp",
+      "name": "browInnerUp",
       "lower_threshold": 1,
       "higher_threshold": 0.5,
       "filter_value": 0.0001,
       "actions": []
     },
     {
-      "name": "BrowInnerDown",
+      "name": "browInnerDown",
       "lower_threshold": 1,
       "higher_threshold": 1.5,
       "filter_value": 0.0001,
       "actions": []
     },
     {
-      "name": "MouthSmile",
+      "name": "mouthSmile",
       "lower_threshold": -1,
       "higher_threshold": 0.1,
       "filter_value": 0.0001,
