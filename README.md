@@ -16,7 +16,7 @@ Tested with Python 3.10 and PySide6.4.3.
 ### Release
 
 1. Extract zip file
-2. Run `gesture_mouse.exe` (Windows) or `./guesture_mouse` (Linux)
+2. Run `gesture_mouse.exe` (Windows) or `sudo ./guesture_mouse` (Linux)
 
 ### Development
 
@@ -24,10 +24,10 @@ Tested with Python 3.10 and PySide6.4.3.
 
 ## Hotkeys
 
-- <kbd>Alt</kbd>+<kbd>1</kbd>` to toggle mouse movement and gestures.
-- <kbd>Alt</kbd>+<kbd>m</kbd>` to toggle mouse movement.
-- <kbd>Alt</kbd>+<kbd>g</kbd>` to toggle gestures.
-- <kbd>Alt</kbd>+<kbd>t</kbd>` to toggle tracking (start or stop camera).
+- <kbd>Alt</kbd>+<kbd>1</kbd> to toggle mouse movement and gestures.
+- <kbd>Alt</kbd>+<kbd>m</kbd> to toggle mouse movement.
+- <kbd>Alt</kbd>+<kbd>g</kbd> to toggle gestures.
+- <kbd>Alt</kbd>+<kbd>t</kbd> to toggle tracking (start or stop camera).
 
 ### Hotkeys Mouse Movement
 
