@@ -30,7 +30,9 @@ jobs:
       # Build zip folder with executable using pyinstaller
       - name: Build zip file
         run: |
-          pyinstaller gui.py -D --add-data config:config --add-data data:data --collect-all mediapipe -n gesture-mouse --contents-directory .
+          cp .\.github\pyinstaller\gesture-mouse.spec.win gesture-mouse.spec
+          pyinstaller.exe gesture-mouse.spec --clean --noconfirm
+      # pyinstaller gui.py -D --add-data config:config --add-data data:data --collect-all mediapipe -n gesture-mouse --contents-directory .
 
       # Uploads artifact
       - name: Upload Artifact
