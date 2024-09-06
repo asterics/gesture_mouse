@@ -12,6 +12,10 @@ jobs:
       # Check-out repository
       - uses: actions/checkout@v3
 
+      - name: Install Visual C++ Redistributable
+        run: |
+          choco install vcredist2015
+
       # Setup Python
       - uses: actions/setup-python@v4
         with:
