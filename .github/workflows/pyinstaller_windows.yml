@@ -31,6 +31,7 @@ jobs:
           python -m venv venv
           .\venv\Scripts\activate.bat
           pip install -r requirements-lock.txt
+          pip install --upgrade --force-reinstall numpy
           pip install pyinstaller==5.6.2
 
       # Build zip folder with executable using pyinstaller
