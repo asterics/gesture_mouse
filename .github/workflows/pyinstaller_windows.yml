@@ -32,15 +32,8 @@ jobs:
           poetry config virtualenvs.in-project true
           poetry install --no-root
           poetry env use .\.venv\Scripts\python.exe
-      #    python -m venv venv
-      #    .\venv\Scripts\activate.bat
-      #    pip install -r requirements-lock.txt
-      #    pip install --upgrade --force-reinstall numpy
-      #    pip uninstall numpy -y
-      #    pip install numpy
           poetry run python .\python-env.py
           echo $PATH
-      #    pip install pyinstaller==5.6.2
 
       # Build zip folder with executable using pyinstaller
       - name: Build zip file
