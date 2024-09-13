@@ -32,13 +32,10 @@ jobs:
           poetry config virtualenvs.in-project true
           poetry install --no-root
           poetry env use .\.venv\Scripts\python.exe
-      #    cp -r .\.github\binaries\windows\sklearn\.libs .
-
           dir .\.venv\Lib\site-packages\sklearn\.libs\
           poetry run python -m pip uninstall scikit-learn -y
           poetry run python -m pip install scikit-learn
-          dir .\.venv\Lib\site-packages\sklearn\.libs\
-               
+          dir .\.venv\Lib\site-packages\sklearn\.libs\               
           poetry run python -m pip uninstall numpy -y
           poetry run python -m pip install numpy
           poetry run python .\python-env.py
