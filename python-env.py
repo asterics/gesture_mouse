@@ -1,9 +1,12 @@
+
+
 import os
 print(f"PATH: {os.environ['PATH']}")
 
 #os.environ['PYTHONPATH']
 
 import sys
+print(f"\n\nsys.version_info: {sys.version_info}")
 print(f"sys.prefix: {sys.prefix}")
 
 print("------- show sklearn -----")
