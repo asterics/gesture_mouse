@@ -46,7 +46,8 @@ jobs:
         run: |
           cp .\.github\pyinstaller\gesture-mouse.spec.win gesture-mouse.spec
           poetry run pyinstaller.exe gesture-mouse.spec --clean --noconfirm
-          cp -r .github/binaries/windows/sklearn/.libs .\dist\gesture-mouse\sklearn\
+          dir .\dist\gesture-mouse\sklearn\.libs\
+      #    cp -r .github/binaries/windows/sklearn/.libs .\dist\gesture-mouse\sklearn\
       # pyinstaller gui.py -D --add-data config:config --add-data data:data --collect-all mediapipe -n gesture-mouse --contents-directory .
 
       # Uploads artifact
