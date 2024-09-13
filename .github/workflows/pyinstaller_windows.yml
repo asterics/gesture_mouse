@@ -32,6 +32,8 @@ jobs:
           poetry config virtualenvs.in-project true
           poetry install --no-root
           poetry env use .\.venv\Scripts\python.exe
+          poetry run python -m pip uninstall numpy -y
+          poetry run python -m pip install numpy
           poetry run python .\python-env.py
           echo $PATH
 
