@@ -55,4 +55,5 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: gesture-mouse
+          include-hidden-files: true
           path: dist/gesture-mouse
