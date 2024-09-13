@@ -19,11 +19,11 @@ jobs:
       # Setup Python
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.9.13' # Version range or exact version of a Python version to use, using SemVer's version range syntax
+          python-version: '3.10' # Version range or exact version of a Python version to use, using SemVer's version range syntax
           architecture: 'x64' # optional x64 or x86. Defaults to x64 if not specified
           cache: 'pip'
-          cache-dependency-path: |
-            **/requirements*.txt
+      #   cache-dependency-path: |
+      #     **/requirements*.txt
             
       # Install dependencies
       - name: Install Dependencies
@@ -31,7 +31,10 @@ jobs:
           python -m venv venv
           .\venv\Scripts\activate.bat
           pip install -r requirements-lock.txt
-          pip install pyinstaller==6.10.0
+          pip install --upgrade --force-reinstall numpy
+          pip uninstall numpy
+          pip install numpy
+          pip install pyinstaller==5.6.2
 
       # Build zip folder with executable using pyinstaller
       - name: Build zip file
