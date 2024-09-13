@@ -28,22 +28,25 @@ jobs:
       # Install dependencies
       - name: Install Dependencies
         run: |
-          python -m venv venv
-          .\venv\Scripts\activate.bat
-          pip install -r requirements-lock.txt
-          pip install --upgrade --force-reinstall numpy
-          pip uninstall numpy -y
-          pip install numpy
-          python .\python-env.py
-          echo "$PATH"
-          echo "$PYTHONPATH"
-          pip install pyinstaller==5.6.2
+          pip install poetry
+          poetry config virtualenvs.in-project true
+          poetry install --no-root
+          poetry env use .\.venv\Scripts\python.exe
+      #    python -m venv venv
+      #    .\venv\Scripts\activate.bat
+      #    pip install -r requirements-lock.txt
+      #    pip install --upgrade --force-reinstall numpy
+      #    pip uninstall numpy -y
+      #    pip install numpy
+          poetry run python .\python-env.py
+          echo "PATH: $PATH"
+      #    pip install pyinstaller==5.6.2
 
       # Build zip folder with executable using pyinstaller
       - name: Build zip file
         run: |
           cp .\.github\pyinstaller\gesture-mouse.spec.win gesture-mouse.spec
-          pyinstaller.exe gesture-mouse.spec --clean --noconfirm
+          poetry run pyinstaller.exe gesture-mouse.spec --clean --noconfirm
       # pyinstaller gui.py -D --add-data config:config --add-data data:data --collect-all mediapipe -n gesture-mouse --contents-directory .
 
       # Uploads artifact
