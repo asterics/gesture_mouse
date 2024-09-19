@@ -1,5 +1,6 @@
+name: Release (Windows)
 on:
-  workflow_dispatch
+  workflow_dispatch:
     inputs:
       version:
         description: "Version Number (x.y.z)"
