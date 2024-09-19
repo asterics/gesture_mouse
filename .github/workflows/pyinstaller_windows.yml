@@ -98,7 +98,7 @@ jobs:
       - name: Display structure of downloaded files
         run: |
           ls
-          zip -r gesture-mouse-${{ needs.version.outputs.version  }}.zip ./gesture_mouse-${{ needs.version.outputs.version  }}/
+          zip -r gesture-mouse-${{ needs.version.outputs.version  }}.zip ./gesture-mouse-${{ needs.version.outputs.version  }}/
           ls
       - name: upload release asset
         uses: actions/upload-release-asset@v1
