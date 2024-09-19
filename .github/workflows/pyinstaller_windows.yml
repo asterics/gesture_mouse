@@ -14,7 +14,7 @@ jobs:
     steps:
 
       # Check-out repository
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Install Visual C++ Redistributable
         run: |
@@ -35,28 +35,28 @@ jobs:
           pip install poetry
           poetry config virtualenvs.in-project true
           poetry install --no-root
-          poetry env use .\.venv\Scripts\python.exe
-          dir .\.venv\Lib\site-packages\sklearn\.libs\
-          poetry run python -m pip uninstall scikit-learn -y
-          poetry run python -m pip install scikit-learn
-          dir .\.venv\Lib\site-packages\sklearn\.libs\               
-          poetry run python -m pip uninstall numpy -y
-          poetry run python -m pip install numpy
-          poetry run python .\python-env.py
-          echo $PATH
+      #    poetry env use .\.venv\Scripts\python.exe
+      #    dir .\.venv\Lib\site-packages\sklearn\.libs\
+      #    poetry run python -m pip uninstall scikit-learn -y
+      #    poetry run python -m pip install scikit-learn
+      #    dir .\.venv\Lib\site-packages\sklearn\.libs\               
+      #    poetry run python -m pip uninstall numpy -y
+      #    poetry run python -m pip install numpy
+      #    poetry run python .\python-env.py
+      #    echo $PATH
 
       # Build zip folder with executable using pyinstaller
       - name: Build zip file
         run: |
           cp .\.github\pyinstaller\gesture-mouse.spec.win gesture-mouse.spec
           poetry run pyinstaller.exe gesture-mouse.spec --clean --noconfirm
-          dir .\dist\gesture-mouse\sklearn\.libs\
+      #    dir .\dist\gesture-mouse\sklearn\.libs\
       #    cp -r .github/binaries/windows/sklearn/.libs .\dist\gesture-mouse\sklearn\
       # pyinstaller gui.py -D --add-data config:config --add-data data:data --collect-all mediapipe -n gesture-mouse --contents-directory .
 
       # Uploads artifact
       - name: Upload Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: gesture-mouse
           include-hidden-files: true
