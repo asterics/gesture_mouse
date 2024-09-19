@@ -1532,9 +1532,22 @@ def test_gui():
     app = QtWidgets.QApplication([])
     window = MainWindow()
     window.resize(1280, 720)
+
+    try:
+        import pyi_splash
+    
+        # Update the text on the splash screen
+        pyi_splash.update_text("Loading gesture-mouse....")
+        
+        # Close the splash screen. It does not matter when the call
+        # to this function is made, the splash screen remains open until
+        # this function is called or the Python program is terminated.
+        pyi_splash.close()
+    except Exception e:
+        print e
+    
     window.show()
     app.exec()
-    print("hallo")
-
+        
 if __name__ == '__main__':
     test_gui()
