@@ -23,7 +23,7 @@ a = Analysis(
 )
 pyz = PYZ(a.pure)
 
-splash = Splash(''gesture-mouse-splash.png'',
+splash = Splash('gesture-mouse-splash.png',
                 binaries=a.binaries,
                 datas=a.datas,
                 text_pos=(10, 50),
