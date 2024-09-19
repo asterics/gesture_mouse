@@ -23,8 +23,16 @@ a = Analysis(
 )
 pyz = PYZ(a.pure)
 
+splash = Splash(''gesture-mouse-splash.png'',
+                binaries=a.binaries,
+                datas=a.datas,
+                text_pos=(10, 50),
+                text_size=12,
+                text_color='black')
+
 exe = EXE(
     pyz,
+    splash,
     a.scripts,
     [],
     exclude_binaries=True,
@@ -43,6 +51,7 @@ exe = EXE(
 )
 coll = COLLECT(
     exe,
+    splash.binaries,
     a.binaries,
     a.datas,
     strip=False,
