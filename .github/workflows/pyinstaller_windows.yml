@@ -94,9 +94,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: gesture-mouse-${{ needs.version.outputs.version  }}
-          merge-multiple: true
+          path: gesture-mouse-${{ needs.version.outputs.version  }}
       - name: Display structure of downloaded files
-        run: ls -R    
+        run: |
+          ls -R
+          zip -r gesture-mouse-${{ needs.version.outputs.version  }}.zip gesture_mouse-${{ needs.version.outputs.version  }}/
+          ls
       - name: upload release asset
         uses: actions/upload-release-asset@v1
         env:
