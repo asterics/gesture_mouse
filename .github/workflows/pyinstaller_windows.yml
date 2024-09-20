@@ -97,7 +97,7 @@ jobs:
       # Build zip folder with executable using pyinstaller
       - name: Build zip file
         run: |
-          cp .\.github\pyinstaller\gesture-mouse.spec.linux gesture-mouse.spec
+          cp ./.github/pyinstaller/gesture-mouse.spec.linux gesture-mouse.spec
           poetry run pyinstaller.exe gesture-mouse.spec --clean --noconfirm
       - name: upload artifact
         uses: actions/upload-artifact@v4
