@@ -4,7 +4,7 @@ from PyInstaller.utils.hooks import collect_all
 datas = [('config', 'config'), ('data', 'data')]
 # binaries = [('.\\venv\\Lib\\site-packages\\sklearn\\.libs\\vcomp140.dll', '.'),('.\\venv\\Lib\\site-packages\\sklearn\\.libs\\msvcp140.dll', '.')]
 binaries = []
-hiddenimports = ['sklearn.utils._typedefs','sklearn.neighbors._partition_nodes','numpy','numpy.core._dtype_ctypes']
+hiddenimports = ['sklearn.utils._typedefs','sklearn.neighbors._partition_nodes','numpy','numpy.core._dtype_ctypes','pynput.keyboard._xorg','pynput.mouse._xorg']
 tmp_ret = collect_all('mediapipe','scikit-learn')
 datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 
