@@ -28,7 +28,8 @@ splash = Splash('gesture-mouse-splash.png',
                 datas=a.datas,
                 text_pos=(10, 50),
                 text_size=12,
-                text_color='black')
+                text_color='black',
+                text_default='Initializing gesture mouse...')
 
 exe = EXE(
     pyz,
