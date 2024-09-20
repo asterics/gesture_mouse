@@ -29,7 +29,7 @@ jobs:
         id: tag
         if: ${{ github.event_name == 'push' }}
         run: echo "version=$(echo ${GITHUB_REF#refs/*/} | sed -e 's/v//')" >> $GITHUB_OUTPUT
-  build:
+  build-windows:
     # Windows is currently the only platform this action supports
     needs: [version]
     runs-on: windows-2019
@@ -69,8 +69,44 @@ jobs:
           name: gesture-mouse-${{ needs.version.outputs.version  }}
           include-hidden-files: true
           path: dist/gesture-mouse
+  build-linux:
+    # Windows is currently the only platform this action supports
+    needs: [version]
+    runs-on: ubuntu-20.04
+    steps:
+      # Check-out repository
+      - uses: actions/checkout@v4
+      # Setup Python
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10' # Version range or exact version of a Python version to use, using SemVer's version range syntax
+          architecture: 'x64' # optional x64 or x86. Defaults to x64 if not specified
+          cache: 'pip'
+      #   cache-dependency-path: |
+      #     **/requirements*.txt
+
+      # Install dependencies
+      - name: Install Dependencies
+        run: |
+          pip install poetry
+          poetry config virtualenvs.in-project true
+          poetry install --no-root
+      # Uncomment to printout environment paths and python setup
+      #    poetry run python .\python-env.py
+
+      # Build zip folder with executable using pyinstaller
+      - name: Build zip file
+        run: |
+          cp .\.github\pyinstaller\gesture-mouse.spec.linux gesture-mouse.spec
+          poetry run pyinstaller.exe gesture-mouse.spec --clean --noconfirm
+      - name: upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gesture-mouse-linux-${{ needs.version.outputs.version  }}
+          include-hidden-files: true
+          path: dist/gesture-mouse
   release:
-    needs: [version, build]
+    needs: [version, build-windows]
     runs-on: ubuntu-latest
     outputs:
       upload_url: ${{ steps.release.outputs.upload_url }}  # Set job-level output
@@ -88,7 +124,7 @@ jobs:
           prerelease: false
   release-upload:
     runs-on: ubuntu-latest
-    needs: [version, build, release]
+    needs: [version, build-windows, release]
     steps:
       - name: Download Artifact
         uses: actions/download-artifact@v4
