@@ -6,7 +6,7 @@ try:
     # Update the text on the splash screen
     pyi_splash.update_text("Importing modules...")    
 except Exception as inst:
-    print f"Splash screen not supported on this platform: {inst}"
+    print(f"Splash screen not supported on this platform: {inst}")
 
 import json
 import os.path
@@ -1546,7 +1546,7 @@ def test_gui():
         import pyi_splash
         pyi_splash.close()
     except Exception as inst:
-        print f"Splash screen not supported on this platform: {inst}"
+        print(f"Splash screen not supported on this platform: {inst}")
 
     window.show()
     app.exec()
