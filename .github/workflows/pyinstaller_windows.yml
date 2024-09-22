@@ -36,6 +36,8 @@ jobs:
     steps:
       # Check-out repository
       - uses: actions/checkout@v4
+        with:
+          path: build-windows
       - name: Install Visual C++ Redistributable
         run: |
           choco install vcredist2015
@@ -52,6 +54,7 @@ jobs:
       # Install dependencies
       - name: Install Dependencies
         run: |
+          cd .\build-windows
           pip install poetry
           poetry config virtualenvs.in-project true
           poetry install --no-root
@@ -90,6 +93,7 @@ jobs:
       # Install dependencies
       - name: Install Dependencies
         run: |
+          cd ./build-linux
           pip install poetry
           poetry config virtualenvs.in-project true
           poetry install --no-root
