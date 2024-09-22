@@ -64,6 +64,7 @@ jobs:
       # Build zip folder with executable using pyinstaller
       - name: Build zip file
         run: |
+          cd .\build-windows
           cp .\.github\pyinstaller\gesture-mouse.spec.win gesture-mouse.spec
           poetry run pyinstaller.exe gesture-mouse.spec --clean --noconfirm
       - name: upload artifact    
@@ -71,7 +72,7 @@ jobs:
         with:
           name: gesture-mouse-${{ needs.version.outputs.version  }}
           include-hidden-files: true
-          path: dist/gesture-mouse
+          path: build-windows/dist/gesture-mouse
   build-linux:
     # Windows is currently the only platform this action supports
     needs: [version]
@@ -103,6 +104,7 @@ jobs:
       # Build zip folder with executable using pyinstaller
       - name: Build zip file
         run: |
+          cd ./build-linux
           cp ./.github/pyinstaller/gesture-mouse.spec.linux gesture-mouse.spec
           poetry run pyinstaller gesture-mouse.spec --clean --noconfirm
       - name: upload artifact
@@ -110,7 +112,7 @@ jobs:
         with:
           name: gesture-mouse-linux-${{ needs.version.outputs.version  }}
           include-hidden-files: true
-          path: dist/gesture-mouse
+          path: build-linux/dist/gesture-mouse
   release:
     needs: [version, build-windows]
     runs-on: ubuntu-latest
