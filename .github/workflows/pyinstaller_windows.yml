@@ -76,6 +76,10 @@ jobs:
     steps:
       # Check-out repository
       - uses: actions/checkout@v4
+        with:
+          path: 'build-linux'
+        run: |
+          ls -al
       # Setup Python
       - uses: actions/setup-python@v4
         with:
