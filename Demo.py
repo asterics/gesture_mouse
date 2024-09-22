@@ -227,7 +227,9 @@ class Demo(Thread):
             self.cam_cap = cv2.VideoCapture(self.vid_source_file)
         else:
             start=int(1000*time.time())
-            self.cam_cap = cv2.VideoCapture(self.webcam_dev_nr, cv2.CAP_DSHOW)
+            #self.cam_cap = cv2.VideoCapture(self.webcam_dev_nr, cv2.CAP_DSHOW)
+            #on Linux there is no DSHOW available, so let opencv decide which API to choose.
+            self.cam_cap = cv2.VideoCapture(self.webcam_dev_nr)
             print(f"Starting camera took {int(1000*time.time())-start}")
 
     def __stop_camera(self):
