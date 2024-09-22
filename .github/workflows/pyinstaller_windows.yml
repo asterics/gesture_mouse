@@ -95,6 +95,7 @@ jobs:
       - name: Install Dependencies
         run: |
           cd ./build-linux
+          sudo apt-get install -y libegl1
           pip install poetry
           poetry config virtualenvs.in-project true
           poetry install --no-root
