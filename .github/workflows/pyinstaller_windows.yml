@@ -11,6 +11,10 @@ on:
         required: false
         default: false
         type: boolean      
+env:
+  WIN_TARGET: windows-2019
+  LINUX_TARGET: linux
+  MAC_TARGET: macosx
 jobs:
   version:
     runs-on: ubuntu-latest
@@ -70,7 +74,7 @@ jobs:
       - name: upload artifact    
         uses: actions/upload-artifact@v4
         with:
-          name: gesture-mouse-${{ needs.version.outputs.version  }}
+          name: gesture-mouse-${{env.WIN_TARGET}}-${{ needs.version.outputs.version  }}
           include-hidden-files: true
           path: build-windows/dist/gesture-mouse
   build-linux:
@@ -124,7 +128,7 @@ jobs:
       - name: upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: gesture-mouse-linux-${{ needs.version.outputs.version  }}
+          name: gesture-mouse-${{env.LINUX_TARGET}}-${{ needs.version.outputs.version  }}
           include-hidden-files: true
           path: build-linux/dist/gesture-mouse
   release:
@@ -150,13 +154,14 @@ jobs:
     steps:
       - name: Download Artifact
         uses: actions/download-artifact@v4
-        with:
-          name: gesture-mouse-${{ needs.version.outputs.version  }}
-          path: gesture-mouse-${{ needs.version.outputs.version  }}
+      #  with:
+      #    name: gesture-mouse-${{ needs.version.outputs.version  }}
+      #    path: gesture-mouse-${{ needs.version.outputs.version  }}
       - name: Display structure of downloaded files
         run: |
           ls
-          zip -r gesture-mouse-${{ needs.version.outputs.version  }}.zip ./gesture-mouse-${{ needs.version.outputs.version  }}/
+          zip -r gesture-mouse-${{env.WIN_TARGET}}-${{ needs.version.outputs.version  }}.zip ./gesture-mouse-${{env.WIN_TARGET}}-${{ needs.version.outputs.version  }}/
+          zip -r gesture-mouse-${{env.LINUX_TARGET}}-${{ needs.version.outputs.version  }}.zip ./gesture-mouse-${{env.LINUX_TARGET}}-${{ needs.version.outputs.version  }}/
           ls
       - name: upload release asset
         uses: actions/upload-release-asset@v1
@@ -164,6 +169,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.release.outputs.upload_url }}
-          asset_path: ./gesture-mouse-${{ needs.version.outputs.version  }}.zip
-          asset_name: gesture-mouse-${{ needs.version.outputs.version  }}.zip
+          asset_path: ./*.zip
+          #asset_name: gesture-mouse-${{ needs.version.outputs.version  }}.zip
           asset_content_type: application/zip
