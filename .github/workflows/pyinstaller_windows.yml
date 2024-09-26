@@ -163,12 +163,21 @@ jobs:
           zip -r gesture-mouse-${{env.WIN_TARGET}}-${{ needs.version.outputs.version  }}.zip ./gesture-mouse-${{env.WIN_TARGET}}-${{ needs.version.outputs.version  }}/
           zip -r gesture-mouse-${{env.LINUX_TARGET}}-${{ needs.version.outputs.version  }}.zip ./gesture-mouse-${{env.LINUX_TARGET}}-${{ needs.version.outputs.version  }}/
           ls
-      - name: upload release asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #- name: upload release asset
+      #  uses: actions/upload-release-asset@v1
+      #  env:
+      #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #  with:
+      #    upload_url: ${{ needs.release.outputs.upload_url }}
+      #    asset_path: ./*.zip
+      #    #asset_name: gesture-mouse-${{ needs.version.outputs.version  }}.zip
+      #    asset_content_type: application/zip
+      - name: Upload Multiple Release Assets
+        # You may pin to the exact commit or the version.
+        # uses: NBTX/upload-release-assets@f68d1c91ca950f33ee35514883819c2bb053f487
+        uses: NBTX/upload-release-assets@v1
         with:
+          # The URL for uploading assets to the release
           upload_url: ${{ needs.release.outputs.upload_url }}
-          asset_path: ./*.zip
-          #asset_name: gesture-mouse-${{ needs.version.outputs.version  }}.zip
-          asset_content_type: application/zip
+          # A glob of assets to upload
+          targets: ./*.zip
