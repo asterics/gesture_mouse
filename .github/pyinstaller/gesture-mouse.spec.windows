@@ -1,0 +1,62 @@
+# -*- mode: python ; coding: utf-8 -*-
+from PyInstaller.utils.hooks import collect_all
+
+datas = [('config', 'config'), ('data', 'data')]
+# binaries = [('.\\venv\\Lib\\site-packages\\sklearn\\.libs\\vcomp140.dll', '.'),('.\\venv\\Lib\\site-packages\\sklearn\\.libs\\msvcp140.dll', '.')]
+binaries = []
+hiddenimports = ['sklearn.utils._typedefs','sklearn.neighbors._partition_nodes','numpy','numpy.core._dtype_ctypes','pynput.mouse._win32','pynput.keyboard._win32']
+tmp_ret = collect_all('mediapipe','scikit-learn')
+datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
+
+
+a = Analysis(
+    ['gui.py'],
+    pathex=[],
+    binaries=binaries,
+    datas=datas,
+    hiddenimports=hiddenimports,
+    hookspath=[],
+    hooksconfig={},
+    runtime_hooks=[],
+    excludes=[],
+    noarchive=False
+)
+pyz = PYZ(a.pure)
+
+splash = Splash('gesture-mouse-splash.png',
+                binaries=a.binaries,
+                datas=a.datas,
+                text_pos=(10, 50),
+                text_size=12,
+                text_color='black',
+                text_default='Initializing gesture mouse...')
+
+exe = EXE(
+    pyz,
+    splash,
+    a.scripts,
+    [],
+    exclude_binaries=True,
+    name='gesture-mouse',
+    debug=False,
+    bootloader_ignore_signals=False,
+    strip=False,
+    upx=True,
+    console=False,
+    disable_windowed_traceback=False,
+    argv_emulation=False,
+    target_arch=None,
+    codesign_identity=None,
+    entitlements_file=None,
+    contents_directory='.',
+)
+coll = COLLECT(
+    exe,
+    splash.binaries,
+    a.binaries,
+    a.datas,
+    strip=False,
+    upx=True,
+    upx_exclude=[],
+    name='gesture-mouse',
+)
