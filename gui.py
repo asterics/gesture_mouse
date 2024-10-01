@@ -34,7 +34,6 @@ import util
 from gui_widgets import LogarithmicSlider, ColoredDoubleSlider, DoubleSlider, StyledMouseSlider
 import re
 
-
 class PlotLine:
     def __init__(self, pen, plot_data_item: pg.PlotDataItem):
         self.x = deque(maxlen=100)
@@ -600,7 +599,7 @@ class DebugVisualizetion(QtWidgets.QWidget):
 
         self.webcam_label = QtWidgets.QLabel()
         self.webcam_label.setMinimumSize(1, 1)
-        self.webcam_label.setMaximumSize(1280, 720)
+        self.webcam_label.setMaximumSize(Demo.VID_RES_X, Demo.VID_RES_Y)
         self.qt_image = QtGui.QImage()
         self.webcam_label.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
         self.status_bar = QtWidgets.QStatusBar()

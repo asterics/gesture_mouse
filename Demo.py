@@ -56,6 +56,8 @@ colors = [(166, 206, 227), (31, 120, 180), (178, 223, 138), (51, 160, 44), (151,
           (153, 91, 111), (255, 127, 0), (202, 178, 214), (106, 61, 154), (255, 255, 153), (177, 89, 40), (0, 255, 0),
           (0, 0, 255), (0, 255, 255), (255, 255, 255)]
 
+VID_RES_X=320
+VID_RES_Y=240
 
 class Demo(Thread):
     def __init__(self):
@@ -235,7 +237,9 @@ class Demo(Thread):
             #self.cam_cap = cv2.VideoCapture(self.webcam_dev_nr, cv2.CAP_DSHOW)
             #on Linux there is no DSHOW available, so let opencv decide which API to choose.
             self.cam_cap = cv2.VideoCapture(self.webcam_dev_nr)
-            print(f"Starting camera took {int(1000*time.time())-start}")
+            self.cam_cap.set(cv2.CAP_PROP_FRAME_WIDTH,VID_RES_X)
+            self.cam_cap.set(cv2.CAP_PROP_FRAME_HEIGHT, VID_RES_Y)
+            print(f"Starting camera took {int(1000*time.time())-start}, resolution={self.cam_cap.get(cv2.CAP_PROP_FRAME_WIDTH)}x{self.cam_cap.get(cv2.CAP_PROP_FRAME_HEIGHT)}")
 
     def __stop_camera(self):
         if self.cam_cap is not None:
