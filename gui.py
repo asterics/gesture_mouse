@@ -605,8 +605,8 @@ class DebugVisualizetion(QtWidgets.QWidget):
         self.status_bar = QtWidgets.QStatusBar()
         self.status_bar.showMessage("FPS: ")
         self.layout = QtWidgets.QVBoxLayout(self)
-        self.layout.addWidget(self.webcam_label)
         self.layout.addWidget(self.status_bar)
+        self.layout.addWidget(self.webcam_label)
 
     def update_image(self, image):
         w = self.webcam_label.width()
@@ -770,7 +770,7 @@ class GeneralTab(QtWidgets.QWidget):
 
     def update_debug_visualization(self):
         self.debug_window.update_image(self.demo.annotated_landmarks)
-        self.debug_window.status_bar.showMessage(f"FPS: {self.demo.fps}, Mode: {self.demo.mouse.mode}")
+        self.debug_window.status_bar.showMessage(f"FPS: {int(self.demo.fps)}, M: {self.demo.mouse.mode.name}, T: {self.demo.mouse.tracking_mode.name}")
 
     def webcam_grp_toggled(self, on:bool):
         if on:

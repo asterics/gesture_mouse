@@ -679,8 +679,11 @@ class Demo(Thread):
         self.signals[name].set_filter_value(0.0001)
 
     def mp_callback(self, result: FaceLandmarkerResult, output_image: mp.Image, timestamp_ms: int):
+        image = output_image.numpy_view().copy()
+
         # No face detected
         if not result.face_landmarks:
+            self.update_video_display(image)
             print("Face not detected")
             return
 
@@ -746,15 +749,25 @@ class Demo(Thread):
         # Debug Image
 
         # black = np.zeros((self.frame_height, self.frame_height, 3)).astype(np.uint8) # for only keypoints
-        image = output_image.numpy_view().copy()
         annotated_img = DrawingDebug.draw_landmarks_fast(np_landmarks, image)
+        #annotated_img = image
         for i, indices in enumerate(self.signal_calculator.ear_indices):
             annotated_img = DrawingDebug.draw_landmarks_fast(np_landmarks, annotated_img, index=indices[:6].astype(int),
                                                              color=colors[i % len(colors)])
-        self.annotated_landmarks = cv2.flip(annotated_img, 1)
+
+        self.update_video_display(annotated_img)
+        self.update_csv(np_landmarks,transformation_matrix, ear_values, ear_values_corrected,result)
+        #print(f"Time since frame read in ms {int(time.time()*1000) - timestamp_ms}, processing done")
+
+    def update_video_display(self, image):
+        self.annotated_landmarks = cv2.flip(image, 1)
+        # TODO: Check if the image_q instructions can be removed
         if self.image_q.full():
             self.image_q.get()
-        self.image_q.put(cv2.flip(annotated_img, 1))
+        self.image_q.put(cv2.flip(image, 1))
+        self.fps = self.fps_counter()
+
+    def update_csv(self, np_landmarks, transformation_matrix, ear_values, ear_values_corrected, result):
         # record csv and also gesture for data capturing
         if self.write_csv:
             gesture = "neutral"
@@ -788,8 +801,7 @@ class Demo(Thread):
             row = [time.time(), *np_landmarks.astype(np.float32).flatten(), *transformation_matrix.astype(np.float32).flatten(),*ear_values.astype(np.float32).flatten(),
                    *ear_values_corrected.astype(np.float32).flatten(), gesture, *result.values()]
             self.csv_writer.writerow(row)
-        #print(f"Time since frame read in ms {int(time.time()*1000) - timestamp_ms}, processing done")
-        self.fps = self.fps_counter()
+
 
 
 if __name__ == '__main__':
