@@ -596,6 +596,8 @@ class AddSignalDialog(QtWidgets.QDialog):
 class DebugVisualizetion(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
+        self.setWindowFlag(QtCore.Qt.WindowType.WindowStaysOnTopHint, True)
+
         self.webcam_label = QtWidgets.QLabel()
         self.webcam_label.setMinimumSize(1, 1)
         self.webcam_label.setMaximumSize(1280, 720)
@@ -1543,6 +1545,7 @@ def test_gui():
     app = QtWidgets.QApplication([])
     window = MainWindow()
     window.resize(1280, 720)
+    window.setWindowTitle("Gesture Mouse")
 
     if platform.system() == 'Windows':
         # close splash screen
@@ -1553,6 +1556,7 @@ def test_gui():
             print(f"Splash screen not supported on this platform: {inst}")
 
     window.show()
+    window.activateWindow()
     app.exec()
         
 if __name__ == '__main__':
