@@ -771,7 +771,12 @@ class GeneralTab(QtWidgets.QWidget):
         self.demo.start_write_csv(self.csv_file_path)
 
     def toggle_debug_window(self):
-        self.debug_window.show()
+        if self.debug_window.isVisible():
+            self.debug_window.hide()
+            #self.topLevelWidget().show()
+        else:
+            self.debug_window.show()
+            #self.topLevelWidget().hide()
 
     def update_debug_visualization(self):
         self.debug_window.update_image(self.demo.annotated_landmarks)
@@ -1516,6 +1521,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)
         ## Signals
         self.demo.start()
+
+        print("Starting global hotkeys")
+        keyboard.GlobalHotKeys({
+            '<alt>+d': self.general_tab.toggle_debug_window}).start()
+
 
     def update_plots(self):
         # TODO: move up again
