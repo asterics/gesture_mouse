@@ -333,6 +333,9 @@ class Demo(Thread):
 
     def stop(self):
         print("Stopping Demo..")
+        self.stop_tracking()
+        self.__stop_camera()
+        self.__stop_socket()
         self.is_running = False
         self.face_mesh.close()
         if self.csv_file_fp is not None:
