@@ -787,7 +787,7 @@ class GeneralTab(QtWidgets.QWidget):
                         active_gestures += ", "
                     active_gestures += signal.name
 
-        self.debug_window.status_bar_gestures.showMessage(f"Active: {active_gestures}")
+        self.debug_window.status_bar_gestures.showMessage(active_gestures)
 
     def webcam_grp_toggled(self, on:bool):
         if on:
