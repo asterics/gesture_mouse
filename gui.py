@@ -604,9 +604,13 @@ class DebugVisualizetion(QtWidgets.QWidget):
         self.webcam_label.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
         self.status_bar = QtWidgets.QStatusBar()
         self.status_bar.showMessage("FPS: ")
+        self.status_bar_gestures = QtWidgets.QStatusBar()
+        self.status_bar_gestures.showMessage("")
         self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.status_bar)
         self.layout.addWidget(self.webcam_label)
+        self.layout.addWidget(self.status_bar_gestures)
+
 
     def update_image(self, image):
         w = self.webcam_label.width()
@@ -771,6 +775,18 @@ class GeneralTab(QtWidgets.QWidget):
     def update_debug_visualization(self):
         self.debug_window.update_image(self.demo.annotated_landmarks)
         self.debug_window.status_bar.showMessage(f"FPS: {int(self.demo.fps)}, M: {self.demo.mouse.mode.name}, T: {self.demo.mouse.tracking_mode.name}")
+
+        # Check all gestures if they are activated and update status bar
+        # TODO: Use listener pattern or queue to notify about changes?
+        active_gestures = ""
+        for signal in self.demo.signals.values():
+            for action in signal.actions.values():
+                if action.is_activated:
+                    if active_gestures != "":
+                        active_gestures += ", "
+                    active_gestures += signal.name
+
+        self.debug_window.status_bar_gestures.showMessage(f"Active: {active_gestures}")
 
     def webcam_grp_toggled(self, on:bool):
         if on:
@@ -1095,7 +1111,7 @@ class MouseClickSettings(QtWidgets.QWidget):
         self.callback = mouse_callback
         self.current_signal = "-"
         self.action = Gesture.GestureAction()
-        self.action.set_up_action(self.callback)
+        self.action.set_action_callable(Gesture.ActionTrigger.UP_ACTION.name, self.callback)
         self.action.set_delay(self.delay.value())
         self.action.set_threshold(self.threshold.value())
 
@@ -1360,13 +1376,13 @@ class KeyboardTab(QtWidgets.QWidget):
             return
 
         if trigger == "up":
-            new_action.set_up_action(action_function)
+            new_action.set_action_callable(Gesture.ActionTrigger.UP_ACTION.name, action_function)
         elif trigger == "down":
-            new_action.set_down_action(action_function)
+            new_action.set_action_callable(Gesture.ActionTrigger.DOWN_ACTION.name, action_function)
         elif trigger == "hold high":
-            new_action.set_high_hold_action(action_function)
+            new_action.set_action_callable(Gesture.ActionTrigger.HIGH_HOLD_ACTION.name, action_function)
         elif trigger == "hold low":
-            new_action.set_low_hold_action(action_function)
+            new_action.set_action_callable(Gesture.ActionTrigger.LOW_HOLD_ACTION.name, action_function)
         else:
             return
         new_action.set_delay(delay)
