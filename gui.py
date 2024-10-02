@@ -34,7 +34,6 @@ import util
 from gui_widgets import LogarithmicSlider, ColoredDoubleSlider, DoubleSlider, StyledMouseSlider
 import re
 
-
 class PlotLine:
     def __init__(self, pen, plot_data_item: pg.PlotDataItem):
         self.x = deque(maxlen=100)
@@ -596,16 +595,23 @@ class AddSignalDialog(QtWidgets.QDialog):
 class DebugVisualizetion(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
+        self.setWindowFlag(QtCore.Qt.WindowType.WindowStaysOnTopHint, True)
+        self.setWindowTitle("Gesture Mouse - Live Debug")
+        self.setMaximumSize(Demo.VID_RES_X, Demo.VID_RES_Y)
+
         self.webcam_label = QtWidgets.QLabel()
         self.webcam_label.setMinimumSize(1, 1)
-        self.webcam_label.setMaximumSize(1280, 720)
         self.qt_image = QtGui.QImage()
         self.webcam_label.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
         self.status_bar = QtWidgets.QStatusBar()
         self.status_bar.showMessage("FPS: ")
+        self.status_bar_gestures = QtWidgets.QStatusBar()
+        self.status_bar_gestures.showMessage("")
         self.layout = QtWidgets.QVBoxLayout(self)
-        self.layout.addWidget(self.webcam_label)
         self.layout.addWidget(self.status_bar)
+        self.layout.addWidget(self.webcam_label)
+        self.layout.addWidget(self.status_bar_gestures)
+
 
     def update_image(self, image):
         w = self.webcam_label.width()
@@ -765,11 +771,28 @@ class GeneralTab(QtWidgets.QWidget):
         self.demo.start_write_csv(self.csv_file_path)
 
     def toggle_debug_window(self):
-        self.debug_window.show()
+        if self.debug_window.isVisible():
+            self.debug_window.hide()
+            #self.topLevelWidget().show()
+        else:
+            self.debug_window.show()
+            #self.topLevelWidget().hide()
 
     def update_debug_visualization(self):
         self.debug_window.update_image(self.demo.annotated_landmarks)
-        self.debug_window.status_bar.showMessage(f"FPS: {self.demo.fps}, Mode: {self.demo.mouse.mode}")
+        self.debug_window.status_bar.showMessage(f"FPS: {int(self.demo.fps)}, M: {self.demo.mouse.mode.name}, T: {self.demo.mouse.tracking_mode.name}")
+
+        # Check all gestures if they are activated and update status bar
+        # TODO: Use listener pattern or queue to notify about changes?
+        active_gestures = ""
+        for signal in self.demo.signals.values():
+            for action in signal.actions.values():
+                if action.is_activated:
+                    if active_gestures != "":
+                        active_gestures += ", "
+                    active_gestures += signal.name
+
+        self.debug_window.status_bar_gestures.showMessage(active_gestures)
 
     def webcam_grp_toggled(self, on:bool):
         if on:
@@ -1094,7 +1117,7 @@ class MouseClickSettings(QtWidgets.QWidget):
         self.callback = mouse_callback
         self.current_signal = "-"
         self.action = Gesture.GestureAction()
-        self.action.set_up_action(self.callback)
+        self.action.set_action_callable(Gesture.ActionTrigger.UP_ACTION.name, self.callback)
         self.action.set_delay(self.delay.value())
         self.action.set_threshold(self.threshold.value())
 
@@ -1359,13 +1382,13 @@ class KeyboardTab(QtWidgets.QWidget):
             return
 
         if trigger == "up":
-            new_action.set_up_action(action_function)
+            new_action.set_action_callable(Gesture.ActionTrigger.UP_ACTION.name, action_function)
         elif trigger == "down":
-            new_action.set_down_action(action_function)
+            new_action.set_action_callable(Gesture.ActionTrigger.DOWN_ACTION.name, action_function)
         elif trigger == "hold high":
-            new_action.set_high_hold_action(action_function)
+            new_action.set_action_callable(Gesture.ActionTrigger.HIGH_HOLD_ACTION.name, action_function)
         elif trigger == "hold low":
-            new_action.set_low_hold_action(action_function)
+            new_action.set_action_callable(Gesture.ActionTrigger.LOW_HOLD_ACTION.name, action_function)
         else:
             return
         new_action.set_delay(delay)
@@ -1499,6 +1522,11 @@ class MainWindow(QtWidgets.QMainWindow):
         ## Signals
         self.demo.start()
 
+        print("Starting global hotkeys")
+        keyboard.GlobalHotKeys({
+            '<alt>+d': self.general_tab.toggle_debug_window}).start()
+
+
     def update_plots(self):
         # TODO: move up again
         self.selected_signals.update_plots(self.demo.signals)
@@ -1543,6 +1571,7 @@ def test_gui():
     app = QtWidgets.QApplication([])
     window = MainWindow()
     window.resize(1280, 720)
+    window.setWindowTitle("Gesture Mouse")
 
     if platform.system() == 'Windows':
         # close splash screen
@@ -1553,6 +1582,7 @@ def test_gui():
             print(f"Splash screen not supported on this platform: {inst}")
 
     window.show()
+    window.activateWindow()
     app.exec()
         
 if __name__ == '__main__':

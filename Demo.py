@@ -56,6 +56,8 @@ colors = [(166, 206, 227), (31, 120, 180), (178, 223, 138), (51, 160, 44), (151,
           (153, 91, 111), (255, 127, 0), (202, 178, 214), (106, 61, 154), (255, 255, 153), (177, 89, 40), (0, 255, 0),
           (0, 0, 255), (0, 255, 255), (255, 255, 255)]
 
+VID_RES_X=320
+VID_RES_Y=240
 
 class Demo(Thread):
     def __init__(self):
@@ -235,7 +237,9 @@ class Demo(Thread):
             #self.cam_cap = cv2.VideoCapture(self.webcam_dev_nr, cv2.CAP_DSHOW)
             #on Linux there is no DSHOW available, so let opencv decide which API to choose.
             self.cam_cap = cv2.VideoCapture(self.webcam_dev_nr)
-            print(f"Starting camera took {int(1000*time.time())-start}")
+            self.cam_cap.set(cv2.CAP_PROP_FRAME_WIDTH,VID_RES_X)
+            self.cam_cap.set(cv2.CAP_PROP_FRAME_HEIGHT, VID_RES_Y)
+            print(f"Starting camera took {int(1000*time.time())-start}, resolution={self.cam_cap.get(cv2.CAP_PROP_FRAME_WIDTH)}x{self.cam_cap.get(cv2.CAP_PROP_FRAME_HEIGHT)}")
 
     def __stop_camera(self):
         if self.cam_cap is not None:
@@ -675,8 +679,11 @@ class Demo(Thread):
         self.signals[name].set_filter_value(0.0001)
 
     def mp_callback(self, result: FaceLandmarkerResult, output_image: mp.Image, timestamp_ms: int):
+        image = output_image.numpy_view().copy()
+
         # No face detected
         if not result.face_landmarks:
+            self.update_video_display(image)
             print("Face not detected")
             return
 
@@ -742,15 +749,25 @@ class Demo(Thread):
         # Debug Image
 
         # black = np.zeros((self.frame_height, self.frame_height, 3)).astype(np.uint8) # for only keypoints
-        image = output_image.numpy_view().copy()
         annotated_img = DrawingDebug.draw_landmarks_fast(np_landmarks, image)
+        #annotated_img = image
         for i, indices in enumerate(self.signal_calculator.ear_indices):
             annotated_img = DrawingDebug.draw_landmarks_fast(np_landmarks, annotated_img, index=indices[:6].astype(int),
                                                              color=colors[i % len(colors)])
-        self.annotated_landmarks = cv2.flip(annotated_img, 1)
+
+        self.update_video_display(annotated_img)
+        self.update_csv(np_landmarks,transformation_matrix, ear_values, ear_values_corrected,result)
+        #print(f"Time since frame read in ms {int(time.time()*1000) - timestamp_ms}, processing done")
+
+    def update_video_display(self, image):
+        self.annotated_landmarks = cv2.flip(image, 1)
+        # TODO: Check if the image_q instructions can be removed
         if self.image_q.full():
             self.image_q.get()
-        self.image_q.put(cv2.flip(annotated_img, 1))
+        self.image_q.put(cv2.flip(image, 1))
+        self.fps = self.fps_counter()
+
+    def update_csv(self, np_landmarks, transformation_matrix, ear_values, ear_values_corrected, result):
         # record csv and also gesture for data capturing
         if self.write_csv:
             gesture = "neutral"
@@ -784,8 +801,7 @@ class Demo(Thread):
             row = [time.time(), *np_landmarks.astype(np.float32).flatten(), *transformation_matrix.astype(np.float32).flatten(),*ear_values.astype(np.float32).flatten(),
                    *ear_values_corrected.astype(np.float32).flatten(), gesture, *result.values()]
             self.csv_writer.writerow(row)
-        #print(f"Time since frame read in ms {int(time.time()*1000) - timestamp_ms}, processing done")
-        self.fps = self.fps_counter()
+
 
 
 if __name__ == '__main__':
