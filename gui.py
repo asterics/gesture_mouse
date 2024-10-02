@@ -596,6 +596,7 @@ class DebugVisualizetion(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowFlag(QtCore.Qt.WindowType.WindowStaysOnTopHint, True)
+        self.setWindowTitle("Gesture Mouse - Live Debug")
 
         self.webcam_label = QtWidgets.QLabel()
         self.webcam_label.setMinimumSize(1, 1)
