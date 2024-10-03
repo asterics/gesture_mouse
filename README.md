@@ -1,50 +1,47 @@
 # Gesture Mouse
 
-A library that allows to control the mouse and keyboard with head movement and face gestures. This project is based on the 
+A program that allows to control the mouse and keyboard with head movement and facial gestures. This project is based on the 
 google mediapipe library (https://ai.google.dev/edge/mediapipe/solutions/guide).
 
 ## Installation instructions
 Tested with Python 3.10 and PySide6.4.3. 
 1. Clone repository
-2. Create a sufolder `mkdir venv`
-3. Create virtual environment  `python -m venv venv`
-4. Activate virtual environment `venv\Scripts\activate.bat` (Linux: `. ./venv/bin/activate`)
-5. Install packages `pip install -r requirements.txt`
+2. Execute the following commands in the repository folder:
+
+```bash
+pip install poetry
+poetry config virtualenvs.in-project true
+poetry install --no-root
+```
 
 ## Running Gesture Mouse
 
 ### Release
 
 1. Extract zip file
-2. Run `gesture_mouse.exe` (Windows) or `sudo ./gesture_mouse` (Linux)
+2. Run `gesture-mouse.exe` (Windows) or `./gesture-mouse` (Linux)
 
 ### Development
 
-- `python gui.py` to start gui (Linux: `sudo ./venv/bin/python3.10 gui.py`)
+```bash
+poetry run python gui.py
+```
 
 ## Hotkeys
 
-- <kbd>Alt</kbd>+<kbd>1</kbd> to toggle mouse movement and gestures.
-- <kbd>Alt</kbd>+<kbd>m</kbd> to toggle mouse movement.
-- <kbd>Alt</kbd>+<kbd>g</kbd> to toggle gestures.
-- <kbd>Alt</kbd>+<kbd>t</kbd> to toggle tracking (start or stop camera).
+* <kbd>Ctrl</kbd><kbd>Alt</kbd>+<kbd>v</kbd>: Start/Stop video and tracking
+* <kbd>Ctrl</kbd><kbd>Alt</kbd>+<kbd>g</kbd>: Enable/Disable gestures
+* <kbd>Ctrl</kbd><kbd>Alt</kbd>+<kbd>m</kbd>: Enable/Disable mouse movement
+* <kbd>Ctrl</kbd><kbd>Alt</kbd>+<kbd>e</kbd>: Enable/Disable gestures and mouse movement
+* <kbd>Shift</kbd><kbd>Alt</kbd>+<kbd>m</kbd>: Change mouse movement mode
+* <kbd>Shift</kbd><kbd>Alt</kbd>+<kbd>r</kbd>: Change mouse tracking mode
+* <kbd>Shift</kbd><kbd>Alt</kbd>+<kbd>c</kbd>: Center mouse
+* <kbd>Shift</kbd><kbd>Alt</kbd>+<kbd>s</kbd>: Switch primary screen for mouse movement
 
-### Hotkeys Mouse Movement
+## Creating a release
 
-- <kbd>m</kbd> iterate through mouse (ABSOLUTE, RELATIVE, JOYSTICK, HYBRID) modes
-- <kbd>t</kbd> iterate through tracking mode (PNP, MEDIAPIPE, NOSE)
-- <kbd>c</kbd> Center mouse position
-- <kbd>.</kbd> Switch monitor in case there are several monitors applied. Ignored for RELATIVE mouse mode.
-
-## Creating an exe distribution
-To create a distribution folder which includes all necessery .dll and an executable one can use PyInstaller([https://pyinstaller.org](https://pyinstaller.org)). 
-Instructions:
-1. Follow the installation instructions
-2. Activate virtual environment
-3. Install PyInstaller `pip install pyinstaller`
-4. Execute build process with  
-`pyinstaller gui.py -D --add-data config;config --add-data data;data --collect-all mediapipe -n gesture-mouse --contents-directory .` on linux  
-`pyinstaller gui.py -D --add-data config:config --add-data data:data --collect-all mediapipe -n gesture-mouse --contents-directory .` on windows 
+Use the github action to create a deployment file for each platform, see .github/workflows/pyinstaller_windows.yml.
+You can also optionally create a release on github with the deployment file attached.
 
 ## Algorithms
 
