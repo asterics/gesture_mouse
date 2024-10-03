@@ -349,26 +349,31 @@ class Mouse:
         return mouse_speed_x, mouse_speed_y
 
     def move_mouse(self, x_speed, y_speed):
-        x_speed_filtered = y_speed_filtered = 0
-        # Somehow floating point errors have a bias which accumulate, this is a hacky solution for it
-        if abs(x_speed) <= 1:
-            x_speed = 0
-        if abs(y_speed) <= 1:
-            y_speed = 0
-        x, y = self.mouse_controller.position
-        self.x = self.x + x_speed
-        self.y = self.y + y_speed
+        try:
+            x_speed_filtered = y_speed_filtered = 0
+            # Somehow floating point errors have a bias which accumulate, this is a hacky solution for it
+            if abs(x_speed) <= 1:
+                x_speed = 0
+            if abs(y_speed) <= 1:
+                y_speed = 0
 
-        if self.filter_mouse_position:
-            output_tracked = self.kalman_filter.update(self.x + 1j * self.y)
-            x_new_filtered, y_new_filtered = np.real(output_tracked), np.imag(output_tracked)
-            x_speed_filtered = x_new_filtered - x
-            y_speed_filtered = y_new_filtered - y
-        else:
-            x_speed_filtered = x_speed
-            y_speed_filtered = y_speed
+            x, y = self.mouse_controller.position
+            self.x = self.x + x_speed
+            self.y = self.y + y_speed
 
-        self.mouse_controller.move(x_speed_filtered, y_speed_filtered)
+            if self.filter_mouse_position:
+                output_tracked = self.kalman_filter.update(self.x + 1j * self.y)
+                x_new_filtered, y_new_filtered = np.real(output_tracked), np.imag(output_tracked)
+                x_speed_filtered = x_new_filtered - x
+                y_speed_filtered = y_new_filtered - y
+            else:
+                x_speed_filtered = x_speed
+                y_speed_filtered = y_speed
+
+            self.mouse_controller.move(x_speed_filtered, y_speed_filtered)
+        except Exception as e:
+            print(f"Move mouse failed, reason: {e}")
+            return
 
     def set_filter_value(self, value):
         self.filter_value = value
