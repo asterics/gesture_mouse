@@ -1547,19 +1547,6 @@ class MainWindow(QtWidgets.QMainWindow):
             '<shift>+<alt>+r': self.demo.mouse.toggle_tracking_mode
         }).start()
 
-
-        #keyboard.add_hotkey("alt + 1", lambda: self.toggle_gesture_mouse())  # TODO: Linux alternative
-        #keyboard.add_hotkey("alt + g", lambda: self.toggle_gestures())
-        #keyboard.add_hotkey("alt + m", lambda: self.toggle_mouse_movement())
-        #keyboard.add_hotkey("alt + t", lambda: self.toggle_tracking())
-        #keyboard.add_hotkey("m", lambda: self.toggle_mouse_mode())
-        #keyboard.add_hotkey("c", lambda: self.mouse.centre_mouse())
-        #keyboard.add_hotkey(".", lambda: self.mouse.switch_monitor())
-        #keyboard.add_hotkey("t", lambda: self.mouse.toggle_tracking_mode())
-        # keyboard.on_press_key("r", lambda e: self.disable_gesture_mouse())
-        # keyboard.on_release_key("r", lambda e: self.enable_gesture_mouse())
-        # add mouse_events
-
     def update_plots(self):
         # TODO: move up again
         self.selected_signals.update_plots(self.demo.signals)
