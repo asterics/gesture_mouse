@@ -109,8 +109,6 @@ class Demo(Thread):
 
         self.signals: CaseInsensitiveDict[str, GestureSignal] = {}
 
-        self.disable_gesture_mouse()
-
         self.write_csv = False
         self.csv_file_name = "log.csv"
         self.csv_file_fp = None
@@ -125,6 +123,10 @@ class Demo(Thread):
         self.mediapipe_csv_writer = None
 
         self.image_q = Queue(3)
+
+        # by default disable mouse movement, but enable gestures
+        self.disable_mouse_movement()
+        self.enable_gestures()
 
     def on_press(self, key):
         try:
