@@ -1,3 +1,4 @@
+import platform
 import queue
 import time
 from threading import Thread
@@ -258,9 +259,14 @@ class Demo(Thread):
             self.cam_cap = cv2.VideoCapture(self.vid_source_file)
         else:
             start=int(1000*time.time())
-            #self.cam_cap = cv2.VideoCapture(self.webcam_dev_nr, cv2.CAP_DSHOW)
-            #on Linux there is no DSHOW available, so let opencv decide which API to choose.
-            self.cam_cap = cv2.VideoCapture(self.webcam_dev_nr)
+            if platform.system() == 'Windows':
+                print("Starting camera with DSHOW")
+                self.cam_cap = cv2.VideoCapture(self.webcam_dev_nr, cv2.CAP_DSHOW)
+            else:
+                #on Linux there is no DSHOW available, so let opencv decide which API to choose.
+                print("Starting camera with default API")
+                self.cam_cap = cv2.VideoCapture(self.webcam_dev_nr)
+
             self.cam_cap.set(cv2.CAP_PROP_FRAME_WIDTH,VID_RES_X)
             self.cam_cap.set(cv2.CAP_PROP_FRAME_HEIGHT, VID_RES_Y)
             print(f"Starting camera took {int(1000*time.time())-start}, resolution={self.cam_cap.get(cv2.CAP_PROP_FRAME_WIDTH)}x{self.cam_cap.get(cv2.CAP_PROP_FRAME_HEIGHT)}")
