@@ -1,12 +1,8 @@
-import dataclasses
 import queue
-import random
 import time
-import uuid
 from threading import Thread
 import socket
 import json
-from typing import Dict
 import os
 from typing import List
 from pathlib import Path
@@ -18,14 +14,13 @@ import mediapipe as mp
 import cv2
 import numpy as np
 import sklearn
-import keyboard
+from pynput import keyboard
 from case_insensitive_dict import CaseInsensitiveDict
 
 from sklearn.preprocessing import OneHotEncoder, StandardScaler, Normalizer, MinMaxScaler
 from sklearn.svm import SVR, SVC, LinearSVR
 
 from sklearn.multioutput import MultiOutputRegressor, MultiOutputClassifier, RegressorChain
-
 
 import Mouse
 import DrawingDebug
@@ -38,7 +33,6 @@ import util
 from pyLiveLinkFace import PyLiveLinkFace, FaceBlendShape
 
 from mediapipe.tasks import python
-from mediapipe.tasks.python import vision
 from mediapipe.tasks.python.vision import face_landmarker
 
 model_path = './data/model/face_landmarker.task'
@@ -113,31 +107,14 @@ class Demo(Thread):
         self.linear_model = MultiOutputRegressor(SVR(kernel="rbf"))
         self.linear_signals: List[str] = []
 
-        # add hotkey
-        # TODO: how to handle activate mouse / toggle mouse etc. by global hotkey
-        # keyboard.add_hotkey("esc", lambda: self.stop())
-        # alt + 1: toggle gestures + mouse movement
-        # alt + g: toggle gestures (keyboard and mouse)
-        # alt + m: toggle mouse movement
-        keyboard.add_hotkey("alt + 1", lambda: self.toggle_gesture_mouse())  # TODO: Linux alternative
-        keyboard.add_hotkey("alt + g", lambda: self.toggle_gestures())
-        keyboard.add_hotkey("alt + m", lambda: self.toggle_mouse_movement())
-        keyboard.add_hotkey("alt + t", lambda: self.toggle_tracking())
-        keyboard.add_hotkey("m", lambda: self.toggle_mouse_mode())
-        keyboard.add_hotkey("c", lambda: self.mouse.centre_mouse())
-        keyboard.add_hotkey(".", lambda: self.mouse.switch_monitor())
-        keyboard.add_hotkey("t", lambda: self.mouse.toggle_tracking_mode())
-        # keyboard.on_press_key("r", lambda e: self.disable_gesture_mouse())
-        # keyboard.on_release_key("r", lambda e: self.enable_gesture_mouse())
-        # add mouse_events
         self.signals: CaseInsensitiveDict[str, GestureSignal] = {}
-
-        self.disable_gesture_mouse()
 
         self.write_csv = False
         self.csv_file_name = "log.csv"
         self.csv_file_fp = None
         self.csv_writer = None
+        self.csv_gesture = "neutral"
+        self.csv_keyboard_listener_active = False
 
         self.recording_mode = False  # TODO: Enum?
         self.iphone_csv_fp = None
@@ -146,6 +123,53 @@ class Demo(Thread):
         self.mediapipe_csv_writer = None
 
         self.image_q = Queue(3)
+
+        # by default disable mouse movement, but enable gestures
+        self.disable_mouse_movement()
+        self.enable_gestures()
+
+    def on_press(self, key):
+        try:
+            #print('alphanumeric key {0} pressed'.format(
+            #    key.char))
+            if self.calibrate_pose or self.calibrate_neutral:
+                self.csv_gesture = self.calibration_name
+            elif key.char == "q":
+                self.csv_gesture = "jawOpen"
+            elif key.char == "w":
+                self.csv_gesture = "smile"
+            elif key.char == "e":
+                self.csv_gesture = "frown"
+            elif key.char == "r":
+                self.csv_gesture = "cheekPuff"
+            elif key.char == "t":
+                self.csv_gesture = "mouthPucker"
+            elif key.char == "z":
+                self.csv_gesture = "blinkLeft"
+            elif key.char == "u":
+                self.csv_gesture = "blinkRight"
+            elif key.char == "i":
+                self.csv_gesture = "browUp"
+            elif key.char == "o":
+                self.csv_gesture = "browDown"
+            elif key.char == "p":
+                self.csv_gesture = "browUpLeft"
+            elif key.char == "a":
+                self.csv_gesture = "browUpRight"
+            elif key.char == "s":
+                self.csv_gesture = "noseSneer"
+
+            print(f"Gesture: {self.csv_gesture}")
+        except AttributeError:
+            print('special key {0} pressed'.format(
+                key))
+
+    def on_release(self, key):
+        print('{0} released'.format(
+            key))
+        if self.csv_keyboard_listener_active == False:
+            # Stop listener
+            return False
 
     def run(self):
         self.is_running = True
@@ -323,6 +347,7 @@ class Demo(Thread):
             self.stop_tracking()
         else:
             self.start_tracking()
+
     def stop_tracking(self):
         print("Stopping tracking..")
         self.is_tracking = False
@@ -416,6 +441,13 @@ class Demo(Thread):
         self.filter_landmarks = enabled
 
     def start_write_csv(self, file_path: str):
+        self.csv_keyboard_listener_active = True
+        # setup local keyboard listener for csv write feature
+        listener = keyboard.Listener(
+            on_press=self.on_press,
+            on_release=self.on_release)
+        listener.start()
+
         if self.recording_mode:
             path = Path(file_path)
             file_name = path.name
@@ -493,6 +525,8 @@ class Demo(Thread):
             self.mediapipe_csv_fp.close()
             self.mediapipe_csv_fp = None
             self.mediapipe_csv_writer = None
+
+        self.csv_keyboard_listener_active = False
 
     def toggle_mouse_mode(self):
         self.mouse.toggle_mode()
@@ -773,36 +807,9 @@ class Demo(Thread):
     def update_csv(self, np_landmarks, transformation_matrix, ear_values, ear_values_corrected, result):
         # record csv and also gesture for data capturing
         if self.write_csv:
-            gesture = "neutral"
-            if self.calibrate_pose or self.calibrate_neutral:
-                gesture = self.calibration_name
-            elif keyboard.is_pressed("q"):
-                gesture = "jawOpen"
-            elif keyboard.is_pressed("w"):
-                gesture = "smile"
-            elif keyboard.is_pressed("e"):
-                gesture = "frown"
-            elif keyboard.is_pressed("r"):
-                gesture = "cheekPuff"
-            elif keyboard.is_pressed("t"):
-                gesture = "mouthPucker"
-            elif keyboard.is_pressed("z"):
-                gesture = "blinkLeft"
-            elif keyboard.is_pressed("u"):
-                gesture = "blinkRight"
-            elif keyboard.is_pressed("i"):
-                gesture = "browUp"
-            elif keyboard.is_pressed("o"):
-                gesture = "browDown"
-            elif keyboard.is_pressed("p"):
-                gesture = "browUpLeft"
-            elif keyboard.is_pressed("a"):
-                gesture = "browUpRight"
-            elif keyboard.is_pressed("s"):
-                gesture = "noseSneer"
-
+#            gesture = "neutral"
             row = [time.time(), *np_landmarks.astype(np.float32).flatten(), *transformation_matrix.astype(np.float32).flatten(),*ear_values.astype(np.float32).flatten(),
-                   *ear_values_corrected.astype(np.float32).flatten(), gesture, *result.values()]
+                   *ear_values_corrected.astype(np.float32).flatten(), self.csv_gesture, *result.values()]
             self.csv_writer.writerow(row)
 
 

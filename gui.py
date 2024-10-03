@@ -603,12 +603,19 @@ class DebugVisualizetion(QtWidgets.QWidget):
         self.webcam_label.setMinimumSize(1, 1)
         self.qt_image = QtGui.QImage()
         self.webcam_label.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
-        self.status_bar = QtWidgets.QStatusBar()
-        self.status_bar.showMessage("FPS: ")
+        self.status_bar1 = QtWidgets.QStatusBar()
+        self.status_bar1.showMessage("Tracking: ")
+        self.status_bar2 = QtWidgets.QStatusBar()
+        self.status_bar2.showMessage("Movement: ")
+        self.status_bar3 = QtWidgets.QStatusBar()
+        self.status_bar3.showMessage("Gestures: Screen:")
+
         self.status_bar_gestures = QtWidgets.QStatusBar()
         self.status_bar_gestures.showMessage("")
         self.layout = QtWidgets.QVBoxLayout(self)
-        self.layout.addWidget(self.status_bar)
+        self.layout.addWidget(self.status_bar1)
+        self.layout.addWidget(self.status_bar2)
+        self.layout.addWidget(self.status_bar3)
         self.layout.addWidget(self.webcam_label)
         self.layout.addWidget(self.status_bar_gestures)
 
@@ -624,7 +631,7 @@ class DebugVisualizetion(QtWidgets.QWidget):
     def resizeEvent(self, event: QtGui.QResizeEvent) -> None:
         super().resizeEvent(event)
         self.webcam_label.resizeEvent(event)
-        self.status_bar.resizeEvent(event)
+        self.status_bar1.resizeEvent(event)
         w = self.webcam_label.width()
         h = self.webcam_label.height()
         self.qt_image = self.qt_image.scaled(w, h, QtCore.Qt.AspectRatioMode.KeepAspectRatio)
@@ -753,6 +760,19 @@ class GeneralTab(QtWidgets.QWidget):
         self.csv_write_group.setLayout(self.csv_writer_layout)
         self.layout.addWidget(self.csv_write_group)
 
+        self.shortcut_group = QGroupBox("Important Shortcuts")
+        self.shortcut_layout = QtWidgets.QVBoxLayout()
+        self.shortcut_group.setLayout(self.shortcut_layout)
+        self.shortcut_layout.addWidget(QtWidgets.QLabel("<Ctrl><Alt>+v: Start/Stop video and tracking"))
+        self.shortcut_layout.addWidget(QtWidgets.QLabel("<Ctrl><Alt>+g: Enable/Disable gestures"))
+        self.shortcut_layout.addWidget(QtWidgets.QLabel("<Ctrl><Alt>+m: Enable/Disable mouse movement"))
+        self.shortcut_layout.addWidget(QtWidgets.QLabel("<Ctrl><Alt>+e: Enable/Disable gestures and mouse movement"))
+        self.shortcut_layout.addWidget(QtWidgets.QLabel("<Shift><Alt>+m: Change mouse movement mode"))
+        self.shortcut_layout.addWidget(QtWidgets.QLabel("<Shift><Alt>+r: Change mouse tracking mode"))
+        self.shortcut_layout.addWidget(QtWidgets.QLabel("<Shift><Alt>+c: Center mouse"))
+        self.shortcut_layout.addWidget(QtWidgets.QLabel("<Shift><Alt>+s: Switch primary screen for mouse movement"))
+        self.layout.addWidget(self.shortcut_group)
+
         self.layout.addStretch()
 
     def open_file_dialog(self):
@@ -770,17 +790,24 @@ class GeneralTab(QtWidgets.QWidget):
     def start_csv_recording(self):
         self.demo.start_write_csv(self.csv_file_path)
 
+    def toggle_debug_window_globally(self):
+        """
+        Need a specific method for the global hook, because directly calling self.debug_window.show() freezes the GUI.
+        This is probably because the GlobalHook is executed in a another thread and causes a dead lock.
+        """
+        print("called by global hotkey")
+        self.debug_window_button.click()
+        self.demo.toggle_tracking()
+
     def toggle_debug_window(self):
-        if self.debug_window.isVisible():
-            self.debug_window.hide()
-            #self.topLevelWidget().show()
-        else:
-            self.debug_window.show()
-            #self.topLevelWidget().hide()
+        print("showing window...")
+        self.debug_window.show()
 
     def update_debug_visualization(self):
         self.debug_window.update_image(self.demo.annotated_landmarks)
-        self.debug_window.status_bar.showMessage(f"FPS: {int(self.demo.fps)}, M: {self.demo.mouse.mode.name}, T: {self.demo.mouse.tracking_mode.name}")
+        self.debug_window.status_bar1.showMessage(f"Tracking: {self.demo.is_tracking}, FPS: {int(self.demo.fps)}")
+        self.debug_window.status_bar2.showMessage(f"Movement: {self.demo.mouse.mouse_movement_enabled}, M: {self.demo.mouse.mode.name}, T: {self.demo.mouse.tracking_mode.name}")
+        self.debug_window.status_bar3.showMessage(f"Gestures: {self.demo.mouse.mouse_gesture_enabled}, Screen: {self.demo.mouse.monitor_index}")
 
         # Check all gestures if they are activated and update status bar
         # TODO: Use listener pattern or queue to notify about changes?
@@ -1522,10 +1549,25 @@ class MainWindow(QtWidgets.QMainWindow):
         ## Signals
         self.demo.start()
 
+        self.setup_global_hooks()
+
+    def setup_global_hooks(self):
+        """
+        Sets up global hooks for the application.
+        """
+        # add hotkey
         print("Starting global hotkeys")
         keyboard.GlobalHotKeys({
-            '<alt>+d': self.general_tab.toggle_debug_window}).start()
-
+            #'<ctrl>+<alt>+w': self.general_tab.toggle_debug_window_globally,
+            '<ctrl>+<alt>+e': self.demo.toggle_gesture_mouse,
+            '<ctrl>+<alt>+g': self.demo.toggle_gestures,
+            '<ctrl>+<alt>+m': self.demo.toggle_mouse_movement,
+            '<ctrl>+<alt>+v': self.general_tab.toggle_debug_window_globally,
+            '<shift>+<alt>+m': self.demo.toggle_mouse_mode,
+            '<shift>+<alt>+c': self.demo.mouse.centre_mouse,
+            '<shift>+<alt>+s': self.demo.mouse.switch_monitor,
+            '<shift>+<alt>+r': self.demo.mouse.toggle_tracking_mode
+        }).start()
 
     def update_plots(self):
         # TODO: move up again
@@ -1533,6 +1575,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.general_tab.update_debug_visualization()
         self.keyboard_tab.update_signal_values(self.demo.signals)
         self.mouse_tab.mouse_mode_selector.setCurrentText(self.demo.mouse.mode.name)
+        self.mouse_tab.tracking_mode_selector.setCurrentText(self.demo.mouse.tracking_mode.name)
         self.mouse_tab.update_signal_values(self.demo.signals)
 
     def change_mode(self, mode:str):
