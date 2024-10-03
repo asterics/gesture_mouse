@@ -345,6 +345,7 @@ class Demo(Thread):
             self.stop_tracking()
         else:
             self.start_tracking()
+
     def stop_tracking(self):
         print("Stopping tracking..")
         self.is_tracking = False
