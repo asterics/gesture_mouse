@@ -1566,6 +1566,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.general_tab.update_debug_visualization()
         self.keyboard_tab.update_signal_values(self.demo.signals)
         self.mouse_tab.mouse_mode_selector.setCurrentText(self.demo.mouse.mode.name)
+        self.mouse_tab.tracking_mode_selector.setCurrentText(self.demo.mouse.tracking_mode.name)
         self.mouse_tab.update_signal_values(self.demo.signals)
 
     def change_mode(self, mode:str):
