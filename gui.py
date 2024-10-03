@@ -770,11 +770,21 @@ class GeneralTab(QtWidgets.QWidget):
     def start_csv_recording(self):
         self.demo.start_write_csv(self.csv_file_path)
 
+    def toggle_debug_window_globally(self):
+        """
+        Need a specific method for the global hook, because directly calling self.debug_window.show() freezes the GUI.
+        This is probably because the GlobalHook is executed in a another thread and causes a dead lock.
+        """
+        print("called by global hotkey")
+        self.debug_window_button.click()
+
     def toggle_debug_window(self):
         if self.debug_window.isVisible():
+            print("hiding window...")
             self.debug_window.hide()
             #self.topLevelWidget().show()
         else:
+            print("showing window...")
             self.debug_window.show()
             #self.topLevelWidget().hide()
 
@@ -1531,7 +1541,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # add hotkey
         print("Starting global hotkeys")
         keyboard.GlobalHotKeys({
-            '<ctrl>+<alt>+w': self.general_tab.toggle_debug_window,
+            '<ctrl>+<alt>+w': self.general_tab.toggle_debug_window_globally,
             '<ctrl>+<alt>+e': self.demo.toggle_gesture_mouse,
             '<ctrl>+<alt>+g': self.demo.toggle_gestures,
             '<ctrl>+<alt>+m': self.demo.toggle_mouse_movement,
