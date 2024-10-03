@@ -603,12 +603,19 @@ class DebugVisualizetion(QtWidgets.QWidget):
         self.webcam_label.setMinimumSize(1, 1)
         self.qt_image = QtGui.QImage()
         self.webcam_label.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
-        self.status_bar = QtWidgets.QStatusBar()
-        self.status_bar.showMessage("FPS: ")
+        self.status_bar1 = QtWidgets.QStatusBar()
+        self.status_bar1.showMessage("Tracking: ")
+        self.status_bar2 = QtWidgets.QStatusBar()
+        self.status_bar2.showMessage("Movement: ")
+        self.status_bar3 = QtWidgets.QStatusBar()
+        self.status_bar3.showMessage("Gestures: Screen:")
+
         self.status_bar_gestures = QtWidgets.QStatusBar()
         self.status_bar_gestures.showMessage("")
         self.layout = QtWidgets.QVBoxLayout(self)
-        self.layout.addWidget(self.status_bar)
+        self.layout.addWidget(self.status_bar1)
+        self.layout.addWidget(self.status_bar2)
+        self.layout.addWidget(self.status_bar3)
         self.layout.addWidget(self.webcam_label)
         self.layout.addWidget(self.status_bar_gestures)
 
@@ -624,7 +631,7 @@ class DebugVisualizetion(QtWidgets.QWidget):
     def resizeEvent(self, event: QtGui.QResizeEvent) -> None:
         super().resizeEvent(event)
         self.webcam_label.resizeEvent(event)
-        self.status_bar.resizeEvent(event)
+        self.status_bar1.resizeEvent(event)
         w = self.webcam_label.width()
         h = self.webcam_label.height()
         self.qt_image = self.qt_image.scaled(w, h, QtCore.Qt.AspectRatioMode.KeepAspectRatio)
@@ -798,7 +805,9 @@ class GeneralTab(QtWidgets.QWidget):
 
     def update_debug_visualization(self):
         self.debug_window.update_image(self.demo.annotated_landmarks)
-        self.debug_window.status_bar.showMessage(f"FPS: {int(self.demo.fps)}, M: {self.demo.mouse.mode.name}, T: {self.demo.mouse.tracking_mode.name}")
+        self.debug_window.status_bar1.showMessage(f"Tracking: {self.demo.is_tracking}, FPS: {int(self.demo.fps)}")
+        self.debug_window.status_bar2.showMessage(f"Movement: {self.demo.mouse.mouse_movement_enabled}, M: {self.demo.mouse.mode.name}, T: {self.demo.mouse.tracking_mode.name}")
+        self.debug_window.status_bar3.showMessage(f"Gestures: {self.demo.mouse.mouse_gesture_enabled}, Screen: {self.demo.mouse.monitor_index}")
 
         # Check all gestures if they are activated and update status bar
         # TODO: Use listener pattern or queue to notify about changes?
