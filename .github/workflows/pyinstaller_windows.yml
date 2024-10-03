@@ -110,6 +110,10 @@ jobs:
           sudo apt install -y -q libxcb-render-util0
           sudo apt install -y -q libxcb-xinerama0
           sudo apt install -y -q libxcb-icccm4
+          sudo apt install -y -q libxcb-xkb1
+          sudo apt install -y -q libxcb-xrm0
+          sudo apt install -y -q libxcb-shape0
+          sudo apt install -y -q libxcb-cursor0
           
           sudo apt-get install -y libegl1
           
