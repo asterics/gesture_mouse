@@ -131,6 +131,7 @@ jobs:
           cd ./build-${{env.LINUX_TARGET}}
           cp ./.github/pyinstaller/gesture-mouse.spec.${{env.LINUX_TARGET}} gesture-mouse.spec
           poetry run pyinstaller gesture-mouse.spec --clean --noconfirm
+          chmod +x build-${{env.LINUX_TARGET}}/dist/gesture-mouse/gesture-mouse
       - name: upload artifact
         uses: actions/upload-artifact@v4
         with:
