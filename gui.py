@@ -597,16 +597,16 @@ class DebugVisualizetion(QtWidgets.QWidget):
         super().__init__()
         self.setWindowFlag(QtCore.Qt.WindowType.WindowStaysOnTopHint, True)
         self.setWindowTitle("Gesture Mouse - Live Debug")
-        self.setMaximumSize(Demo.VID_RES_X, Demo.VID_RES_Y)
+        self.setMaximumSize(Demo.VID_RES_X, Demo.VID_RES_Y+50)
 
         self.webcam_label = QtWidgets.QLabel()
-        self.webcam_label.setMinimumSize(1, 1)
+        self.webcam_label.setMinimumSize(Demo.VID_RES_X/2, Demo.VID_RES_Y/2)
         self.qt_image = QtGui.QImage()
         self.webcam_label.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
         self.status_bar1 = QtWidgets.QStatusBar()
         self.status_bar1.showMessage("Tracking: ")
         self.status_bar2 = QtWidgets.QStatusBar()
-        self.status_bar2.showMessage("Movement: ")
+        self.status_bar2.showMessage("Mouse: ")
         self.status_bar3 = QtWidgets.QStatusBar()
         self.status_bar3.showMessage("Gestures: Screen:")
 
@@ -806,7 +806,7 @@ class GeneralTab(QtWidgets.QWidget):
     def update_debug_visualization(self):
         self.debug_window.update_image(self.demo.annotated_landmarks)
         self.debug_window.status_bar1.showMessage(f"Tracking: {self.demo.is_tracking}, FPS: {int(self.demo.fps)}")
-        self.debug_window.status_bar2.showMessage(f"Movement: {self.demo.mouse.mouse_movement_enabled}, M: {self.demo.mouse.mode.name}, T: {self.demo.mouse.tracking_mode.name}")
+        self.debug_window.status_bar2.showMessage(f"Mouse: {self.demo.mouse.mouse_movement_enabled}, {self.demo.mouse.mode.name}, {self.demo.mouse.tracking_mode.name}")
         self.debug_window.status_bar3.showMessage(f"Gestures: {self.demo.mouse.mouse_gesture_enabled}, Screen: {self.demo.mouse.monitor_index}")
 
         # Check all gestures if they are activated and update status bar
@@ -1546,10 +1546,12 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.change_mode("WEBCAM")
         self.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)
+
+        self.setup_global_hooks()
+
         ## Signals
         self.demo.start()
 
-        self.setup_global_hooks()
 
     def setup_global_hooks(self):
         """
