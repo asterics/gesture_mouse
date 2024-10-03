@@ -753,6 +753,19 @@ class GeneralTab(QtWidgets.QWidget):
         self.csv_write_group.setLayout(self.csv_writer_layout)
         self.layout.addWidget(self.csv_write_group)
 
+        self.shortcut_group = QGroupBox("Important Shortcuts")
+        self.shortcut_layout = QtWidgets.QVBoxLayout()
+        self.shortcut_group.setLayout(self.shortcut_layout)
+        self.shortcut_layout.addWidget(QtWidgets.QLabel("<Ctrl><Alt>+v: Start/Stop video and tracking"))
+        self.shortcut_layout.addWidget(QtWidgets.QLabel("<Ctrl><Alt>+g: Enable/Disable gestures"))
+        self.shortcut_layout.addWidget(QtWidgets.QLabel("<Ctrl><Alt>+m: Enable/Disable mouse movement"))
+        self.shortcut_layout.addWidget(QtWidgets.QLabel("<Ctrl><Alt>+e: Enable/Disable gestures and mouse movement"))
+        self.shortcut_layout.addWidget(QtWidgets.QLabel("<Shift><Alt>+m: Change mouse movement mode"))
+        self.shortcut_layout.addWidget(QtWidgets.QLabel("<Shift><Alt>+r: Change mouse tracking mode"))
+        self.shortcut_layout.addWidget(QtWidgets.QLabel("<Shift><Alt>+c: Center mouse"))
+        self.shortcut_layout.addWidget(QtWidgets.QLabel("<Shift><Alt>+s: Switch primary screen for mouse movement"))
+        self.layout.addWidget(self.shortcut_group)
+
         self.layout.addStretch()
 
     def open_file_dialog(self):
