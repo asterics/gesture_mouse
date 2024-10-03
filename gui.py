@@ -1522,10 +1522,38 @@ class MainWindow(QtWidgets.QMainWindow):
         ## Signals
         self.demo.start()
 
+        self.setup_global_hooks()
+
+    def setup_global_hooks(self):
+        """
+        Sets up global hooks for the application.
+        """
+        # add hotkey
         print("Starting global hotkeys")
         keyboard.GlobalHotKeys({
-            '<alt>+d': self.general_tab.toggle_debug_window}).start()
+            '<ctrl>+<alt>+w': self.general_tab.toggle_debug_window,
+            '<ctrl>+<alt>+e': self.demo.toggle_gesture_mouse,
+            '<ctrl>+<alt>+g': self.demo.toggle_gestures,
+            '<ctrl>+<alt>+m': self.demo.toggle_mouse_movement,
+            '<ctrl>+<alt>+v': self.demo.toggle_tracking,
+            '<shift>+<alt>+m': self.demo.toggle_mouse_mode,
+            '<shift>+<alt>+c': self.demo.mouse.centre_mouse,
+            '<shift>+<alt>+s': self.demo.mouse.switch_monitor,
+            '<shift>+<alt>+r': self.demo.mouse.toggle_tracking_mode
+        }).start()
 
+
+        #keyboard.add_hotkey("alt + 1", lambda: self.toggle_gesture_mouse())  # TODO: Linux alternative
+        #keyboard.add_hotkey("alt + g", lambda: self.toggle_gestures())
+        #keyboard.add_hotkey("alt + m", lambda: self.toggle_mouse_movement())
+        #keyboard.add_hotkey("alt + t", lambda: self.toggle_tracking())
+        #keyboard.add_hotkey("m", lambda: self.toggle_mouse_mode())
+        #keyboard.add_hotkey("c", lambda: self.mouse.centre_mouse())
+        #keyboard.add_hotkey(".", lambda: self.mouse.switch_monitor())
+        #keyboard.add_hotkey("t", lambda: self.mouse.toggle_tracking_mode())
+        # keyboard.on_press_key("r", lambda e: self.disable_gesture_mouse())
+        # keyboard.on_release_key("r", lambda e: self.enable_gesture_mouse())
+        # add mouse_events
 
     def update_plots(self):
         # TODO: move up again

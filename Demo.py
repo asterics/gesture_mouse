@@ -113,23 +113,6 @@ class Demo(Thread):
         self.linear_model = MultiOutputRegressor(SVR(kernel="rbf"))
         self.linear_signals: List[str] = []
 
-        # add hotkey
-        # TODO: how to handle activate mouse / toggle mouse etc. by global hotkey
-        # keyboard.add_hotkey("esc", lambda: self.stop())
-        # alt + 1: toggle gestures + mouse movement
-        # alt + g: toggle gestures (keyboard and mouse)
-        # alt + m: toggle mouse movement
-        keyboard.add_hotkey("alt + 1", lambda: self.toggle_gesture_mouse())  # TODO: Linux alternative
-        keyboard.add_hotkey("alt + g", lambda: self.toggle_gestures())
-        keyboard.add_hotkey("alt + m", lambda: self.toggle_mouse_movement())
-        keyboard.add_hotkey("alt + t", lambda: self.toggle_tracking())
-        keyboard.add_hotkey("m", lambda: self.toggle_mouse_mode())
-        keyboard.add_hotkey("c", lambda: self.mouse.centre_mouse())
-        keyboard.add_hotkey(".", lambda: self.mouse.switch_monitor())
-        keyboard.add_hotkey("t", lambda: self.mouse.toggle_tracking_mode())
-        # keyboard.on_press_key("r", lambda e: self.disable_gesture_mouse())
-        # keyboard.on_release_key("r", lambda e: self.enable_gesture_mouse())
-        # add mouse_events
         self.signals: CaseInsensitiveDict[str, GestureSignal] = {}
 
         self.disable_gesture_mouse()
