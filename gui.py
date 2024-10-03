@@ -777,16 +777,11 @@ class GeneralTab(QtWidgets.QWidget):
         """
         print("called by global hotkey")
         self.debug_window_button.click()
+        self.demo.toggle_tracking()
 
     def toggle_debug_window(self):
-        if self.debug_window.isVisible():
-            print("hiding window...")
-            self.debug_window.hide()
-            #self.topLevelWidget().show()
-        else:
-            print("showing window...")
-            self.debug_window.show()
-            #self.topLevelWidget().hide()
+        print("showing window...")
+        self.debug_window.show()
 
     def update_debug_visualization(self):
         self.debug_window.update_image(self.demo.annotated_landmarks)
@@ -1541,11 +1536,11 @@ class MainWindow(QtWidgets.QMainWindow):
         # add hotkey
         print("Starting global hotkeys")
         keyboard.GlobalHotKeys({
-            '<ctrl>+<alt>+w': self.general_tab.toggle_debug_window_globally,
+            #'<ctrl>+<alt>+w': self.general_tab.toggle_debug_window_globally,
             '<ctrl>+<alt>+e': self.demo.toggle_gesture_mouse,
             '<ctrl>+<alt>+g': self.demo.toggle_gestures,
             '<ctrl>+<alt>+m': self.demo.toggle_mouse_movement,
-            '<ctrl>+<alt>+v': self.demo.toggle_tracking,
+            '<ctrl>+<alt>+v': self.general_tab.toggle_debug_window_globally,
             '<shift>+<alt>+m': self.demo.toggle_mouse_mode,
             '<shift>+<alt>+c': self.demo.mouse.centre_mouse,
             '<shift>+<alt>+s': self.demo.mouse.switch_monitor,
