@@ -208,6 +208,7 @@ jobs:
       - name: Display structure of downloaded files
         run: |
           ls
+          chmod +x ./gesture-mouse-${{env.LINUX_TARGET}}-${{ needs.version.outputs.version  }}/gesture-mouse
           zip -r gesture-mouse-${{env.WIN_TARGET}}-${{ needs.version.outputs.version  }}.zip ./gesture-mouse-${{env.WIN_TARGET}}-${{ needs.version.outputs.version  }}/
           zip -r gesture-mouse-${{env.LINUX_TARGET}}-${{ needs.version.outputs.version  }}.zip ./gesture-mouse-${{env.LINUX_TARGET}}-${{ needs.version.outputs.version  }}/
           zip -r gesture-mouse-${{env.MAC_TARGET}}-${{ needs.version.outputs.version  }}.zip ./gesture-mouse-${{env.MAC_TARGET}}-${{ needs.version.outputs.version  }}/
