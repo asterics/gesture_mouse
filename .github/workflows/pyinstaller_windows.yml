@@ -104,12 +104,18 @@ jobs:
           sudo apt update -q
           sudo apt install -y -q build-essential libgl1-mesa-dev
           
+          sudo apt install -y -q libxcb1
           sudo apt install -y -q libxkbcommon-x11-0
           sudo apt install -y -q libxcb-image0
           sudo apt install -y -q libxcb-keysyms1
           sudo apt install -y -q libxcb-render-util0
           sudo apt install -y -q libxcb-xinerama0
           sudo apt install -y -q libxcb-icccm4
+          sudo apt install -y -q libxcb-xkb1
+          sudo apt install -y -q libxcb-xrm0
+          sudo apt install -y -q libxcb-shape0
+          sudo apt install -y -q libxcb-cursor0
+          sudo apt install -y -q libxcb-randr0
           
           sudo apt-get install -y libegl1
           
@@ -125,6 +131,7 @@ jobs:
           cd ./build-${{env.LINUX_TARGET}}
           cp ./.github/pyinstaller/gesture-mouse.spec.${{env.LINUX_TARGET}} gesture-mouse.spec
           poetry run pyinstaller gesture-mouse.spec --clean --noconfirm
+          chmod +x ./dist/gesture-mouse/gesture-mouse
       - name: upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -201,6 +208,7 @@ jobs:
       - name: Display structure of downloaded files
         run: |
           ls
+          chmod +x ./gesture-mouse-${{env.LINUX_TARGET}}-${{ needs.version.outputs.version  }}/gesture-mouse
           zip -r gesture-mouse-${{env.WIN_TARGET}}-${{ needs.version.outputs.version  }}.zip ./gesture-mouse-${{env.WIN_TARGET}}-${{ needs.version.outputs.version  }}/
           zip -r gesture-mouse-${{env.LINUX_TARGET}}-${{ needs.version.outputs.version  }}.zip ./gesture-mouse-${{env.LINUX_TARGET}}-${{ needs.version.outputs.version  }}/
           zip -r gesture-mouse-${{env.MAC_TARGET}}-${{ needs.version.outputs.version  }}.zip ./gesture-mouse-${{env.MAC_TARGET}}-${{ needs.version.outputs.version  }}/

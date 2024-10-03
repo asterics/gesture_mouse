@@ -1,19 +1,26 @@
 import pickle
+from enum import Enum
 
 from SignalsCalculator import FilteredFloat
-import keyboard
 from typing import Callable, Dict
 import uuid
-import mouse
 import time
 
 
 def null_f():
     pass
 
+class ActionTrigger(Enum):
+    UP_ACTION = 0
+    DOWN_ACTION = 1
+    HIGH_HOLD_ACTION = 2
+    LOW_HOLD_ACTION = 3
 
-class Action:
+class GestureAction:
     def __init__(self):
+        # dictionary of actions to be executed when conditions are met
+        self.action_callables = dict()
+
         self.old_value: float = 0.
 
         # up action helpers
@@ -32,10 +39,6 @@ class Action:
         # hold high helpers
         self.hold_high_active = False
 
-        self.up_action: Callable[[], None] = null_f
-        self.down_action: Callable[[], None] = null_f
-        self.high_hold_action: Callable[[], None] = null_f
-        self.low_hold_action: Callable[[], None] = null_f
         self.threshold: float = 0.5
         self.delay: float = 0.5
 
@@ -87,47 +90,26 @@ class Action:
             # check delay
             if (new_time - self.up_starttime) >= self.delay:
                 if not self.up_activated:
-                    self.up_action()
+                    self.execute_action(ActionTrigger.UP_ACTION.name)
                     self.up_activated = True
 
-                self.high_hold_action()
+                self.execute_action(ActionTrigger.HIGH_HOLD_ACTION.name)
         elif value <= self.threshold:
             # check delay
             if (new_time - self.down_starttime) >= self.delay:
                 if not self.down_activated:
-                    self.down_action()
+                    self.execute_action(ActionTrigger.DOWN_ACTION.name)
                     self.down_activated = True
 
-                self.low_hold_action()
+                self.execute_action(ActionTrigger.LOW_HOLD_ACTION.name)
         self.old_value = value
 
-    def set_up_action(self, action: Callable[[], None]):
+    def set_action_callable(self, action_key: str, action_callable: Callable[[], None]):
         """
         Sets the action for exceeding the threshold, i.e. value > threshold >= old_value:
         :param action: Function to be executed when threshold is exceeded
         """
-        self.up_action = action
-
-    def set_down_action(self, action: Callable[[], None]):
-        """
-        Sets the action for falling below the threshold, i.e. value <= threshold < old_value
-        :param action: Function to be executed when threshold is exceeded
-        """
-        self.down_action = action
-
-    def set_high_hold_action(self, action: Callable[[], None]):
-        """
-        Sets the action for staying above the threshold, i.e. value > threshold and old_value > threshold
-        :param action:
-        """
-        self.high_hold_action = action
-
-    def set_low_hold_action(self, action: Callable[[], None]):
-        """
-        Sets the action for staying below the threshold, i.e. value > threshold and old_value > threshold
-        :param action:
-        """
-        self.low_hold_action = action
+        self.action_callables[action_key] = action_callable
 
     def set_threshold(self, value: float):
         """
@@ -145,13 +127,37 @@ class Action:
         assert value >= 0
         self.delay = value
 
+    def execute_action(self, action_key: str):
+        """
+        Executes the action with the key action_key
+        :param action_key: key of action to execute
+        """
 
-class Signal:
+        # execute action only if not null
+        if action_key and action_key in self.action_callables:
+            print(f"executing action {action_key}")
+            self.action_callables[action_key]()
+
+    @property
+    def is_activated(self):
+        # return True if up or down action is activated and up_action or down_action is not None
+        if (ActionTrigger.UP_ACTION.name in self.action_callables and self.up_action_active == True):
+            return True
+        elif (ActionTrigger.DOWN_ACTION.name in self.action_callables and self.down_action_active == True):
+            return True
+        elif (ActionTrigger.HIGH_HOLD_ACTION.name in self.action_callables and self.hold_high_active == True):
+            return True
+        elif (ActionTrigger.LOW_HOLD_ACTION.name in self.action_callables and self.hold_low_active == True):
+            return True
+
+        return False
+
+class GestureSignal:
     def __init__(self, name: str):
         self.name = name
         self.raw_value: FilteredFloat = FilteredFloat(0, 0.0001)
         self.scaled_value: float = 0.
-        self.actions: Dict[uuid.UUID, Action] = {}
+        self.actions: Dict[uuid.UUID, GestureAction] = {}
         self.lower_threshold: float = 0.
         self.higher_threshold: float = 1.
         self.actions_enabled=True
@@ -209,7 +215,7 @@ class Signal:
         print(self.name, filter_value)
         self.raw_value.set_filter_value(filter_value)
 
-    def add_action(self, uid: uuid.UUID, action: Action):
+    def add_action(self, uid: uuid.UUID, action: GestureAction):
         """
         Adds action to a signal
         :param uid: uuid of action

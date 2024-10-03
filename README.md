@@ -1,33 +1,47 @@
 # Gesture Mouse
 
-A library that allows to control the mouse and keyboard with head movement and face gestures. This project is based on the 
-google mediapipe library (https://google.github.io/mediapipe/).
+A program that allows to control the mouse and keyboard with head movement and facial gestures. This project is based on the 
+google mediapipe library (https://ai.google.dev/edge/mediapipe/solutions/guide).
 
 ## Installation instructions
 Tested with Python 3.10 and PySide6.4.3. 
 1. Clone repository
-2. Create a sufolder `mkdir venv`
-3. Create virtual environment  `python -m venv venv`
-4. Activate virtual environment `venv\Scripts\activate.bat` (Linux: `. venv/bin/activate`)
-5. Install packages `pip install -r requirements.txt`
+2. Execute the following commands in the repository folder:
+
+```bash
+pip install poetry
+poetry config virtualenvs.in-project true
+poetry install --no-root
+```
 
 ## Running Gesture Mouse
-### Starting the application
-- `python gui.py` to start gui (Linux: `sudo ./venv/bin/python3.10 gui.py`) 
-- `Alt+1` to toggle mouse controlled by python or system.
-- `Esc` to turn off program. (Used if you lose control over mouse)
 
-Alternatively you can create an executable distribution and run `dist\gui.exe` (Windows) or `dist/gui` (Linux)
+### Release
 
-## Creating an exe distribution
-To create a distribution folder wich includes all necessery .dll and an executable one can use PyInstaller([https://pyinstaller.org](https://pyinstaller.org)). 
-Instructions:
-1. Follow the installation instructions
-2. Activate virtual environment `venv/Scripts/activate` on windows and `source venv/bin/activate` on linux
-3. Install PyInstaller `pip install pyinstaller`
-4. Execute build process with  
-`pyinstaller gui.py -D --add-data config;config --add-data data;data --collect-all mediapipe` on windows  
-`pyinstaller gui.py -D --add-data config:config --add-data data:data --collect-all mediapipe` on linux 
+1. Extract zip file
+2. Run `gesture-mouse.exe` (Windows) or `./gesture-mouse` (Linux)
+
+### Development
+
+```bash
+poetry run python gui.py
+```
+
+## Hotkeys
+
+* <kbd>Ctrl</kbd><kbd>Alt</kbd>+<kbd>v</kbd>: Start/Stop video and tracking
+* <kbd>Ctrl</kbd><kbd>Alt</kbd>+<kbd>g</kbd>: Enable/Disable gestures
+* <kbd>Ctrl</kbd><kbd>Alt</kbd>+<kbd>m</kbd>: Enable/Disable mouse movement
+* <kbd>Ctrl</kbd><kbd>Alt</kbd>+<kbd>e</kbd>: Enable/Disable gestures and mouse movement
+* <kbd>Shift</kbd><kbd>Alt</kbd>+<kbd>m</kbd>: Change mouse movement mode
+* <kbd>Shift</kbd><kbd>Alt</kbd>+<kbd>r</kbd>: Change mouse tracking mode
+* <kbd>Shift</kbd><kbd>Alt</kbd>+<kbd>c</kbd>: Center mouse
+* <kbd>Shift</kbd><kbd>Alt</kbd>+<kbd>s</kbd>: Switch primary screen for mouse movement
+
+## Creating a release
+
+Use the github action to create a deployment file for each platform, see .github/workflows/pyinstaller_windows.yml.
+You can also optionally create a release on github with the deployment file attached.
 
 ## Algorithms
 
