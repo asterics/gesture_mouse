@@ -21,11 +21,11 @@ from functools import partial
 
 from pynput import mouse
 from pynput import keyboard
-# import pygame
-import pyqtgraph as pg
+
 from PySide6 import QtWidgets, QtCore, QtGui
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QGroupBox, QFileDialog
 import numpy as np
+import pyqtgraph as pg
 
 import Demo
 import Mouse
