@@ -3,6 +3,10 @@
 A program that allows to control the mouse and keyboard with head movement and facial gestures. This project is based on the 
 google mediapipe library (https://ai.google.dev/edge/mediapipe/solutions/guide).
 
+## Experimental
+
+This software is experimental and not yet suitable for professional use. If there is a bug, please file an issue.
+
 ## Installation instructions
 Tested with Python 3.10 and PySide6.4.3. 
 1. Clone repository
