@@ -6,6 +6,7 @@ from typing import Callable, Dict
 import uuid
 import time
 
+import threading
 
 def null_f():
     pass
@@ -153,6 +154,11 @@ class GestureAction:
         return False
 
 class GestureSignal:
+    """
+    Lock object for dictionary to ensure thread safety.
+    """
+    dict_lock = threading.Lock()
+
     def __init__(self, name: str):
         self.name = name
         self.raw_value: FilteredFloat = FilteredFloat(0, 0.0001)
@@ -174,8 +180,9 @@ class GestureSignal:
         self.scaled_value = max(
             min((filtered_value - self.lower_threshold) / (self.higher_threshold - self.lower_threshold), 1.), 0.)
         if self.actions_enabled:
-            for action in self.actions.values():
-                action.update(self.scaled_value)
+            with self.dict_lock:
+                for action in self.actions.values():
+                    action.update(self.scaled_value)
 
     def set_threshold(self, lower_threshold: float, higher_threshold: float):
         """
@@ -222,7 +229,8 @@ class GestureSignal:
         :param action: action
         :return:
         """
-        self.actions[uid] = action
+        with self.dict_lock:
+            self.actions[uid] = action
 
     def remove_action(self, uid):
         """
@@ -230,7 +238,8 @@ class GestureSignal:
         :param uid: uuid of action to remove
         :return:
         """
-        self.actions.pop(uid, None)
+        with self.dict_lock:
+            self.actions.pop(uid, None)
 
     def set_actions_active(self, enabled:bool):
         self.actions_enabled = enabled
