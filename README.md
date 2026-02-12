@@ -74,7 +74,7 @@ is limited to simple buttons. Therefore, this interface is at a very low price (
 * AsTeRICS Grid: [Asterics Grid AAC Web-App](https://grid.asterics.eu): an open source, cross plattform communicator / talker for Augmented and Alternative Communication (AAC).
 
 
-
+<!--
 # Support us
 Please support the development by donating to the AsTeRICS Foundation:
 
@@ -85,4 +85,5 @@ Please support the development by donating to the AsTeRICS Foundation:
 <a title="Donate at opencollective.com" href="https://opencollective.com/asterics-foundation" target="_blank">
 <img src="https://github.com/asterics/AsTeRICS-Grid/raw/master/app/img/donate-open-collective.png" width=300/></a>
 </div>
+-->
 
