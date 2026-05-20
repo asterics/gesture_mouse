@@ -1,0 +1,74 @@
+[
+  {
+    "action": "keyboard_key",
+    "signal": "jawOpen",
+    "threshold": 0.22,
+    "delay": 0.0,
+    "trigger": "hold high",
+    "action_type": "press",
+    "key": "Space"
+  },
+  {
+    "action": "keyboard_key",
+    "signal": "jawOpen",
+    "threshold": 0.194,
+    "delay": 0.0,
+    "trigger": "down",
+    "action_type": "release",
+    "key": "Space"
+  },
+  {
+    "action": "keyboard_key",
+    "signal": "browInnerUp",
+    "threshold": 0.299,
+    "delay": 0.0,
+    "trigger": "hold high",
+    "action_type": "press",
+    "key": "Up"
+  },
+  {
+    "action": "keyboard_key",
+    "signal": "headYaw",
+    "threshold": 0.563,
+    "delay": 0.0,
+    "trigger": "hold high",
+    "action_type": "press",
+    "key": "Right"
+  },
+  {
+    "action": "keyboard_key",
+    "signal": "headYaw",
+    "threshold": 0.56,
+    "delay": 0.0,
+    "trigger": "down",
+    "action_type": "release",
+    "key": "Right"
+  },
+  {
+    "action": "keyboard_key",
+    "signal": "headYaw",
+    "threshold": 0.388,
+    "delay": 0.0,
+    "trigger": "hold low",
+    "action_type": "press",
+    "key": "Left"
+  },
+  {
+    "action": "keyboard_key",
+    "signal": "headYaw",
+    "threshold": 0.392,
+    "delay": 0.0,
+    "trigger": "up",
+    "action_type": "release",
+    "key": "Left"
+  },
+  {
+    "action": "keyboard_key",
+    "signal": "browInnerUp",
+    "threshold": 0.306,
+    "delay": 0.5,
+    "trigger": "down",
+    "action_type": "release",
+    "key": "Up"
+  }
+]
