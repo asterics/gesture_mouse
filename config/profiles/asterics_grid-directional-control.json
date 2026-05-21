@@ -1,0 +1,47 @@
+[
+  {
+    "action": "keyboard_key",
+    "signal": "jawOpen",
+    "threshold": 0.22,
+    "delay": 0.0,
+    "trigger": "up",
+    "action_type": "press and release",
+    "key": "Space"
+  },
+  {
+    "action": "keyboard_key",
+    "signal": "headYaw",
+    "threshold": 0.537,
+    "delay": 0.0,
+    "trigger": "up",
+    "action_type": "press and release",
+    "key": "Right"
+  },
+  {
+    "action": "keyboard_key",
+    "signal": "headYaw",
+    "threshold": 0.392,
+    "delay": 0.0,
+    "trigger": "down",
+    "action_type": "press and release",
+    "key": "Left"
+  },
+  {
+    "action": "keyboard_key",
+    "signal": "headPitch",
+    "threshold": 0.474,
+    "delay": 0.0,
+    "trigger": "down",
+    "action_type": "press and release",
+    "key": "Up"
+  },
+  {
+    "action": "keyboard_key",
+    "signal": "headPitch",
+    "threshold": 0.72,
+    "delay": 0.0,
+    "trigger": "up",
+    "action_type": "press and release",
+    "key": "Down"
+  }
+]
