@@ -1,0 +1,29 @@
+[
+  {
+    "action": "keyboard_key",
+    "signal": "jawOpen",
+    "threshold": 0.22,
+    "delay": 0.0,
+    "trigger": "hold high",
+    "action_type": "press",
+    "key": "Down"
+  },
+  {
+    "action": "keyboard_key",
+    "signal": "jawOpen",
+    "threshold": 0.194,
+    "delay": 0.0,
+    "trigger": "down",
+    "action_type": "release",
+    "key": "Down"
+  },
+  {
+    "action": "keyboard_key",
+    "signal": "browInnerUp",
+    "threshold": 0.34,
+    "delay": 0.0,
+    "trigger": "up",
+    "action_type": "press and release",
+    "key": "Space"
+  }
+]
