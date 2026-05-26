@@ -17,6 +17,10 @@ Additionally, for some gestures a combination with a modified eye aspect ratio (
 There is experimental support for blendshape detection on an iPhone using its depth camera and streaming it using the [LiveLinkFace app](https://apps.apple.com/us/app/live-link-face/id1495370836) from Epic Games.
 In order for that, it uses the python [pyLiveLinkFace](https://github.com/JimWest/PyLiveLinkFace) code.
 
+## Example configurations
+
+The [```/config/profiles```](./config/profiles) folder contains example configurations for using facial gestures to play e.g. Chrome Dino (see [video](https://youtu.be/qGVAFNxDnKs?si=85XRzhBNlyPMC9fw) or the game [Inside](https://en.wikipedia.org/wiki/Inside_(video_game)).
+
 ## Experimental
 
 This software is experimental and not yet suitable for professional use. If there is a bug, please file an issue.
