@@ -1,7 +1,21 @@
 # Gesture Mouse
 
 A program that allows to control the mouse and keyboard with head movement and facial gestures. This project is based on the 
-google mediapipe library (https://ai.google.dev/edge/mediapipe/solutions/guide).
+[google mediapipe library](https://ai.google.dev/edge/mediapipe/solutions/guide) and uses the [face landmark detection models](https://ai.google.dev/edge/mediapipe/solutions/vision/face_landmarker).
+
+## Algorithms
+
+The gesture calculation (e.g. jawopen) uses the mediapipe facial landmark detection including the recognition of defined facial gesture (see model card [blendshape](https://storage.googleapis.com/mediapipe-assets/Model%20Card%20Blendshape%20V2.pdf)).
+Additionally, for some gestures a combination with a modified eye aspect ratio (EAR) algorithm was tested. The EAR algorithm helps to make the gesture invariant to head movements or rotations.
+ * see [function SignalsCalculator.eye_aspect_ratio](https://github.com/asterics/gesture_mouse/blob/d59c84c273acace350a404e3fe110aad15be1885/SignalsCalculator.py#L330).
+ * The idea is based on the article about [eye aspect algorithm for driver drowsiness detection](https://learnopencv.com/driver-drowsiness-detection-using-mediapipe-in-python/).
+
+![Calculation of eye aspect algorithm](https://cdn.learnopencv.com/wp-content/uploads/2022/09/04092233/03-driver-drowsiness-detection-EAR-points-768x297.png)
+
+## iPhone Depth Camera + LiveLinkFace Support
+
+There is experimental support for blendshape detection on an iPhone using its depth camera and streaming it using the [LiveLinkFace app](https://apps.apple.com/us/app/live-link-face/id1495370836) from Epic Games.
+In order for that, it uses the python [pyLiveLinkFace](https://github.com/JimWest/PyLiveLinkFace) code.
 
 ## Experimental
 
@@ -46,15 +60,6 @@ poetry run python gui.py
 
 Use the github action to create a deployment file for each platform, see .github/workflows/pyinstaller_windows.yml.
 You can also optionally create a release on github with the deployment file attached.
-
-## Algorithms
-
-The gesture calculation (e.g. jawopen) uses the mediapipe facial landmark detection including the recognition of defined facial gesture.
-Additionally, for some gestures a combination with a modified eye aspect ratio (EAR) algorithm was tested. The EAR algorithm helps to make the gesture invariant to head movements or rotations.
- * see [function SignalsCalculator.eye_aspect_ratio](https://github.com/asterics/gesture_mouse/blob/d59c84c273acace350a404e3fe110aad15be1885/SignalsCalculator.py#L330).
- * The idea is based on the article about [eye aspect algorithm for driver drowsiness detection](https://learnopencv.com/driver-drowsiness-detection-using-mediapipe-in-python/).
-
-![Calculation of eye aspect algorithm](https://cdn.learnopencv.com/wp-content/uploads/2022/09/04092233/03-driver-drowsiness-detection-EAR-points-768x297.png)
 
 ## Links and Credits
 
