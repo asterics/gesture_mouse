@@ -49,7 +49,8 @@ You can also optionally create a release on github with the deployment file atta
 
 ## Algorithms
 
-The gesture calculation (e.g. eye-blink) uses the mediapipe facial landmark detection in combination with a modified eye aspect ratio (EAR) algorithm. The EAR algorithm helps to make the gesture invariant to head movements or rotations.
+The gesture calculation (e.g. jawopen) uses the mediapipe facial landmark detection including the recognition of defined facial gesture.
+Additionally, for some gestures a combination with a modified eye aspect ratio (EAR) algorithm was tested. The EAR algorithm helps to make the gesture invariant to head movements or rotations.
  * see [function SignalsCalculator.eye_aspect_ratio](https://github.com/asterics/gesture_mouse/blob/d59c84c273acace350a404e3fe110aad15be1885/SignalsCalculator.py#L330).
  * The idea is based on the article about [eye aspect algorithm for driver drowsiness detection](https://learnopencv.com/driver-drowsiness-detection-using-mediapipe-in-python/).
 
