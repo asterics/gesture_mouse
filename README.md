@@ -53,7 +53,7 @@ The gesture calculation (e.g. eye-blink) uses the mediapipe facial landmark dete
  * see [function SignalsCalculator.eye_aspect_ratio](https://github.com/asterics/gesture_mouse/blob/d59c84c273acace350a404e3fe110aad15be1885/SignalsCalculator.py#L330).
  * The idea is based on the article about [eye aspect algorithm for driver drowsiness detection](https://learnopencv.com/driver-drowsiness-detection-using-mediapipe-in-python/).
 
-![Calculation of eye aspect algorithm](https://learnopencv.com/wp-content/uploads/2022/09/03-driver-drowsiness-detection-EAR-points-768x297.png)
+![Calculation of eye aspect algorithm](https://cdn.learnopencv.com/wp-content/uploads/2022/09/04092233/03-driver-drowsiness-detection-EAR-points-768x297.png)
 
 ## Links and Credits
 
